@@ -10,12 +10,12 @@ recognition running entirely on your Mac.
 
 Requires **Apple Silicon** and **macOS 26 or later**.
 
-[Download VoxKey 0.2.1 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.2.1/VoxKey-v0.2.1-arm64.dmg),
+[Download VoxKey 0.3.0 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.3.0/VoxKey-v0.3.0-arm64.dmg),
 open the DMG, and drag VoxKey into Applications. You can also
 [build from source](#development).
 
 1. Launch VoxKey and grant Microphone and Accessibility access.
-2. Follow setup to download and prepare the English model.
+2. Choose a speech model during setup: Download it, then select Use Model. Each card lists its supported languages.
 3. Focus a text field, hold your configured trigger, and speak after the capture sound.
 4. Release to finish. Press Escape to cancel.
 

@@ -9,6 +9,74 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Signed updates for VoxKey.</description>
         <language>en</language>
         <item>
+            <title>0.3.0</title>
+            <pubDate>Thu, 10 Sep 2026 15:28:55 -0300</pubDate>
+            <link>https://rodrigouroz.github.io/VoxKey/</link>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# VoxKey 0.3.0
+
+VoxKey now has a model library with four cards, multilingual dictation, and a
+refreshed native interface. Requires Apple Silicon and macOS 26 or later.
+Internal build number: 9.
+
+## Choose the model that works for your voice
+
+- Compare compact and full versions of Distil-Whisper v3 and Whisper v3 Turbo.
+  Every card explains language support, download size, and the model's tradeoffs.
+- Download several models and keep them on your Mac. Downloading is separate from
+  activation: choose **Use Model** when you want to switch. One model is active;
+  existing downloads remain available for future use.
+- Open the library with **Choose Model…** during setup, **Manage Models…** in
+  Settings, or **Models and Languages…** in the menu bar.
+- Model and language choices persist. Finish dictation before switching;
+  preparation failure preserves the previous working model and language.
+
+## Dictate in Spanish and other languages
+
+- Both Turbo variants support Spanish and other Whisper languages, with explicit
+  language selection or automatic detection. Distil-v3 supports English only.
+- Batch and streaming transcription honor the selected language. Text delivery
+  preserves Spanish opening punctuation, and word replacement uses local language
+  detection instead of forcing English.
+- Optional grammar correction remains English-only. It is paused for Spanish,
+  other non-English languages, and Automatic. The saved preference returns when
+  you select English again. The grammar model retains its noncommercial-use terms.
+
+## A consistent native design
+
+- A lime keycap on forest green replaces the old app icon. The menu bar uses a
+  monochrome version while ready.
+- First-run setup and everyday Settings have separate windows. Settings contains
+  model access, trigger, capture mode, microphone, grammar, login, and feedback.
+- Shared cards, native controls, system colors, serif titles, and consistent
+  spacing connect the model library, onboarding, Settings, Vocabulary, and Safety Net.
+- The public page shares the brand mark and typography, adds dark mode, and keeps
+  installation steps visible.
+
+## Validation and known limits
+
+All 233 local app tests and nine artifact-privacy regression tests passed.
+The local test suite covers the model cards, file inventory, saved selection,
+language restrictions, and shared grammar controls. Real Core ML inference checks
+Spanish through batch and streaming paths and verifies failed model replacement.
+Rendered UI checks include light and dark appearances. Distribution retains the
+artifact privacy checks introduced in 0.2.1.
+
+All five research candidates, including a local Distil-v3.5 conversion, were
+[benchmarked on synthetic speech](https://github.com/rodrigouroz/VoxKey/blob/v0.3.0/docs/testing/model-comparison-2026-09-10/README.md).
+That small sample does not predict accuracy for an individual voice. There is no universal recommended
+model or accuracy guarantee. Distil-v3.5 is not a downloadable library option.
+
+Spanish grammar candidates did not meet the required quality and supporting-evidence
+bar, so Spanish correction is excluded. Microphone, accent, long-form dictation,
+and editor compatibility still need testing in the apps you use.
+]]></description>
+            <enclosure url="https://github.com/rodrigouroz/VoxKey/releases/download/v0.3.0/VoxKey-v0.3.0-arm64.dmg" length="2643319" type="application/octet-stream" sparkle:edSignature="Ir5WF40z+H3ugmQOs/Yybi19ktV075lplK9Jz2bI1e6a7b6C/T8EC9JGRnya90xZZU0Aq1YbL3TaLM6zKBeFDw=="/>
+        </item>
+        <item>
             <title>0.2.1</title>
             <pubDate>Thu, 10 Sep 2026 13:37:18 -0300</pubDate>
             <link>https://rodrigouroz.github.io/VoxKey/</link>
@@ -49,6 +117,6 @@ vocabulary.
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: QwsU5qLsyhWnI2s/WiDKIj+djFu8a3MGg2g9NOhLGve2rKvuGXBkYxXeU5k3ofqVDWzYA67z5v4oRj5ftQarAA==
-length: 2831
+edSignature: LfiLUw98JYAgOchk4/sVfC7cmthy5ZCBhB5nfqH6J4Sh5kTVPNRfkMzTEs9meqil5160qEzLIr/Yz9IWZobqBg==
+length: 6897
 -->
