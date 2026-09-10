@@ -33,7 +33,9 @@ actor WhisperTranscriber {
 
     private var whisperKit: WhisperKit?
     private let computeOptions: ModelComputeOptions?
+    private let localModelRoot: URL?
     private var inferenceInFlight = false
+    private var preparationInFlight = false
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "transcription")
     private(set) var selectedModel = defaultModel
 
@@ -41,8 +43,9 @@ actor WhisperTranscriber {
     // the GPU: local end-to-end measurements substantially favor it on M5 Pro.
     init(computeOptions: ModelComputeOptions? = ModelComputeOptions(
         audioEncoderCompute: .all, textDecoderCompute: .all
-    )) {
+    ), localModelRoot: URL? = nil) {
         self.computeOptions = computeOptions
+        self.localModelRoot = localModelRoot
     }
 
     func prepare(
@@ -50,10 +53,12 @@ actor WhisperTranscriber {
         download: Bool = true,
         progress: @escaping @Sendable (ModelPreparationPhase) -> Void = { _ in }
     ) async throws {
-        guard !inferenceInFlight else { throw TranscriptionError.inferenceBusy }
+        guard !inferenceInFlight, !preparationInFlight else { throw TranscriptionError.inferenceBusy }
         if whisperKit != nil, selectedModel == model { return }
+        preparationInFlight = true
+        defer { preparationInFlight = false }
 
-        let downloadBase = try modelDownloadBase()
+        let downloadBase = try TranscriptionModelFiles.downloadBase()
         let modelFolder: URL
         if download {
             progress(.downloading(0))
@@ -64,13 +69,13 @@ actor WhisperTranscriber {
                 progress(.downloading(downloadProgress.fractionCompleted))
             }
         } else {
-            modelFolder = localModelFolder(model: model, downloadBase: downloadBase)
-            guard isCompleteModel(at: modelFolder) else {
+            modelFolder = try TranscriptionModelFiles(root: localModelRoot).folder(for: model)
+            guard TranscriptionModelFiles.isComplete(at: modelFolder) else {
                 throw TranscriptionError.modelNotInstalled
             }
         }
 
-        guard isCompleteModel(at: modelFolder) else {
+        guard TranscriptionModelFiles.isComplete(at: modelFolder) else {
             throw TranscriptionError.modelNotInstalled
         }
         progress(.prewarming)
@@ -86,36 +91,9 @@ actor WhisperTranscriber {
             download: false
         )
         let candidate = try await WhisperKit(config)
+        try Task.checkCancellation()
         whisperKit = candidate
         selectedModel = model
-    }
-
-    private func modelDownloadBase() throws -> URL {
-        guard let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            throw TranscriptionError.modelNotInstalled
-        }
-        return documents.appending(path: "huggingface", directoryHint: .isDirectory)
-    }
-
-    private func localModelFolder(model: String, downloadBase: URL) -> URL {
-        downloadBase
-            .appending(path: "models/argmaxinc/whisperkit-coreml", directoryHint: .isDirectory)
-            .appending(path: model, directoryHint: .isDirectory)
-    }
-
-    private func isCompleteModel(at folder: URL) -> Bool {
-        let requiredPaths = [
-            "MelSpectrogram.mlmodelc/weights/weight.bin",
-            "AudioEncoder.mlmodelc/weights/weight.bin",
-            "TextDecoder.mlmodelc/weights/weight.bin"
-        ]
-        return requiredPaths.allSatisfy { relativePath in
-            let url = folder.appending(path: relativePath)
-            guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]) else {
-                return false
-            }
-            return values.isRegularFile == true && (values.fileSize ?? 0) > 0
-        }
     }
 
     func vocabularyPromptTokens(_ terms: [VocabularyTerm]) throws -> [Int] {
@@ -123,8 +101,8 @@ actor WhisperTranscriber {
         return TranscriptionVocabulary.promptTokens(terms, tokenizer: tokenizer)
     }
 
-    func transcribe(_ capture: CapturedAudio, vocabulary: [VocabularyTerm] = []) async throws -> TranscriptionOutcome {
-        guard !inferenceInFlight else { throw TranscriptionError.inferenceBusy }
+    func transcribe(_ capture: CapturedAudio, vocabulary: [VocabularyTerm] = [], language: String? = "en") async throws -> TranscriptionOutcome {
+        guard !inferenceInFlight, !preparationInFlight else { throw TranscriptionError.inferenceBusy }
         inferenceInFlight = true
         defer { inferenceInFlight = false }
         try Task.checkCancellation()
@@ -140,10 +118,11 @@ actor WhisperTranscriber {
         let options = DecodingOptions(
             verbose: false,
             task: .transcribe,
-            language: "en",
+            language: language,
             temperature: 0,
             temperatureFallbackCount: 3,
             usePrefillPrompt: true,
+            detectLanguage: language == nil,
             skipSpecialTokens: true,
             withoutTimestamps: true,
             promptTokens: prompt.isEmpty ? nil : prompt,
@@ -163,9 +142,10 @@ actor WhisperTranscriber {
     func transcribeStream(
         from capture: AudioCaptureService,
         vocabulary: [VocabularyTerm] = [],
+        language: String? = "en",
         progress: @Sendable (StreamingTranscriptionProgress) -> Void = { _ in }
     ) async throws -> TranscriptionOutcome {
-        guard !inferenceInFlight else { throw TranscriptionError.inferenceBusy }
+        guard !inferenceInFlight, !preparationInFlight else { throw TranscriptionError.inferenceBusy }
         inferenceInFlight = true
         defer { inferenceInFlight = false }
         let resampler = StreamingAudioResampler()
@@ -186,7 +166,7 @@ actor WhisperTranscriber {
                     if prompt == nil { prompt = try vocabularyPromptTokens(vocabulary) }
                     let context = try streamingPrompt(vocabulary: prompt ?? [], precedingText: transcript.confirmedText)
                     let started = ContinuousClock.now
-                    let text = try await decodeStreamingWindow(window.samples, prompt: context)
+                    let text = try await decodeStreamingWindow(window.samples, prompt: context, language: language)
                     try Task.checkCancellation()
                     let boundaryRepeat = TranscriptionRepetition.boundaryWordCount(previous: transcript.confirmedText, next: text)
                     logger.notice("phrase assembly index=\(transcript.decodeCount, privacy: .public) audio_start=\(transcript.consumedSamples, privacy: .public) audio_count=\(window.samples.count, privacy: .public) boundary_repeated_words=\(boundaryRepeat, privacy: .public)")
@@ -216,11 +196,12 @@ actor WhisperTranscriber {
         return TranscriptionVocabulary.streamingPrompt(vocabulary: vocabulary, precedingText: precedingText, tokenizer: tokenizer)
     }
 
-    private func decodeStreamingWindow(_ samples: [Float], prompt: [Int]) async throws -> String {
+    private func decodeStreamingWindow(_ samples: [Float], prompt: [Int], language: String?) async throws -> String {
         guard let whisperKit else { throw TranscriptionError.modelNotLoaded }
         let options = DecodingOptions(
-            verbose: false, task: .transcribe, language: "en", temperature: 0,
+            verbose: false, task: .transcribe, language: language, temperature: 0,
             temperatureFallbackCount: 3, usePrefillPrompt: true,
+            detectLanguage: language == nil,
             skipSpecialTokens: true, withoutTimestamps: true,
             windowClipTime: 0,
             promptTokens: prompt.isEmpty ? nil : prompt,

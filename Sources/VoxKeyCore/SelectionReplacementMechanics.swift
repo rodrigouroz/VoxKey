@@ -52,8 +52,7 @@ enum SelectionReplacementMechanics {
     private static func tag(_ word: String, before: String, after: String, using tagger: NLTagger) -> NLTag? {
         let text = before + word + after
         tagger.string = text
-        // VoxKey's transcription model currently produces English.
-        tagger.setLanguage(.english, range: text.startIndex..<text.endIndex)
+        // Let the local tagger infer language from the bounded editing context.
         let index = text.index(text.startIndex, offsetBy: before.count)
         return tagger.tag(at: index, unit: .word, scheme: .nameTypeOrLexicalClass).0
     }

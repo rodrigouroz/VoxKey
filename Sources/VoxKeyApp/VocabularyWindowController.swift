@@ -71,7 +71,7 @@ final class VocabularyWindowController: NSWindowController, NSWindowDelegate, NS
             VoxKeyDesign.label("Help VoxKey recognize the names and terms you use. Vocabulary stays on this Mac.", style: .body, color: VoxKeyDesign.secondaryInk)
         ], spacing: 8)
         let content = column([
-            VoxKeyDesign.brandRow(), introduction, personal, packages,
+            introduction, personal, packages,
             VoxKeyDesign.label("Changes apply to your next dictation. A selection of terms guides recognition; spelling is not guaranteed.", style: .caption, color: VoxKeyDesign.secondaryInk)
         ], spacing: VoxKeyDesign.Layout.sectionSpacing)
         VoxKeyDesign.install(content, in: window)

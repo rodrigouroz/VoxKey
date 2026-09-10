@@ -8,7 +8,6 @@ final class SafetyNetWindowController: NSWindowController, NSWindowDelegate {
     var onDismiss: ((UUID) -> Void)?
     private(set) var result: LastResult
     private let heading = VoxKeyDesign.label("", style: .windowTitle)
-    private let eyebrow = VoxKeyDesign.eyebrow("")
 
     private let destinationLabel = VoxKeyDesign.label("", style: .caption, color: VoxKeyDesign.secondaryInk)
     private let destinationIcon = NSImageView()
@@ -42,7 +41,7 @@ final class SafetyNetWindowController: NSWindowController, NSWindowDelegate {
         super.init(window: window)
 
         let header = VoxKeyDesign.vertical([
-            eyebrow, heading,
+            heading,
             VoxKeyDesign.label("Kept on this Mac for this session.", style: .caption, color: VoxKeyDesign.secondaryInk)
         ], spacing: 8)
 
@@ -164,7 +163,6 @@ final class SafetyNetWindowController: NSWindowController, NSWindowDelegate {
     private func updateHeading() {
         let ready = result.failure == nil && !result.deliveryUncertain
         heading.stringValue = ready ? "Your dictation is ready." : "Your words are still here."
-        eyebrow.stringValue = result.failure == nil ? "LAST DICTATION" : "SAFETY NET"
     }
 
     private func refreshDeliverButton() {

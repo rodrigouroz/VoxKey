@@ -1,0 +1,186 @@
+{
+  "models": [
+    {
+      "id": "distil-v3-compressed",
+      "variant": "distil-whisper_distil-large-v3_594MB",
+      "folder": "models/distil-whisper_distil-large-v3_594MB",
+      "languages": [
+        "en"
+      ],
+      "revision": "0f63a7800b00dd0226abd051b906c246e1907482",
+      "packageBytes": 594534261
+    },
+    {
+      "id": "distil-v3-full",
+      "variant": "distil-whisper_distil-large-v3",
+      "folder": "models/distil-whisper_distil-large-v3",
+      "languages": [
+        "en"
+      ],
+      "revision": "0f63a7800b00dd0226abd051b906c246e1907482",
+      "packageBytes": 1514534700
+    },
+    {
+      "id": "turbo-compressed",
+      "variant": "openai_whisper-large-v3-v20240930_626MB",
+      "folder": "models/openai_whisper-large-v3-v20240930_626MB",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "revision": "0f63a7800b00dd0226abd051b906c246e1907482",
+      "packageBytes": 626718238
+    },
+    {
+      "id": "turbo-full",
+      "variant": "openai_whisper-large-v3-v20240930",
+      "folder": "models/openai_whisper-large-v3-v20240930",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "revision": "0f63a7800b00dd0226abd051b906c246e1907482",
+      "packageBytes": 1619531263
+    },
+    {
+      "id": "distil-v3.5-full",
+      "variant": "distil-whisper_distil-large-v3.5",
+      "folder": "converted/distil-whisper_distil-large-v3.5",
+      "languages": [
+        "en"
+      ],
+      "revision": "728a7691f3ff1d3d971528d3203a6e9559165d41",
+      "packageBytes": 1527435444
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "en-Samantha-short",
+      "language": "en",
+      "voice": "Samantha",
+      "path": "audio/en-Samantha-short.aiff",
+      "reference": "Please send me the notes after the meeting.",
+      "sha256": "1d07f7e403a576bba8e007b2d312f46b67703bad874975918ff7e89c2d8ca7a9"
+    },
+    {
+      "id": "en-Samantha-faithful",
+      "language": "en",
+      "voice": "Samantha",
+      "path": "audio/en-Samantha-faithful.aiff",
+      "reference": "These is the files I need. The new version work on my Mac.",
+      "sha256": "7fa1d579652df03d5bdb081c90c8bd0a5d460815495ee4c2dd156f8664127c43"
+    },
+    {
+      "id": "en-Samantha-negation",
+      "language": "en",
+      "voice": "Samantha",
+      "path": "audio/en-Samantha-negation.aiff",
+      "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+      "sha256": "f2ea9eb58761c92bee44833331aed360657f9f99fd46fc51a678b48ff48236e5"
+    },
+    {
+      "id": "en-Samantha-technical",
+      "language": "en",
+      "voice": "Samantha",
+      "path": "audio/en-Samantha-technical.aiff",
+      "reference": "Please update the Quasar Ledger. Check the cache, the queue, and the schema. The final word is telescope.",
+      "sha256": "f2a2839e8a97717251bcb212f750964fd2ce10e86dbf9876ed99d786886bd69b"
+    },
+    {
+      "id": "en-Daniel-short",
+      "language": "en",
+      "voice": "Daniel",
+      "path": "audio/en-Daniel-short.aiff",
+      "reference": "Please send me the notes after the meeting.",
+      "sha256": "dc3c4a508500b09387be610fd5238b618d2a9621366c4dd742ed71af22361740"
+    },
+    {
+      "id": "en-Daniel-faithful",
+      "language": "en",
+      "voice": "Daniel",
+      "path": "audio/en-Daniel-faithful.aiff",
+      "reference": "These is the files I need. The new version work on my Mac.",
+      "sha256": "7f4bbbdcfcc14f98b55c7dca655edeecaaeb1f1842c00f3ffd9435b4cff16720"
+    },
+    {
+      "id": "en-Daniel-negation",
+      "language": "en",
+      "voice": "Daniel",
+      "path": "audio/en-Daniel-negation.aiff",
+      "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+      "sha256": "e0250780c953c90f996b15ce427d2a4171f88d22d816128cb5c8fea78601191b"
+    },
+    {
+      "id": "en-Daniel-technical",
+      "language": "en",
+      "voice": "Daniel",
+      "path": "audio/en-Daniel-technical.aiff",
+      "reference": "Please update the Quasar Ledger. Check the cache, the queue, and the schema. The final word is telescope.",
+      "sha256": "946c1ffbdc54ae19031666d36792af7d74591f6773e014888ab832fd9a4fbbdb"
+    },
+    {
+      "id": "es-Paulina-short",
+      "language": "es",
+      "voice": "Paulina",
+      "path": "audio/es-Paulina-short.aiff",
+      "reference": "Por favor, mandame las notas después de la reunión.",
+      "sha256": "16f8557007a9f63a4bff0403043d030abd0947b6d69d51ae0ba9348c05f068cf"
+    },
+    {
+      "id": "es-Paulina-voseo",
+      "language": "es",
+      "voice": "Paulina",
+      "path": "audio/es-Paulina-voseo.aiff",
+      "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+      "sha256": "fd4e819cb2274dc2ea18e0efd26ada87162dd93b8595bcb6c1cb060bb46cb64a"
+    },
+    {
+      "id": "es-Paulina-negation",
+      "language": "es",
+      "voice": "Paulina",
+      "path": "audio/es-Paulina-negation.aiff",
+      "reference": "La versión no está lista. No la publiques todavía. Esto es muy muy importante.",
+      "sha256": "cac5d9a32b3397685c4e8b825c688b68917c3140b917c74b914d37b336c2b5f3"
+    },
+    {
+      "id": "es-Paulina-technical",
+      "language": "es",
+      "voice": "Paulina",
+      "path": "audio/es-Paulina-technical.aiff",
+      "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+      "sha256": "2cd3e61a49708654fb52c9e2ac82387f6239c32b7b8037114210ea14d3c047b4"
+    },
+    {
+      "id": "es-Mónica-short",
+      "language": "es",
+      "voice": "Mónica",
+      "path": "audio/es-Mónica-short.aiff",
+      "reference": "Por favor, mandame las notas después de la reunión.",
+      "sha256": "cbb00cd32d57f4204fc1dfe52dd7b2daa36574fc0276f6955b05fde83d0f63bd"
+    },
+    {
+      "id": "es-Mónica-voseo",
+      "language": "es",
+      "voice": "Mónica",
+      "path": "audio/es-Mónica-voseo.aiff",
+      "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+      "sha256": "9cb5cec90c505ee77664a1ec9745e6dea8a9f9cfa0bb536a95bf2c191b4d021b"
+    },
+    {
+      "id": "es-Mónica-negation",
+      "language": "es",
+      "voice": "Mónica",
+      "path": "audio/es-Mónica-negation.aiff",
+      "reference": "La versión no está lista. No la publiques todavía. Esto es muy muy importante.",
+      "sha256": "d811411af8407e6b794a56491c607337ad0e76820c261e0618e9409ee9a83e80"
+    },
+    {
+      "id": "es-Mónica-technical",
+      "language": "es",
+      "voice": "Mónica",
+      "path": "audio/es-Mónica-technical.aiff",
+      "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+      "sha256": "d91ec5e5478d3a6cb7636e15c8da06431f6de7a59a09860c379369273b6f99e7"
+    }
+  ]
+}

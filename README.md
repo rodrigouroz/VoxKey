@@ -3,7 +3,7 @@
 **Hold a key. Speak. Keep writing.**
 
 100% local dictation for your Mac. Free forever and fully open source. Hold your **Dictation trigger** (Globe/Fn by default), speak, and release to insert
-English text where you started typing. Powered by WhisperKit, with speech
+text where you started typing. English is the default; multilingual Whisper Turbo models also support Spanish and other languages. Powered by WhisperKit, with speech
 recognition running entirely on your Mac.
 
 ## Get started
@@ -23,13 +23,26 @@ VoxKey lives in the menu bar. Turn off **Capture Sounds** for silent use and spe
 when the overlay says **Listening**. Add recognition hints in **Vocabulary…** or
 import a vocabulary package and inspect it with **View Contents**.
 
+Open **Models and Languages…** from the menu bar or Settings to compare local
+speech models. Each card explains the model, download size, and supported languages.
+Choose **Download** to keep a model on this Mac, then **Use Model** to activate it.
+You can keep several downloaded models; only one is active. Downloads leave the
+active model available. Choose the active model’s dictation language below the cards.
+Downloaded models are reused offline. Finish dictation before switching; model
+preparation pauses dictation, and a failed replacement keeps the
+previous working model and language. Both Whisper v3 Turbo variants support
+Spanish and automatic language detection. Distil-Whisper v3 supports English only.
+An explicit language is useful for short utterances that are hard to identify.
+See the [local model comparison](docs/testing/model-comparison-2026-09-10/README.md)
+for measured speed, word errors, tradeoffs, and the Spanish grammar investigation.
+
 Completed phrases are transcribed while you speak; only the final text is inserted.
 If delivery cannot be confirmed, **Safety Net** keeps the result available for recovery.
 **Recover Dictation…** appears in the menu only when a result needs recovery,
 including when there was no destination. Confirmed delivery clears the result.
 
 Choose **Globe/Fn**, **Right Option**, **Right Command**, or **Right Control** in
-**Settings and Readiness… → Settings → Dictation trigger**. Use the key alone;
+**Settings… → Dictation → Trigger key**. Use the key alone;
 Caps Lock is unsupported. A brief chord-detection delay precedes activation;
 joining a shortcut while holding the trigger cancels dictation. Left modifiers
 keep their normal meaning. Settings changes apply on the next press.
@@ -48,10 +61,13 @@ While **Listening**, six small bars show incoming microphone audio. No bars and
 “No audio detected” mean you should check Microphone in Settings. The meter
 hides as soon as capture ends and never displays words or a microphone name.
 
-Enable **Correct grammar locally** in onboarding or **Settings and Readiness… → Settings**
+Enable **Correct grammar locally** during setup or in **Settings…**
 to download the optional grammar model (519 MB). It defaults off. Dictation continues
 during preparation; correction starts automatically when the model is ready and works
 offline afterward. The model is for noncommercial use and may change words.
+Grammar correction currently requires **English** as the selected dictation
+language. It pauses for Spanish, other languages, and Automatic; transcription
+still works. A qualified Spanish grammar model is not included yet.
 
 ## Privacy
 
@@ -72,8 +88,8 @@ Sparkle. Enable **Automatically Check for Updates** for background checks; VoxKe
 asks before installing and restarting. Updates wait while dictation or Safety Net
 recovery is in progress. You can also install any newer DMG manually.
 
-VoxKey supports English dictation. Editor compatibility and real-world latency
-are still being tested. See [0.2.1 release notes](docs/release/0.2.1.md) and
+VoxKey defaults to English and offers multilingual Turbo models. Editor compatibility and real-world latency
+are still being tested. See [0.3.0 release notes](docs/release/0.3.0.md) and
 [how to build and publish a release](docs/release/distribution.md).
 
 ## Development

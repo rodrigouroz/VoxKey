@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- VoxKey app icon: the lime keycap brand mark on a forest tile.
+       Source of truth for the asset catalog PNGs and the site favicon. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#27443a"/>
+      <stop offset="1" stop-color="#1b3025"/>
+    </linearGradient>
+    <linearGradient id="key" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cdf3a4"/>
+      <stop offset="1" stop-color="#b8e88a"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#tile)"/>
+  <rect x="100.5" y="100.5" width="823" height="823" rx="186" fill="none" stroke="#43523f" stroke-opacity="0.9"/>
+  <!-- keycap shadow, keycap, rim -->
+  <rect x="232" y="258" width="560" height="560" rx="129" fill="#0d1a10" fill-opacity="0.55"/>
+  <rect x="232" y="232" width="560" height="560" rx="129" fill="url(#key)"/>
+  <rect x="274" y="274" width="476" height="476" rx="92" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="5"/>
+  <!-- waveform bars: heights 0.18 0.36 0.51 0.31 0.17 of the keycap -->
+  <g fill="#1f3321">
+    <rect x="387" y="461.6" width="30" height="100.8" rx="15"/>
+    <rect x="442" y="411.2" width="30" height="201.6" rx="15"/>
+    <rect x="497" y="369.2" width="30" height="285.6" rx="15"/>
+    <rect x="552" y="425.2" width="30" height="173.6" rx="15"/>
+    <rect x="607" y="464.4" width="30" height="95.2" rx="15"/>
+  </g>
+</svg>

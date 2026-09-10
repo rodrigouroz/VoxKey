@@ -1,0 +1,163 @@
+[
+  {
+    "model": "distil-v3-compressed",
+    "fixture": "en-Samantha-technical",
+    "mode": "explicit",
+    "reference": "Please update the Quasar Ledger. Check the cache, the queue, and the schema. The final word is telescope.",
+    "transcription": "Please update the Quasar ledger. Check the cache, the Q, and the schema. The final word is telescope."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "en-Samantha-negation",
+    "mode": "auto",
+    "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+    "transcription": "build is not ready. Do not deploy it. This is very very useful."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "en-Samantha-negation",
+    "mode": "explicit",
+    "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+    "transcription": "build is not ready. Do not deploy it. This is very very useful."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Paulina-voseo",
+    "mode": "auto",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "Podés revisar este cambio, si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Paulina-technical",
+    "mode": "auto",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la caché, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Mónica-voseo",
+    "mode": "auto",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Puedes revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Mónica-technical",
+    "mode": "auto",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la cache, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Paulina-voseo",
+    "mode": "explicit",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "Podés revisar este cambio, si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Paulina-technical",
+    "mode": "explicit",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la caché, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Mónica-voseo",
+    "mode": "explicit",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Puedes revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-compressed",
+    "fixture": "es-Mónica-technical",
+    "mode": "explicit",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la cache, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "en-Samantha-negation",
+    "mode": "auto",
+    "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+    "transcription": "build is not ready. Do not deploy it. This is very very useful."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "en-Samantha-negation",
+    "mode": "explicit",
+    "reference": "The build is not ready. Do not deploy it. This is very very useful.",
+    "transcription": "build is not ready. Do not deploy it. This is very very useful."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Paulina-voseo",
+    "mode": "auto",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Podés revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Paulina-technical",
+    "mode": "auto",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la caché, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-short",
+    "mode": "auto",
+    "reference": "Por favor, mandame las notas después de la reunión.",
+    "transcription": "Por favor, mándame las notas después de la reunión."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-voseo",
+    "mode": "auto",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Puedes revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-technical",
+    "mode": "auto",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la cache, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Paulina-voseo",
+    "mode": "explicit",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Podés revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Paulina-technical",
+    "mode": "explicit",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la caché, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-short",
+    "mode": "explicit",
+    "reference": "Por favor, mandame las notas después de la reunión.",
+    "transcription": "Por favor, mándame las notas después de la reunión."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-voseo",
+    "mode": "explicit",
+    "reference": "¿Podés revisar este cambio? Si encontrás un problema, avisame antes de publicarlo.",
+    "transcription": "¿Puedes revisar este cambio? Si encontrás un problema, avísame antes de publicarlo."
+  },
+  {
+    "model": "turbo-full",
+    "fixture": "es-Mónica-technical",
+    "mode": "explicit",
+    "reference": "Revisá la caché, la cola y el esquema de la base de datos. La última palabra es telescopio.",
+    "transcription": "Revisa la cache, la cola y el esquema de la base de datos. La última palabra es telescopio."
+  }
+]

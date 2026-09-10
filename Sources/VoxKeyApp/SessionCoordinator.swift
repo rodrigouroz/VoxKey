@@ -41,6 +41,8 @@ actor SessionCoordinator {
     private var cancellingSessionID: DictationSessionID?
     private var modelReady = false
     private var modelPreparationInFlight = false
+    private(set) var transcriptionConfiguration = TranscriptionConfiguration()
+    private var sessionLanguage: String? = "en"
     private var snapshotDeduplicator = SnapshotDeduplicator()
     private var captureDestinationFailure: DeliveryFailure?
     private var sessionMicrophoneUID: String?
@@ -95,7 +97,7 @@ actor SessionCoordinator {
     }
 
     func refreshReadiness() async {
-        guard !machine.phase.isBusy else { return }
+        guard !machine.phase.isBusy, !modelPreparationInFlight else { return }
         guard AudioCaptureService.microphoneAuthorized() else {
             setNotReady(.microphonePermission, message: "Microphone access is required.")
             return
@@ -105,7 +107,7 @@ actor SessionCoordinator {
             return
         }
         guard modelReady else {
-            setNotReady(.modelUnavailable, message: "Prepare the English transcription model.")
+            setNotReady(.modelUnavailable, message: "Prepare a transcription model.")
             return
         }
         if machine.phase == .ready { return }
@@ -123,21 +125,32 @@ actor SessionCoordinator {
     }
 
     func prepareDefaultModel(download: Bool = true) async throws {
-        guard !modelPreparationInFlight else { return }
+        try await prepareModel(TranscriptionConfiguration(), download: download)
+    }
+
+    func prepareModel(_ configuration: TranscriptionConfiguration, download: Bool = true) async throws {
+        guard !modelPreparationInFlight, !machine.phase.isBusy, !recoveryDeliveryInFlight, !terminating else {
+            throw TranscriptionError.inferenceBusy
+        }
         modelPreparationInFlight = true
         defer { modelPreparationInFlight = false }
-        setNotReady(.modelUnavailable, message: "Preparing the English transcription model…")
+        let previouslyReady = modelReady
+        setNotReady(.modelUnavailable, message: "Preparing the transcription model…")
         do {
             let continuation = modelUpdateContinuation
-            try await transcriber.prepare(download: download) { phase in
+            try await transcriber.prepare(model: configuration.model.rawValue, download: download) { phase in
                 continuation.yield(phase)
             }
+            transcriptionConfiguration = configuration
             modelReady = true
             modelUpdateContinuation.yield(.ready)
+            modelPreparationInFlight = false
             await refreshReadiness()
         } catch {
-            modelReady = false
-            modelUpdateContinuation.yield(download ? .failed : .required)
+            modelReady = previouslyReady
+            modelUpdateContinuation.yield(previouslyReady ? .ready : (download ? .failed : .required))
+            modelPreparationInFlight = false
+            await refreshReadiness()
             throw error
         }
     }
@@ -148,7 +161,7 @@ actor SessionCoordinator {
             await stopAndProcess(id)
             return nil
         }
-        guard !terminating, AudioCaptureService.microphoneAuthorized(), AccessibilityService.isTrusted, modelReady else {
+        guard !terminating, !modelPreparationInFlight, AudioCaptureService.microphoneAuthorized(), AccessibilityService.isTrusted, modelReady else {
             await refreshReadiness()
             await rejectTrigger()
             return nil
@@ -158,7 +171,8 @@ actor SessionCoordinator {
             await rejectTrigger()
             return nil
         }
-        sessionGrammarCorrectionEnabled = grammarCorrectionEnabled
+        sessionGrammarCorrectionEnabled = grammarCorrectionEnabled && transcriptionConfiguration.supportsGrammarCorrection
+        sessionLanguage = transcriptionConfiguration.decodingLanguage
 
         do {
             let sessionID = try machine.beginSession(captureMode: captureMode)
@@ -228,9 +242,10 @@ actor SessionCoordinator {
             let correction = sessionGrammarCorrectionEnabled
                 ? GrammarCorrectionSession(corrector: grammarCorrector, enabled: true) : nil
             grammarSession = correction
+            let language = sessionLanguage
             transcriptionTask = Task { [weak self, transcriber, audioCapture] in
                 do {
-                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary) { update in
+                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary, language: language) { update in
                         correction?.observe(update.confirmedText)
                     }
                 } catch {

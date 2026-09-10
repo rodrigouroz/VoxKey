@@ -28,15 +28,22 @@ import Testing
                  [GrammarCorrectionState.waiting, .downloading(0.42), .preparing, .downloadRequired, .unavailable])
 func optionalGrammarControlsFitAndStayInSync(_ appearance: NSAppearance.Name, _ state: GrammarCorrectionState) throws {
     _ = NSApplication.shared
-    let controller = OnboardingWindowController(grammarAvailable: true)
-    controller.window?.appearance = NSAppearance(named: appearance)
-    #expect(controller.grammarCheckbox.state == .off)
-    #expect(controller.setupGrammarCheckbox.state == .off)
-    controller.setupGrammarCheckbox.performClick(nil)
-    #expect(controller.grammarCheckbox.state == .on)
-    controller.updateGrammarCorrection(enabled: true, state: state)
-    for page in ["readiness", "settings"] {
-        if page == "settings" { controller.showSettings() }
+    // Setup and Settings each own a grammar card. AppController mirrors a change in
+    // one to the other; here both receive the same state and must render it.
+    let setup = OnboardingWindowController(grammarAvailable: true)
+    let settings = SettingsWindowController(grammarAvailable: true)
+    #expect(setup.setupGrammarCheckbox.state == .off)
+    #expect(settings.grammarCheckbox.state == .off)
+    var requested: [Bool] = []
+    setup.onGrammarCorrectionChanged = { requested.append($0) }
+    settings.onGrammarCorrectionChanged = { requested.append($0) }
+    setup.setupGrammarCheckbox.performClick(nil)
+    #expect(requested == [true])
+    setup.updateGrammarCorrection(enabled: true, state: state)
+    settings.updateGrammarCorrection(enabled: true, state: state)
+    #expect(settings.grammarCheckbox.state == .on)
+    for (page, controller) in [("setup", setup as NSWindowController), ("settings", settings)] {
+        controller.window?.appearance = NSAppearance(named: appearance)
         let root = try #require(controller.window?.contentView)
         root.layoutSubtreeIfNeeded()
         func check(_ view: NSView) {
@@ -53,8 +60,8 @@ func optionalGrammarControlsFitAndStayInSync(_ appearance: NSAppearance.Name, _ 
             try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("grammar-\(page)-\(appearance.rawValue)-\(state).png"))
         }
     }
-    controller.grammarCheckbox.performClick(nil)
-    #expect(controller.setupGrammarCheckbox.state == .off)
+    settings.grammarCheckbox.performClick(nil)
+    #expect(requested == [true, false])
 }
 
 @Test(.enabled(if: ProcessInfo.processInfo.environment["VOXKEY_GRAMMAR_TEST_ASSETS"] != nil))

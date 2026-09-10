@@ -1,0 +1,14 @@
+{
+  "model": "dreuxx26/Multilingual-grammar-Corrector-using-mT5-small",
+  "revision": "1e7f08320a74dd0307101d31e8620acffffa51a9",
+  "device": "cpu",
+  "threads": 4,
+  "loadMS": 1063.5305829928257,
+  "note": "Exploratory Python CPU inference, not production Core ML latency.",
+  "uniqueFixtures": 14,
+  "correctionMatches": 0,
+  "correctionSamples": 10,
+  "preservationMatches": 18,
+  "preservationSamples": 18,
+  "medianMS": 81.6657500108704
+}

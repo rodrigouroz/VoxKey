@@ -1,3 +1,3 @@
 # Unreleased
 
-No changes collected since 0.2.1.
+The model library and design refresh are collected in [0.3.0](0.3.0.md).

@@ -110,12 +110,12 @@ func packagedGrammarControlsAreVisibleAndOffByDefault() throws {
     let terms = application.bundleURL.appendingPathComponent("Contents/Resources/Licenses/Grammar/TERMS.md")
     #expect(try String(contentsOf: terms, encoding: .utf8).contains("Only non-commercial purposes."))
     _ = NSApplication.shared
-    let controller = OnboardingWindowController(grammarAvailable: available)
-    #expect(!controller.setupGrammarCheckbox.isHiddenOrHasHiddenAncestor)
-    #expect(controller.setupGrammarCheckbox.state == .off)
-    controller.showSettings()
-    #expect(!controller.grammarCheckbox.isHiddenOrHasHiddenAncestor)
-    #expect(controller.grammarCheckbox.state == .off)
+    let setup = OnboardingWindowController(grammarAvailable: available)
+    #expect(!setup.setupGrammarCheckbox.isHiddenOrHasHiddenAncestor)
+    #expect(setup.setupGrammarCheckbox.state == .off)
+    let settings = SettingsWindowController(grammarAvailable: available)
+    #expect(!settings.grammarCheckbox.isHiddenOrHasHiddenAncestor)
+    #expect(settings.grammarCheckbox.state == .off)
 }
 
 @Test(.enabled(if: ProcessInfo.processInfo.environment["VOXKEY_GRAMMAR_APP"] != nil

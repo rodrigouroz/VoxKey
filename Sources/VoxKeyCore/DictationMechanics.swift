@@ -68,6 +68,6 @@ public enum DictationMechanics {
         return result
     }
 
-    private static let openingPunctuation: Set<Character> = ["(", "[", "{", "\"", "“", "‘"]
+    private static let openingPunctuation: Set<Character> = ["(", "[", "{", "\"", "“", "‘", "¿", "¡"]
     private static let closingPunctuation: Set<Character> = [".", ",", "!", "?", ":", ";", ")", "]", "}", "\"", "”", "’"]
 }

@@ -1,6 +1,10 @@
 import AppKit
 
 /// Shared visual language for VoxKey's deliberately small native surfaces.
+///
+/// Neutrals come from the system so windows read as macOS windows in every
+/// appearance and contrast setting. VoxKey owns only its brand colors: forest
+/// green for actions, lime for the mark and highlights, amber for attention.
 @MainActor
 enum VoxKeyDesign {
     enum Layout {
@@ -9,19 +13,20 @@ enum VoxKeyDesign {
         static let sectionSpacing: CGFloat = 20
         static let cardInset: CGFloat = 18
         static let contentSpacing: CGFloat = 12
-        static let cardRadius: CGFloat = 16
-        static let fieldRadius: CGFloat = 10
+        static let cardRadius: CGFloat = 12
+        static let fieldRadius: CGFloat = 8
         static let fieldInset: CGFloat = 12
     }
 
     /// Every label in the app picks one of these. Ad-hoc sizes belong here, not at call sites.
+    /// Titles use the system serif (New York) so the app shares the public page's voice.
     enum TextStyle {
         case windowTitle, sectionTitle, itemTitle, body, emphasis, caption
-        case footnote, footnoteEmphasis, micro, indicator, brand, onboardingHero
+        case footnote, footnoteEmphasis, micro, indicator, onboardingHero
 
         var font: NSFont {
             switch self {
-            case .windowTitle: .systemFont(ofSize: 26, weight: .bold)
+            case .windowTitle: Self.serif(ofSize: 26, weight: .bold)
             case .sectionTitle: .systemFont(ofSize: 17, weight: .semibold)
             case .itemTitle: .systemFont(ofSize: 14, weight: .semibold)
             case .body: .systemFont(ofSize: 13)
@@ -31,27 +36,42 @@ enum VoxKeyDesign {
             case .footnoteEmphasis: .systemFont(ofSize: 11, weight: .medium)
             case .micro: .systemFont(ofSize: 10, weight: .medium)
             case .indicator: .monospacedSystemFont(ofSize: 11, weight: .semibold)
-            case .brand: .systemFont(ofSize: 17, weight: .bold)
-            case .onboardingHero: .systemFont(ofSize: 33, weight: .bold)
+            case .onboardingHero: Self.serif(ofSize: 33, weight: .bold)
             }
+        }
+
+        private static func serif(ofSize size: CGFloat, weight: NSFont.Weight) -> NSFont {
+            let system = NSFont.systemFont(ofSize: size, weight: weight)
+            guard let descriptor = system.fontDescriptor.withDesign(.serif),
+                  let serif = NSFont(descriptor: descriptor, size: size) else { return system }
+            return serif
         }
     }
 
-    static let canvas = adaptive(light: 0xF4F5F0, dark: 0x171C1B)
-    static let surface = adaptive(light: 0xFFFFFF, dark: 0x222927)
-    static let insetSurface = adaptive(light: 0xF2F5F1, dark: 0x1A211F)
-    static let ink = adaptive(light: 0x202D28, dark: 0xF0F5EF)
-    static let secondaryInk = adaptive(light: 0x5D6C64, dark: 0xACBCB2)
+    // MARK: System neutrals
+
+    static let canvas = NSColor.windowBackgroundColor
+    /// Grouped-form cards: white on the light window, a faint lift on the dark one.
+    static let surface = NSColor(name: nil) { appearance in
+        appearance.isDark ? NSColor.white.withAlphaComponent(0.065) : NSColor.white
+    }
+    static let insetSurface = NSColor.textBackgroundColor
+    static let ink = NSColor.labelColor
+    static let secondaryInk = NSColor.secondaryLabelColor
+    static let border = NSColor.separatorColor
+
+    // MARK: Brand colors
+
     /// Forest green: the color users read as VoxKey's accent. Fills primary buttons.
     static let brandGreen = adaptive(light: 0x356040, dark: 0x416B4D)
-    /// Lime highlight. Reads as a fill only on dark surfaces; light mode leans on `brandGreen`.
-    static let accent = adaptive(light: 0xC1EF92, dark: 0xC1EF92)
+    /// Lime highlight. Deeper in light appearance so it still reads as a fill on a light window.
+    static let accent = adaptive(light: 0xA9DC78, dark: 0xC1EF92)
     static let accentInk = adaptive(light: 0x356040, dark: 0xC1EF92)
     static let accentWash = adaptive(light: 0xEAF4E1, dark: 0x2B3B2B)
     static let warm = adaptive(light: 0xA35830, dark: 0xF2B68F)
     static let warmWash = adaptive(light: 0xFBEEE4, dark: 0x3B2F28)
-    static let border = adaptive(light: 0xDCE3DA, dark: 0x3D4942, highContrast: true)
-    static let accentForeground = NSColor(srgbRed: 0.12, green: 0.20, blue: 0.13, alpha: 1)
+    /// Waveform bars on the lime mark, in either appearance.
+    static let accentForeground = fixed(0x1F3321)
 
     /// The recording pill keeps one dark forest surface in either system appearance.
     /// The public site's capture pill uses these same values.
@@ -64,21 +84,14 @@ enum VoxKeyDesign {
         static let attention = fixed(0xF2B68F)
     }
 
+    // MARK: Components
+
     static func label(_ text: String, style: TextStyle = .body, color: NSColor = ink) -> NSTextField {
         let label = NSTextField(wrappingLabelWithString: text)
         label.font = style.font
         label.textColor = color
         label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
-    }
-
-    static func brandRow() -> NSStackView {
-        let icon = NSImageView(image: NSImage(systemSymbolName: "lock.shield", accessibilityDescription: nil) ?? NSImage())
-        icon.contentTintColor = secondaryInk
-        icon.symbolConfiguration = .init(pointSize: 11, weight: .medium)
-        icon.setAccessibilityElement(false)
-        let badge = horizontal([icon, eyebrow("ON-DEVICE DICTATION")], spacing: 5)
-        return horizontal([label("VoxKey", style: .brand), NSView(), badge])
     }
 
     static func horizontal(_ views: [NSView], spacing: CGFloat = Layout.contentSpacing) -> NSStackView {
@@ -118,6 +131,13 @@ enum VoxKeyDesign {
         let card = VoxKeyCardView()
         embed(vertical(views), in: card)
         return card
+    }
+
+    /// A one-point rule in the system separator color.
+    static func separator() -> NSView {
+        let line = VoxKeyCardView(fill: border, border: .clear, cornerRadius: 0)
+        line.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        return line
     }
 
     /// Native scrolling, selection, and editing inside the shared inset field.
@@ -161,13 +181,6 @@ enum VoxKeyDesign {
         ])
     }
 
-    static func eyebrow(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .monospacedSystemFont(ofSize: 11, weight: .medium)
-        label.textColor = secondaryInk
-        return label
-    }
-
     static func configureButton(_ button: NSButton, primary: Bool = false) {
         button.bezelStyle = .rounded
         button.controlSize = .large
@@ -180,17 +193,36 @@ enum VoxKeyDesign {
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
 
-    private static func adaptive(light: UInt32, dark: UInt32, highContrast: Bool = false) -> NSColor {
-        NSColor(name: nil) { appearance in
-            let bestMatch = appearance.bestMatch(from: [
-                .accessibilityHighContrastDarkAqua, .accessibilityHighContrastAqua, .darkAqua, .aqua
-            ])
-            let isDark = bestMatch == .darkAqua || bestMatch == .accessibilityHighContrastDarkAqua
-            let increasedContrast = bestMatch == .accessibilityHighContrastDarkAqua
-                || bestMatch == .accessibilityHighContrastAqua
-            let value = highContrast && increasedContrast ? (isDark ? 0xA2B1A6 : 0x6C7B70) : (isDark ? dark : light)
-            return fixed(value)
+    /// The menu bar mark: a keycap holding the waveform, as a template image so
+    /// the system tints it for light, dark, and highlighted menu states.
+    static func menuBarMark() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
+            NSColor.black.setStroke()
+            let key = NSBezierPath(roundedRect: rect.insetBy(dx: 1.25, dy: 1.75), xRadius: 4, yRadius: 4)
+            key.lineWidth = 1.5
+            key.stroke()
+            NSColor.black.setFill()
+            let heights: [CGFloat] = [3.5, 6.5, 9, 5.5, 3]
+            let barWidth: CGFloat = 1.5
+            let stride: CGFloat = 2.5
+            for (index, height) in heights.enumerated() {
+                let bar = NSRect(
+                    x: rect.midX + CGFloat(index - 2) * stride - barWidth / 2,
+                    y: rect.midY - height / 2,
+                    width: barWidth,
+                    height: height
+                )
+                NSBezierPath(roundedRect: bar, xRadius: barWidth / 2, yRadius: barWidth / 2).fill()
+            }
+            return true
         }
+        image.isTemplate = true
+        image.accessibilityDescription = "VoxKey"
+        return image
+    }
+
+    private static func adaptive(light: UInt32, dark: UInt32) -> NSColor {
+        NSColor(name: nil) { appearance in fixed(appearance.isDark ? dark : light) }
     }
 
     nonisolated private static func fixed(_ value: UInt32) -> NSColor {
@@ -203,8 +235,14 @@ enum VoxKeyDesign {
     }
 }
 
+private extension NSAppearance {
+    var isDark: Bool {
+        bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+}
+
 @MainActor
-final class VoxKeyCardView: NSView {
+class VoxKeyCardView: NSView {
     var fillColor: NSColor { didSet { needsDisplay = true } }
     var borderColor: NSColor { didSet { needsDisplay = true } }
     private let cornerRadius: CGFloat
@@ -243,6 +281,7 @@ final class VoxKeyCardView: NSView {
 }
 
 /// A static waveform inside a keycap: a brand mark, never an audio-level display.
+/// The app icon is this same drawing on a forest tile (docs/assets/voxkey-icon.svg).
 @MainActor
 final class VoxKeyBrandMarkView: NSView {
     private let size: CGFloat

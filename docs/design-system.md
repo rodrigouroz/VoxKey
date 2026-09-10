@@ -1,28 +1,38 @@
 # VoxKey design system
 
-VoxKey uses the visual language established by Settings: warm neutral surfaces,
-forest-green actions, a restrained lime brand accent, and native macOS controls.
-Settings, Vocabulary, Last Dictation, and the status overlay share the palette in
-`Sources/VoxKeyApp/VoxKeyDesign.swift`. New windows should use its components.
-The public page in `docs/styles.css` declares the same values as CSS custom
-properties; change a color in both places or not at all.
+VoxKey windows are macOS windows first: system neutrals, native controls, and
+grouped-form cards. VoxKey owns three brand colors, forest green for actions,
+lime for the mark and highlights, and amber for attention, plus a serif voice
+for titles that it shares with the public page. Setup, Settings, Vocabulary,
+Last Dictation, and the status overlay share `Sources/VoxKeyApp/VoxKeyDesign.swift`.
+New windows should use its components. The public page in `docs/styles.css`
+declares the brand values as CSS custom properties; change a color in both
+places or not at all.
 
 ## Palette
 
+Neutrals are system colors. They adapt to appearance, Increased Contrast, and
+future macOS changes without VoxKey maintaining hex values.
+
+| Role | Token | System color |
+| --- | --- | --- |
+| Canvas | `canvas` | `windowBackgroundColor` |
+| Surface | `surface` | White on the light window; white at 6.5% on the dark one |
+| Inset surface | `insetSurface` | `textBackgroundColor` |
+| Ink | `ink` | `labelColor` |
+| Secondary ink | `secondaryInk` | `secondaryLabelColor` |
+| Border | `border` | `separatorColor` |
+
+Brand colors are VoxKey's own and carry light and dark variants.
+
 | Role | Light | Dark | Use |
 | --- | --- | --- | --- |
-| Canvas | `#F4F5F0` | `#171C1B` | Window background |
-| Surface | `#FFFFFF` | `#222927` | Section cards |
-| Inset surface | `#F2F5F1` | `#1A211F` | Text fields and transcript |
-| Ink | `#202D28` | `#F0F5EF` | Main text |
-| Secondary ink | `#5D6C64` | `#ACBCB2` | Supporting text and metadata |
-| Brand green (`brandGreen`) | `#356040` | `#416B4D` | Primary button fill with white text; the app's global accent color |
-| Lime highlight (`accent`) | `#C1EF92` | `#C1EF92` | Brand mark; waveform; small highlights on dark surfaces |
-| Accent ink | `#356040` | `#C1EF92` | Ready states and active icons |
-| Accent wash | `#EAF4E1` | `#2B3B2B` | Subtle active-state background |
-| Attention ink | `#A35830` | `#F2B68F` | Actionable warnings |
-| Attention wash | `#FBEEE4` | `#3B2F28` | Warning background |
-| Border | `#DCE3DA` | `#3D4942` | Card and field boundaries |
+| Brand green (`brandGreen`) | `#356040` | `#416B4D` | Primary button fill with white text; the app's accent color asset |
+| Lime highlight (`accent`) | `#A9DC78` | `#C1EF92` | Brand mark; waveform; highlights. Deeper in light so it reads as a fill |
+| Accent ink (`accentInk`) | `#356040` | `#C1EF92` | Ready states and active icons |
+| Accent wash (`accentWash`) | `#EAF4E1` | `#2B3B2B` | Subtle active-state background |
+| Attention ink (`warm`) | `#A35830` | `#F2B68F` | Actionable warnings |
+| Attention wash (`warmWash`) | `#FBEEE4` | `#3B2F28` | Warning background |
 
 The recording overlay uses one fixed dark forest palette in either appearance,
 exposed as `VoxKeyDesign.Overlay`. The public page's capture pill and privacy
@@ -37,39 +47,57 @@ panel use the same values.
 | Secondary ink | `#C1CEB7` | Keycap label |
 | Attention | `#F2B68F` | Warning icon |
 
-Follow system appearance. Increased Contrast strengthens borders to `#6C7B70`
-in light appearance and `#A2B1A6` in dark appearance. Text and primary-button
-color pairs meet a 4.5:1 contrast ratio; lime is not a text color on light surfaces,
-and it barely reads as a fill there, so light mode leans on brand green.
-Native controls retain their focus, keyboard, selection, and disabled behavior.
+Text and primary-button color pairs meet a 4.5:1 contrast ratio. Lime is never a
+text color on light surfaces. Native controls retain their focus, keyboard,
+selection, and disabled behavior.
+
+## Brand mark and icons
+
+The mark is a lime keycap holding a five-bar waveform (`VoxKeyBrandMarkView`).
+The app icon is the same drawing on a forest tile; its source is
+`docs/assets/voxkey-icon.svg`, which also renders the site favicon. Regenerate
+the asset catalog PNGs from that file rather than editing them by hand. The
+menu bar uses a monochrome template version of the keycap (`menuBarMark`) in the
+ready state and SF Symbols for capturing, busy, attention, and not-ready states.
 
 ## Typography and geometry
 
-- Use the system font, always through a `VoxKeyDesign.TextStyle`; do not set
-  point sizes at call sites. Window titles are 26 pt bold; section titles are 17 pt
-  semibold; item titles are 14 pt semibold; body text is 13 pt, with a medium
-  `emphasis` variant; captions are 12 pt; footnotes are 11 pt, with a medium
-  variant for state labels; `micro` is 10 pt medium for keycap-sized labels.
-  Text editors use 14 pt.
-- On the public page, body copy and demo captions never drop below 11 px.
-  Compact metadata and decorative chrome may go smaller.
-- The brand name is 17 pt bold. The 33 pt onboarding hero is reserved for the
-  introductory “Press. Speak. Release.” message, not ordinary settings pages.
-- Eyebrows use 11 pt system monospaced type, sparingly, for orientation. The
-  `indicator` style is the semibold monospaced variant for check marks and glyphs.
+- Titles use the system serif, New York, through `TextStyle.windowTitle` (26 pt
+  bold) and `TextStyle.onboardingHero` (33 pt bold, reserved for “Press. Speak.
+  Release.”). Everything else is the system sans: section titles 17 pt semibold,
+  item titles 14 pt semibold, body 13 pt with a medium `emphasis` variant,
+  captions 12 pt, footnotes 11 pt with a medium variant for state labels,
+  `micro` 10 pt medium for keycap-sized labels, and `indicator` for monospaced
+  check marks. Always pick a `TextStyle`; do not set point sizes at call sites.
+- No eyebrows in the app. Monospaced all-caps labels are a landing-page pattern
+  and stay on the public page. Window titles and section titles carry orientation.
+- On the public page, body copy and demo captions never drop below 11 px, and
+  decorative chrome never below 10 px.
 - Window content has 28 pt horizontal and 20 pt vertical margins. Sections are
   separated by 20 pt; card content uses 18 pt padding and 12 pt gaps.
-- Section cards have a 16 pt radius and a 1 pt border. Inset fields have a 10 pt
-  radius, 1 pt border, and 12 pt text padding.
+- Cards have a 12 pt radius and a 1 pt separator border. Inset fields have an
+  8 pt radius, 1 pt border, and 12 pt text padding.
 - Native button geometry stays native. The floating status overlay uses a dark
   forest-green pill in both appearances, matching the public page's dictation demo.
   During capture, a lime input waveform sits beside the status and a keycap for the
   configured trigger. The pill stays compact for ordinary capture and grows to keep
   toggle instructions and warnings readable. Warning icons remain amber.
 
+## Windows
+
+- **Set Up VoxKey** (`OnboardingWindowController`) is the first-run flow:
+  hero, three checks, optional grammar, readiness check, Finish Setup. It
+  reopens from the menu while any check is unmet and shows the app in the Dock
+  so permission dialogs cannot strand the user.
+- **Settings** (`SettingsWindowController`, ⌘,) holds everyday preferences:
+  trigger, Toggle Dictation, microphone, grammar, Launch at Login, feedback. It
+  is an ordinary window that returns focus to the previous app when closed.
+- Both windows show a `GrammarCorrectionCard`; AppController mirrors a change in
+  one to the other.
+
 ## Components and behavior
 
-Use `brandRow`, semantic `label` styles, `section`, `textField`, and `install`
+Use semantic `label` styles, `section`, `separator`, `textField`, and `install`
 from `VoxKeyDesign` for new windows. Use the shared layout constants when a
 specialized layout, such as the prerequisite rows, needs its own composition.
 
@@ -88,7 +116,8 @@ these states. Do not add decorative animation or sound to settings actions.
 ## Validation
 
 Run the existing AppKit layout and action tests when shared components change.
-Inspect native windows in light and dark appearance, including empty and loaded
-Vocabulary, normal Last Dictation, and uncertain delivery. Check long content,
-native focus rings, scrolling, and Increased Contrast. Browser mockups communicate
-direction; native AppKit rendering determines the shipped result.
+Inspect native windows in light and dark appearance, including Set Up VoxKey,
+Settings, empty and loaded Vocabulary, normal Last Dictation, and uncertain
+delivery. Check long content, native focus rings, scrolling, and Increased
+Contrast. Browser mockups communicate direction; native AppKit rendering
+determines the shipped result.

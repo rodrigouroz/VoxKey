@@ -47,13 +47,17 @@ func toggleCaptureStillStopsOnEscapeOrInitialSilence(_ escape: Bool) async throw
 @MainActor @Test
 func settingsShowTheConfiguredToggleGesture() throws {
     _ = NSApplication.shared
-    let controller = OnboardingWindowController()
-    controller.updateTrigger(.rightCommand)
-    controller.updateCaptureMode(.toggle)
-    #expect(controller.toggleCheckbox.state == .on)
-    #expect(controller.testTextView.accessibilityHelp()?.contains("Press Right Command") == true)
+    let settings = SettingsWindowController()
+    settings.updateTrigger(.rightCommand)
+    settings.updateCaptureMode(.toggle)
+    #expect(settings.toggleCheckbox.state == .on)
+    // The readiness check in setup explains the same gesture.
+    let setup = OnboardingWindowController()
+    setup.updateTrigger(.rightCommand)
+    setup.updateCaptureMode(.toggle)
+    #expect(setup.testTextView.accessibilityHelp()?.contains("Press Right Command") == true)
     var selected: CaptureMode?
-    controller.onCaptureModeChanged = { selected = $0 }
-    controller.toggleCheckbox.performClick(nil)
+    settings.onCaptureModeChanged = { selected = $0 }
+    settings.toggleCheckbox.performClick(nil)
     #expect(selected == .hold)
 }

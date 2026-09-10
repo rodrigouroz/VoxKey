@@ -13,3 +13,7 @@ dist/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Python benchmark caches contain machine-specific bytecode.
+__pycache__/
+*.py[cod]

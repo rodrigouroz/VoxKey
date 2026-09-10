@@ -21,7 +21,7 @@ func grantedPermissionRowsKeepTheirIntrinsicSpacing() throws {
     let subtitle = try #require(root.textField(containing: "VoxKey transcribes entirely"))
     let microphone = try #require(root.textField(containing: "Microphone"))
     let accessibility = try #require(root.textField(containing: "Accessibility"))
-    let model = try #require(root.textField(containing: "English model"))
+    let model = try #require(root.textField(containing: "Transcription model"))
 
     let subtitleFrame = root.convert(subtitle.bounds, from: subtitle)
     let microphoneFrame = root.convert(microphone.bounds, from: microphone)
@@ -62,7 +62,7 @@ func onboardingOffersOnePrerequisiteActionAtATime() throws {
         modelPhase: .required,
         message: nil
     )
-    #expect(root.visibleButtonTitles == ["Prepare English Model"])
+    #expect(root.visibleButtonTitles == ["Choose Model…"])
 }
 
 @MainActor
@@ -82,7 +82,7 @@ func successfulReadinessCheckOffersAnExplicitFinishAction() throws {
     )
     controller.markComplete()
 
-    #expect(root.visibleButtonTitles == ["Finish Setup"])
+    #expect(root.visibleButtonTitles == ["Change Model…", "Finish Setup"])
     #expect(controller.testTextView.isEditable == false)
 
     let finishButton = try #require(root.descendants.compactMap { $0 as? NSButton }.first { $0.title == "Finish Setup" })
@@ -129,8 +129,8 @@ func resettingOnboardingRestoresTheEditableReadinessCheck() throws {
     controller.resetCompletionState()
     let root = try #require(controller.window?.contentView)
     #expect(controller.testTextView.isEditable)
-    #expect(root.visibleButtonTitles.isEmpty)
-    #expect(root.textField(containing: "READINESS CHECK") != nil)
+    #expect(root.visibleButtonTitles == ["Change Model…"])
+    #expect(root.textField(containing: "Readiness check") != nil)
 }
 
 private extension NSView {
@@ -156,15 +156,15 @@ private extension NSView {
 @MainActor @Test(arguments: [NSAppearance.Name.aqua, .darkAqua], [false, true])
 func dictationSettingsFitInBothAppearances(_ appearance: NSAppearance.Name, _ grammarAvailable: Bool) throws {
     _ = NSApplication.shared
-    let controller = OnboardingWindowController(grammarAvailable: grammarAvailable)
+    let controller = SettingsWindowController(grammarAvailable: grammarAvailable)
     controller.window?.appearance = NSAppearance(named: appearance)
     controller.updateTrigger(.rightCommand)
     controller.updateCaptureMode(.toggle)
     controller.updateLaunchAtLogin(enabled: true)
+    controller.updateGrammarCorrection(enabled: grammarAvailable, state: .downloadRequired)
     controller.updateMicrophones(.init(devices: [
         .init(id: 1, uid: "synthetic", name: "Synthetic microphone with a very long descriptive name for layout validation")
     ], defaultID: 1), pinnedUID: "synthetic")
-    controller.showSettings()
     let root = try #require(controller.window?.contentView)
     root.layoutSubtreeIfNeeded()
     for view in root.descendants where view is NSControl && !view.isHiddenOrHasHiddenAncestor {

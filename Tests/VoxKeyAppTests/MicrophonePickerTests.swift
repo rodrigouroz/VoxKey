@@ -42,7 +42,7 @@ func anAbsentPinFallsBackAndReconnectionResolvesItsUIDToANewIdentifier() async t
 @MainActor @Test
 func microphoneSettingsPreserveDuplicateNamesAndUnavailablePins() throws {
     _ = NSApplication.shared
-    let controller = OnboardingWindowController()
+    let controller = SettingsWindowController()
     let devices: [AudioInputDescriptor] = [.init(id: 1, uid: "one", name: "Same name"), .init(id: 2, uid: "two", name: "Same name")]
     controller.updateMicrophones(.init(devices: devices, defaultID: 1), pinnedUID: "two")
     #expect(controller.microphonePopup.numberOfItems == 3)

@@ -14,6 +14,16 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let updates = UpdateController()
     private let overlay = StatusOverlayController()
     let onboarding = OnboardingWindowController()
+    private var modelSettings: ModelSettingsWindowController?
+    private var activeModelReady = false
+    private let modelLibrary = TranscriptionModelLibrary()
+    private var installedModels: Set<TranscriptionModel> = []
+    private var downloadingModel: TranscriptionModel?
+    private var modelDownloadProgress = 0.0
+    private var preparingModel: TranscriptionModel?
+    private var modelSelectionMessage: String?
+    private var transcriptionConfiguration: TranscriptionConfiguration { TranscriptionConfiguration(defaults: defaults) }
+    let settings = SettingsWindowController()
     private lazy var vocabularyStore = Result { try VocabularyStore() }
     private var vocabularyWindow: VocabularyWindowController?
 
@@ -65,7 +75,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.setActivationPolicy(.accessory)
         configureApplicationMenu()
         configureStatusItem()
-        configureOnboarding()
+        configureWindows()
         observeCoordinator()
         observeModelPreparation()
         updates.start()
@@ -81,6 +91,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         Task { @MainActor in
+            installedModels = await modelLibrary.installedModels()
+            updateModelSettings()
             if defaults.bool(forKey: modelInstalledKey) {
                 await prepareModel(download: false)
             } else {
@@ -105,16 +117,25 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if flag {
+        if needsSetup {
             presentOnboarding()
+        } else if flag {
+            // A model or Settings window may already be frontmost.
+            NSApp.activate()
         } else {
-            openOnboarding()
+            openSettings()
         }
         return false
     }
 
+    /// Setup stays reachable until the first dictation is delivered and every check passes.
+    private var needsSetup: Bool {
+        if case .notReady = latestSnapshot.phase { return true }
+        return !defaults.bool(forKey: onboardingCompleteKey)
+    }
+
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard onboarding.window?.isVisible == true else { return }
+        guard onboarding.window?.isVisible == true || settings.window?.isVisible == true else { return }
         // Login-item approval can change while the user is in System Settings.
         updateLaunchAtLogin()
         updateOnboarding(message: runtimeMessage ?? latestSnapshot.message)
@@ -161,7 +182,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "VoxKey")
+        item.button?.image = VoxKeyDesign.menuBarMark()
         item.button?.imagePosition = .imageOnly
         let menu = NSMenu()
         menu.delegate = self
@@ -183,9 +204,19 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(safety)
         }
 
-        let setup = NSMenuItem(title: "Settings and Readiness…", action: #selector(openOnboarding), keyEquivalent: ",")
-        setup.target = self
-        menu.addItem(setup)
+        if needsSetup {
+            let setup = NSMenuItem(title: "Set Up VoxKey…", action: #selector(openOnboarding), keyEquivalent: "")
+            setup.target = self
+            menu.addItem(setup)
+        }
+
+        let preferences = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        preferences.target = self
+        menu.addItem(preferences)
+
+        let models = NSMenuItem(title: "Models and Languages…", action: #selector(openModelSettings), keyEquivalent: "")
+        models.target = self
+        menu.addItem(models)
 
         let vocabulary = NSMenuItem(title: "Vocabulary…", action: #selector(openVocabulary), keyEquivalent: "")
         if case .failure = vocabularyStore { vocabulary.title = "Vocabulary Needs Attention…" }
@@ -218,28 +249,38 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .onboarding: "Setup required"
             case .microphonePermission: "Microphone access required"
             case .accessibilityPermission: "Accessibility access required"
-            case .modelUnavailable: "English model required"
+            case .modelUnavailable: "Transcription model required"
             }
         }
     }
 
-    private func configureOnboarding() {
+    private func configureWindows() {
+        onboarding.onChooseModel = { [weak self] in self?.openModelSettings() }
+        settings.onChooseModel = { [weak self] in self?.openModelSettings() }
+        updateGrammarLanguage()
         let grammarEnabled = defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable
-        onboarding.updateGrammarCorrection(enabled: grammarEnabled, state: grammarEnabled ? .waiting : .off)
+        updateGrammarCorrection(enabled: grammarEnabled, state: grammarEnabled ? .waiting : .off)
         applyGrammarPreference(grammarEnabled)
-        onboarding.onGrammarCorrectionChanged = { [weak self] enabled in
+        // Setup and Settings each show a grammar card; a change in one is mirrored to the other.
+        let grammarChanged: (Bool) -> Void = { [weak self] enabled in
             guard let self else { return }
             defaults.set(enabled, forKey: GrammarCorrector.preferenceKey)
+            updateGrammarCorrection(enabled: enabled, state: enabled ? .waiting : .off)
             applyGrammarPreference(enabled, download: enabled)
         }
-        onboarding.onPrepareGrammarModel = { [weak self] in
+        onboarding.onGrammarCorrectionChanged = grammarChanged
+        settings.onGrammarCorrectionChanged = grammarChanged
+        let prepareGrammar: () -> Void = { [weak self] in
+            self?.updateGrammarCorrection(enabled: true, state: .downloading(0))
             self?.applyGrammarPreference(true, download: true, repair: true)
         }
+        onboarding.onPrepareGrammarModel = prepareGrammar
+        settings.onPrepareGrammarModel = prepareGrammar
         grammarObservationTask = Task { [weak self] in
             guard let self else { return }
             for await state in coordinator.grammarUpdates {
                 guard !Task.isCancelled else { return }
-                onboarding.updateGrammarCorrection(
+                updateGrammarCorrection(
                     enabled: defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable,
                     state: state)
             }
@@ -247,26 +288,31 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         inputDeviceObserver.onChange = { [weak self] catalog in
             guard let self else { return }
             inputCatalog = catalog
-            onboarding.updateMicrophones(catalog, pinnedUID: defaults.string(forKey: microphoneUIDKey))
+            settings.updateMicrophones(catalog, pinnedUID: defaults.string(forKey: microphoneUIDKey))
         }
-        onboarding.onMicrophoneChanged = { [weak self] uid in
+        settings.onMicrophoneChanged = { [weak self] uid in
             guard let self else { return }
             defaults.set(uid, forKey: microphoneUIDKey)
-            onboarding.updateMicrophones(inputCatalog, pinnedUID: uid)
+            settings.updateMicrophones(inputCatalog, pinnedUID: uid)
         }
         inputDeviceObserver.start()
+        settings.updateCaptureMode(captureMode)
         onboarding.updateCaptureMode(captureMode)
-        onboarding.onCaptureModeChanged = { [weak self] mode in
-            self?.defaults.set(mode == .toggle, forKey: "VoxKeyToggleDictation")
+        settings.onCaptureModeChanged = { [weak self] mode in
+            guard let self else { return }
+            defaults.set(mode == .toggle, forKey: "VoxKeyToggleDictation")
+            onboarding.updateCaptureMode(mode)
         }
-        onboarding.onLaunchAtLoginChanged = { [weak self] enabled in
+        settings.onLaunchAtLoginChanged = { [weak self] enabled in
             self?.setLaunchAtLogin(enabled)
         }
+        settings.updateTrigger(triggerMonitor.trigger)
         onboarding.updateTrigger(triggerMonitor.trigger)
-        onboarding.onTriggerChanged = { [weak self] trigger in
+        settings.onTriggerChanged = { [weak self] trigger in
             guard let self else { return }
             defaults.set(trigger.rawValue, forKey: triggerKey)
             triggerMonitor.trigger = trigger
+            onboarding.updateTrigger(trigger)
         }
         onboarding.onRequestMicrophone = { [weak self] in
             guard let self else { return }
@@ -281,20 +327,28 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             _ = AccessibilityService.requestTrust()
             self?.runtimeMessage = "Grant VoxKey access in System Settings, then return here."
         }
-        onboarding.onPrepareModel = { [weak self] in
-            guard let self else { return }
-            Task { @MainActor in await self.prepareModel(download: true) }
-        }
         onboarding.onFinish = { [weak self] in
             self?.completeOnboarding()
         }
+    }
+
+    private func updateGrammarCorrection(enabled: Bool, state: GrammarCorrectionState) {
+        onboarding.updateGrammarCorrection(enabled: enabled, state: state)
+        settings.updateGrammarCorrection(enabled: enabled, state: state)
+    }
+
+    private func updateGrammarLanguage() {
+        let supported = transcriptionConfiguration.supportsGrammarCorrection
+        onboarding.grammar.updateLanguage(supported: supported)
+        settings.grammar.updateLanguage(supported: supported)
     }
 
     private func applyGrammarPreference(_ enabled: Bool, download: Bool = false, repair: Bool = false) {
         let previous = grammarPreferenceTask
         grammarPreferenceTask = Task {
             await previous?.value
-            await coordinator.setGrammarCorrectionEnabled(enabled, download: download, repair: repair)
+            let allowed = enabled && transcriptionConfiguration.supportsGrammarCorrection
+            await coordinator.setGrammarCorrectionEnabled(allowed, download: allowed && download, repair: repair)
         }
     }
 
@@ -306,6 +360,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let stateChanged = latestSnapshot.phase != snapshot.phase || latestSnapshot.message != snapshot.message
                     || latestSnapshot.attention != snapshot.attention || latestSnapshot.lastResult != snapshot.lastResult
                 latestSnapshot = snapshot
+                updateModelSettings()
                 overlay.update(snapshot)
                 guard stateChanged else { continue }
                 updates.installation.update(snapshot)
@@ -349,6 +404,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     runtimeMessage = "Model preparation failed. Resume preparation to reuse completed downloads."
                 }
                 updateOnboarding(message: runtimeMessage)
+                updateModelSettings()
             }
         }
     }
@@ -356,7 +412,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func updateStatusIcon(_ snapshot: SessionSnapshot) {
         let symbol: String
         switch snapshot.phase {
-        case .ready: symbol = snapshot.lastResult?.failure == nil ? "waveform" : "exclamationmark.bubble.fill"
+        case .ready where snapshot.lastResult?.failure == nil:
+            let mark = VoxKeyDesign.menuBarMark()
+            mark.accessibilityDescription = statusTitle(for: snapshot)
+            statusItem?.button?.image = mark
+            return
+        case .ready: symbol = "exclamationmark.bubble.fill"
         case .capturing: symbol = "mic.fill"
         case .arming, .finalizing, .delivering: symbol = "ellipsis.circle"
         case .notReady: symbol = "waveform.badge.exclamationmark"
@@ -365,8 +426,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func refreshRuntimeState() async {
-        if onboarding.window?.isVisible == true {
-            onboarding.updateMicrophoneFallback(await coordinator.microphoneFallbackUsed())
+        if settings.window?.isVisible == true {
+            settings.updateMicrophoneFallback(await coordinator.microphoneFallbackUsed())
         }
         if latestSnapshot.phase.isBusy {
             await coordinator.enforceCaptureSafety()
@@ -447,8 +508,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func prepareModel(download: Bool) async {
-        guard !modelPreparationTaskActive else { return }
+    private func prepareModel(download: Bool, selection: TranscriptionConfiguration? = nil) async {
+        guard !modelPreparationTaskActive, !latestSnapshot.phase.isBusy else {
+            modelSelectionMessage = "Finish the current dictation before changing models."
+            updateModelSettings()
+            return
+        }
         switch modelPhase {
         case .downloading, .prewarming:
             return
@@ -456,21 +521,91 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             break
         }
         modelPreparationTaskActive = true
-        defer { modelPreparationTaskActive = false }
+        modelSelectionMessage = nil
+        let configuration = selection ?? transcriptionConfiguration
+        preparingModel = configuration.model
+        defer { modelPreparationTaskActive = false; preparingModel = nil; updateModelSettings() }
         runtimeMessage = download ? "Downloading and preparing the model. This can take several minutes…" : nil
+        updateModelSettings()
         updateOnboarding(message: runtimeMessage)
         do {
-            try await coordinator.prepareDefaultModel(download: download)
+            do {
+                try await coordinator.prepareModel(configuration, download: false)
+            } catch TranscriptionError.modelNotInstalled where download {
+                try await coordinator.prepareModel(configuration, download: true)
+            }
+            configuration.save(to: defaults)
+            activeModelReady = true
             defaults.set(true, forKey: modelInstalledKey)
+            updateGrammarLanguage()
+            applyGrammarPreference(defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable)
+            modelSelectionMessage = "Ready. Your selection will be used for the next dictation."
         } catch {
-            defaults.set(false, forKey: modelInstalledKey)
-            if !download {
+            defaults.set(activeModelReady, forKey: modelInstalledKey)
+            modelSelectionMessage = activeModelReady
+                ? "Could not prepare this model. Your previous model and language are still active. Try again to resume the download."
+                : "Could not prepare this model. Try again to resume the download."
+            if !download, !activeModelReady {
                 modelPhase = .required
                 runtimeMessage = "The installed model is unavailable. Prepare it again."
             }
             await coordinator.refreshReadiness()
         }
+        installedModels = await modelLibrary.installedModels()
         updateOnboarding(message: runtimeMessage ?? latestSnapshot.message)
+    }
+
+    private func updateModelSettings() {
+        let configuration = transcriptionConfiguration
+        settings.modelSummary.stringValue = activeModelReady
+            ? "\(configuration.model.name) · \(TranscriptionModel.languageName(configuration.language))"
+            : "Download a model and choose which one to use."
+        modelSettings?.update(active: configuration, ready: activeModelReady, installed: installedModels,
+                              busy: modelPreparationTaskActive || latestSnapshot.phase.isBusy,
+                              downloading: downloadingModel, downloadProgress: modelDownloadProgress,
+                              preparing: preparingModel, message: modelSelectionMessage)
+    }
+
+    @objc private func openModelSettings() {
+        if modelSettings == nil {
+            let controller = ModelSettingsWindowController()
+            controller.onActivate = { [weak self] configuration in
+                Task { @MainActor in await self?.prepareModel(download: false, selection: configuration) }
+            }
+            controller.onDownload = { [weak self] model in self?.downloadModel(model) }
+            modelSettings = controller
+        }
+        updateModelSettings()
+        modelSettings?.present()
+        Task {
+            installedModels = await modelLibrary.installedModels()
+            updateModelSettings()
+        }
+    }
+
+    private func downloadModel(_ model: TranscriptionModel) {
+        guard downloadingModel == nil, !modelPreparationTaskActive else { return }
+        downloadingModel = model
+        modelDownloadProgress = 0
+        modelSelectionMessage = nil
+        updateModelSettings()
+        Task {
+            do {
+                try await modelLibrary.download(model) { [weak self] fraction in
+                    Task { @MainActor in
+                        guard let self, self.downloadingModel == model else { return }
+                        self.modelDownloadProgress = fraction
+                        self.updateModelSettings()
+                    }
+                }
+                modelSelectionMessage = "\(model.name) is downloaded. Choose Use Model when you want to activate it."
+            } catch {
+                modelSelectionMessage = "Could not download \(model.name). Try again to reuse completed files. Your active model is unchanged."
+            }
+            installedModels = await modelLibrary.installedModels()
+            downloadingModel = nil
+            updateModelSettings()
+        }
     }
 
     func updateOnboarding(message: String?, force: Bool = false) {
@@ -581,8 +716,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openOnboarding() {
         presentOnboarding()
-        if defaults.bool(forKey: onboardingCompleteKey) { onboarding.showSettings() }
         updateOnboarding(message: runtimeMessage ?? latestSnapshot.message)
+    }
+
+    @objc private func openSettings() {
+        updateLaunchAtLogin()
+        settings.present()
     }
 
     @objc private func openVocabulary() {
@@ -619,7 +758,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateLaunchAtLogin() {
         let status = SMAppService.mainApp.status
-        onboarding.updateLaunchAtLogin(
+        settings.updateLaunchAtLogin(
             enabled: status == .enabled,
             message: launchAtLoginError ?? (status == .requiresApproval
                 ? "Allow VoxKey in System Settings → General → Login Items & Extensions."
