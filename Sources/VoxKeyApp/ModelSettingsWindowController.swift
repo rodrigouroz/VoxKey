@@ -15,6 +15,8 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
     private let activationCoordinator: ApplicationActivationCoordinator
     private var active = TranscriptionConfiguration()
     private var ready = false
+    private var selectedLanguage = "en"
+    private var availableLanguages = TranscriptionModel.turboFull.languages
 
     init(activationCoordinator: ApplicationActivationCoordinator = ApplicationActivationCoordinator()) {
         self.activationCoordinator = activationCoordinator
@@ -35,7 +37,8 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
         for card in cards {
             card.onActivate = { [weak self] model in
                 guard let self else { return }
-                onActivate?(TranscriptionConfiguration(model: model, language: active.language))
+                guard model.languages.contains(selectedLanguage) else { return }
+                onActivate?(TranscriptionConfiguration(model: model, language: selectedLanguage))
             }
             card.onDownload = { [weak self] model in self?.onDownload?(model) }
         }
@@ -67,37 +70,54 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
 
     func update(active: TranscriptionConfiguration, ready: Bool, installed: Set<TranscriptionModel>, busy: Bool,
                 downloading: TranscriptionModel? = nil, downloadProgress: Double = 0,
+                downloadElapsed: TimeInterval = 0,
                 preparing: TranscriptionModel? = nil, message: String? = nil) {
         self.active = active
         self.ready = ready
+        if ready { selectedLanguage = active.language }
         activeLabel.stringValue = ready
             ? "Active: \(active.model.name) · \(TranscriptionModel.languageName(active.language))"
             : "Download a model, then choose Use Model to start."
         for card in cards {
             card.update(installed: installed.contains(card.model), active: ready && active.model == card.model,
-                        busy: busy, downloading: downloading, progress: downloadProgress, preparing: preparing)
+                        busy: busy, downloading: downloading, progress: downloadProgress, preparing: preparing,
+                        downloadElapsed: downloadElapsed)
+            if installed.contains(card.model), !card.model.languages.contains(selectedLanguage) {
+                card.actionButton.isEnabled = false
+            }
         }
-        let languages = active.model.languages
+        let languages = ready ? active.model.languages : TranscriptionModel.turboFull.languages
+        availableLanguages = languages
         let names = languages.map(TranscriptionModel.languageName)
         if languagePopup.itemTitles != names {
             languagePopup.removeAllItems()
             languagePopup.addItems(withTitles: names)
         }
-        languagePopup.selectItem(at: languages.firstIndex(of: active.language) ?? 0)
-        languagePopup.isEnabled = ready && active.model.multilingual && !busy
-        languagePanel.isHidden = !ready
-        grammarNote.stringValue = active.supportsGrammarCorrection
+        languagePopup.selectItem(at: languages.firstIndex(of: selectedLanguage) ?? 0)
+        languagePopup.isEnabled = (!ready || active.model.multilingual) && !busy
+        languagePanel.isHidden = false
+        grammarNote.stringValue = !ready
+            ? "Choose your spoken language before Use Model. Spanish and automatic detection require Whisper v3 Turbo."
+            : active.supportsGrammarCorrection
             ? "Optional English grammar correction is managed in Settings."
             : "Grammar correction is paused for this language setting. Dictation stays in the spoken language."
-        statusLabel.stringValue = message ?? (busy
+        statusLabel.stringValue = message ?? (downloading != nil
+            ? ModelDownloadStatus(fraction: downloadProgress, elapsed: downloadElapsed).detail
+            : busy
             ? "Finish the current dictation or model preparation before switching."
             : "Downloaded models stay on this Mac. Switching keeps your previous model active if preparation fails.")
     }
 
     @objc private func changeLanguage() {
-        let languages = active.model.languages
-        guard ready, languages.indices.contains(languagePopup.indexOfSelectedItem) else { return }
-        onActivate?(TranscriptionConfiguration(model: active.model, language: languages[languagePopup.indexOfSelectedItem]))
+        guard languagePopup.isEnabled, availableLanguages.indices.contains(languagePopup.indexOfSelectedItem) else { return }
+        selectedLanguage = availableLanguages[languagePopup.indexOfSelectedItem]
+        if ready {
+            onActivate?(TranscriptionConfiguration(model: active.model, language: selectedLanguage))
+        } else {
+            for card in cards where card.actionButton.title == "Use Model" {
+                card.actionButton.isEnabled = card.model.languages.contains(selectedLanguage)
+            }
+        }
     }
 }
 
@@ -109,7 +129,7 @@ final class TranscriptionModelCard: VoxKeyCardView {
     let actionButton = NSButton(title: "Download", target: nil, action: nil)
     let stateLabel = VoxKeyDesign.label("", style: .footnoteEmphasis, color: VoxKeyDesign.secondaryInk)
     let languageLabel: NSTextField
-    private let progress = NSProgressIndicator()
+    let progress = NSProgressIndicator()
     private var installed = false
 
     init(model: TranscriptionModel) {
@@ -123,6 +143,7 @@ final class TranscriptionModelCard: VoxKeyCardView {
         progress.style = .bar
         progress.minValue = 0
         progress.maxValue = 1
+        progress.widthAnchor.constraint(greaterThanOrEqualToConstant: 120).isActive = true
         progress.setAccessibilityLabel("\(model.name) download progress")
         let title = VoxKeyDesign.label(model.multilingual ? "Whisper v3 Turbo" : "Distil-Whisper v3", style: .itemTitle)
         let variant = model == .distilCompressed || model == .turboCompressed ? "Compact" : "Full precision"
@@ -143,11 +164,12 @@ final class TranscriptionModelCard: VoxKeyCardView {
     required init?(coder: NSCoder) { nil }
 
     func update(installed: Bool, active: Bool, busy: Bool, downloading: TranscriptionModel?, progress value: Double,
-                preparing: TranscriptionModel?) {
+                preparing: TranscriptionModel?, downloadElapsed: TimeInterval = 0) {
         self.installed = installed
         let loading = preparing == model
         let fetching = downloading == model
-        stateLabel.stringValue = loading ? "Preparing…" : (fetching ? "Downloading…" : (active ? "Active ✓" : (installed ? "Downloaded" : "Not downloaded")))
+        let download = ModelDownloadStatus(fraction: value, elapsed: downloadElapsed)
+        stateLabel.stringValue = loading ? "Preparing…" : (fetching ? download.title : (active ? "Active ✓" : (installed ? "Downloaded" : "Not downloaded")))
         stateLabel.textColor = active ? VoxKeyDesign.accentInk : VoxKeyDesign.secondaryInk
         borderColor = active ? VoxKeyDesign.accentInk : VoxKeyDesign.border
         fillColor = active ? VoxKeyDesign.accentWash : VoxKeyDesign.surface
@@ -157,9 +179,10 @@ final class TranscriptionModelCard: VoxKeyCardView {
         actionButton.isEnabled = installed ? !busy : (downloading == nil && preparing == nil)
         progress.stopAnimation(nil)
         progress.isHidden = !fetching && !loading
-        progress.isIndeterminate = loading
-        progress.doubleValue = min(max(value, 0), 1)
-        if loading { progress.startAnimation(nil) }
+        progress.isIndeterminate = loading || (fetching && download.isIndeterminate)
+        progress.doubleValue = download.fraction
+        progress.setAccessibilityValue(fetching ? download.message : "Preparing model")
+        if progress.isIndeterminate { progress.startAnimation(nil) }
     }
 
     @objc private func performAction() {

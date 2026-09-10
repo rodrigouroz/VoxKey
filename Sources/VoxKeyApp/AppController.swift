@@ -22,6 +22,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var installedModels: Set<TranscriptionModel> = []
     private var downloadingModel: TranscriptionModel?
     private var modelDownloadProgress = 0.0
+    private var modelDownloadStartedAt: TimeInterval?
+    private var preparationDownloadStartedAt: TimeInterval?
     private var preparingModel: TranscriptionModel?
     private var modelSelectionMessage: String?
     private var transcriptionConfiguration: TranscriptionConfiguration { TranscriptionConfiguration(defaults: defaults) }
@@ -52,6 +54,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let accessibility: Bool
         let modelPhase: ModelPreparationPhase
         let message: String?
+        let downloadStatus: ModelDownloadStatus?
     }
     private var renderedOnboardingStatus: OnboardingStatus?
 
@@ -197,7 +200,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func rebuildMenu(_ menu: NSMenu, snapshot: SessionSnapshot) {
         menu.removeAllItems()
-        let status = NSMenuItem(title: statusTitle(for: snapshot), action: nil, keyEquivalent: "")
+        let status = NSMenuItem(title: currentDownloadStatus?.message ?? statusTitle(for: snapshot), action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
         menu.addItem(.separator())
@@ -215,6 +218,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         let preferences = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        // Resolve AppKit's lazy gear image before clearing it; assigning nil
+        // before the first read still lets it indent this section on display.
+        if preferences.image != nil { preferences.image = nil }
         preferences.target = self
         menu.addItem(preferences)
 
@@ -317,6 +323,13 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             defaults.set(trigger.rawValue, forKey: triggerKey)
             triggerMonitor.trigger = trigger
             onboarding.updateTrigger(trigger)
+            settings.updateTrigger(trigger)
+        }
+        onboarding.onTriggerChanged = settings.onTriggerChanged
+        onboarding.onLanguageChanged = { [weak self] language in
+            guard let self else { return }
+            let configuration = TranscriptionConfiguration(model: transcriptionConfiguration.model, language: language)
+            Task { @MainActor in await self.prepareModel(download: false, selection: configuration) }
         }
         onboarding.onRequestMicrophone = { [weak self] in
             guard let self else { return }
@@ -398,13 +411,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 case .required:
                     break
                 case let .downloading(fraction):
+                    if preparationDownloadStartedAt == nil { preparationDownloadStartedAt = ProcessInfo.processInfo.systemUptime }
                     let percentage = Int((min(max(fraction, 0), 1) * 100).rounded())
                     runtimeMessage = "Downloading the model… \(percentage)%"
                 case .prewarming:
+                    preparationDownloadStartedAt = nil
                     runtimeMessage = "Download complete. Optimizing the model for this Mac…"
                 case .ready:
+                    preparationDownloadStartedAt = nil
                     runtimeMessage = nil
                 case .failed:
+                    preparationDownloadStartedAt = nil
                     runtimeMessage = "Model preparation failed. Resume preparation to reuse completed downloads."
                 }
                 updateOnboarding(message: runtimeMessage)
@@ -430,6 +447,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func refreshRuntimeState() async {
+        if currentDownloadStatus != nil {
+            updateModelSettings()
+            updateOnboarding(message: nil)
+        }
         if settings.window?.isVisible == true {
             settings.updateMicrophoneFallback(await coordinator.microphoneFallbackUsed())
         }
@@ -561,12 +582,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateModelSettings() {
         let configuration = transcriptionConfiguration
+        onboarding.updateDictationChoices(configuration: configuration, ready: activeModelReady,
+                                           busy: modelPreparationTaskActive || latestSnapshot.phase.isBusy)
         settings.modelSummary.stringValue = activeModelReady
             ? "\(configuration.model.name) · \(TranscriptionModel.languageName(configuration.language))"
             : "Download a model and choose which one to use."
         modelSettings?.update(active: configuration, ready: activeModelReady, installed: installedModels,
                               busy: modelPreparationTaskActive || latestSnapshot.phase.isBusy,
                               downloading: downloadingModel, downloadProgress: modelDownloadProgress,
+                              downloadElapsed: modelDownloadElapsed,
                               preparing: preparingModel, message: modelSelectionMessage)
     }
 
@@ -591,8 +615,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard downloadingModel == nil, !modelPreparationTaskActive else { return }
         downloadingModel = model
         modelDownloadProgress = 0
+        modelDownloadStartedAt = ProcessInfo.processInfo.systemUptime
         modelSelectionMessage = nil
         updateModelSettings()
+        updateOnboarding(message: nil)
         Task {
             do {
                 try await modelLibrary.download(model) { [weak self] fraction in
@@ -600,6 +626,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
                         guard let self, self.downloadingModel == model else { return }
                         self.modelDownloadProgress = fraction
                         self.updateModelSettings()
+                        self.updateOnboarding(message: nil)
                     }
                 }
                 modelSelectionMessage = "\(model.name) is downloaded. Choose Use Model when you want to activate it."
@@ -608,8 +635,26 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             installedModels = await modelLibrary.installedModels()
             downloadingModel = nil
+            modelDownloadStartedAt = nil
             updateModelSettings()
+            updateOnboarding(message: modelSelectionMessage)
         }
+    }
+
+    private var modelDownloadElapsed: TimeInterval {
+        modelDownloadStartedAt.map { ProcessInfo.processInfo.systemUptime - $0 } ?? 0
+    }
+
+    private var currentDownloadStatus: ModelDownloadStatus? {
+        if downloadingModel != nil {
+            return ModelDownloadStatus(fraction: modelDownloadProgress, elapsed: modelDownloadElapsed)
+        }
+        if case let .downloading(fraction) = modelPhase {
+            return ModelDownloadStatus(fraction: fraction, elapsed: preparationDownloadStartedAt.map {
+                ProcessInfo.processInfo.systemUptime - $0
+            } ?? 0)
+        }
+        return nil
     }
 
     func updateOnboarding(message: String?, force: Bool = false) {
@@ -617,13 +662,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let status = OnboardingStatus(
             microphone: AudioCaptureService.microphoneAuthorized(),
             accessibility: AccessibilityService.isTrusted,
-            modelPhase: modelPhase,
-            message: runtimeMessage ?? message
+            modelPhase: downloadingModel != nil && !activeModelReady ? .downloading(modelDownloadProgress) : modelPhase,
+            message: runtimeMessage ?? message,
+            downloadStatus: currentDownloadStatus
         )
         guard force || status != renderedOnboardingStatus else { return }
         renderedOnboardingStatus = status
         onboarding.update(microphone: status.microphone, accessibility: status.accessibility,
-                          modelPhase: status.modelPhase, message: status.message)
+                          modelPhase: status.modelPhase, message: status.message, downloadStatus: status.downloadStatus)
     }
 
     func presentLaunchOnboardingIfNeeded(microphoneAuthorized: Bool, accessibilityTrusted: Bool) {

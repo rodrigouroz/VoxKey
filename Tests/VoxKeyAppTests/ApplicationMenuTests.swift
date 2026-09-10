@@ -3,6 +3,23 @@ import Testing
 @testable import VoxKeyApp
 import VoxKeyCore
 
+@MainActor @Test
+func statusMenuKeepsOneTextColumnAcrossSections() {
+    _ = NSApplication.shared
+    let app = AppController()
+    let menu = NSMenu()
+    app.rebuildMenu(menu, snapshot: SessionStateMachine(phase: .ready).snapshot())
+    menu.update()
+
+    // AppKit can infer an image from a standard title or shortcut even when
+    // VoxKey never assigns one, shifting only that section's text column.
+    for item in menu.items where !item.isSeparatorItem {
+        #expect(item.image == nil, "Unexpected icon on \(item.title)")
+        #expect(item.indentationLevel == 0)
+    }
+    #expect(menu.showsStateColumn)
+}
+
 @MainActor
 @Test(arguments: [nil, .delivered, .unconfirmed, .failed(.destinationChanged)] as [DeliveryOutcome?])
 func recoveryMenuAppearsOnlyForAnUnresolvedDictation(outcome: DeliveryOutcome?) throws {

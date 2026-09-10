@@ -9,6 +9,8 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     var onRequestMicrophone: (() -> Void)?
     var onRequestAccessibility: (() -> Void)?
     var onChooseModel: (() -> Void)?
+    var onLanguageChanged: ((String) -> Void)?
+    var onTriggerChanged: ((DictationTrigger) -> Void)?
     var onFinish: (() -> Void)?
     var onClose: (() -> Void)?
     var onGrammarCorrectionChanged: ((Bool) -> Void)?
@@ -17,6 +19,10 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     let grammar = GrammarCorrectionCard(title: "Correct grammar locally (optional)")
     var setupGrammarCheckbox: NSButton { grammar.checkbox }
     let testTextView = NSTextView()
+    let languagePopup = NSPopUpButton()
+    let triggerPopup = NSPopUpButton()
+    let languageHint = VoxKeyDesign.label("Choose a model to set the dictation language.", style: .caption, color: VoxKeyDesign.secondaryInk)
+    private var availableLanguages = ["en"]
     private(set) var dictationTrigger: DictationTrigger = .globe
     private var captureMode: CaptureMode = .hold
 
@@ -29,7 +35,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     private let microphoneState = NSTextField(labelWithString: "")
     private let accessibilityState = NSTextField(labelWithString: "")
     private let modelState = NSTextField(labelWithString: "")
-    private let modelProgress = NSProgressIndicator()
+    let modelProgress = NSProgressIndicator()
     private let messageLabel = VoxKeyDesign.label("", style: .caption, color: VoxKeyDesign.secondaryInk)
     private let microphoneButton = NSButton(title: "Continue", target: nil, action: nil)
     private let accessibilityButton = NSButton(title: "Open System Settings", target: nil, action: nil)
@@ -51,7 +57,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     ) {
         self.activationCoordinator = activationCoordinator
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 656, height: grammarAvailable ? 780 : 660),
+            contentRect: NSRect(x: 0, y: 0, width: 656, height: grammarAvailable ? 870 : 750),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -128,7 +134,19 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             NSView(),
             VoxKeyDesign.label("Esc to cancel", style: .footnote, color: VoxKeyDesign.secondaryInk)
         ], spacing: 6)
-        VoxKeyDesign.embed(VoxKeyDesign.vertical([checkHeading, readinessInstructions, field, keyHint]), in: readinessCard)
+        languagePopup.setAccessibilityLabel("Dictation language")
+        languagePopup.target = self
+        languagePopup.action = #selector(changeLanguage)
+        triggerPopup.addItems(withTitles: DictationTrigger.allCases.map(\.displayName))
+        triggerPopup.setAccessibilityLabel("Dictation trigger")
+        triggerPopup.target = self
+        triggerPopup.action = #selector(changeTrigger)
+        let choices = VoxKeyDesign.horizontal([
+            VoxKeyDesign.vertical([VoxKeyDesign.label("Dictation language", style: .emphasis), languagePopup], spacing: 4),
+            VoxKeyDesign.vertical([VoxKeyDesign.label("Trigger key", style: .emphasis), triggerPopup], spacing: 4)
+        ], spacing: 16)
+        choices.distribution = .fillEqually
+        VoxKeyDesign.embed(VoxKeyDesign.vertical([checkHeading, choices, languageHint, readinessInstructions, field, keyHint]), in: readinessCard)
 
         messageLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         let completionActions = VoxKeyDesign.horizontal([messageLabel, NSView(), finishButton], spacing: 16)
@@ -144,6 +162,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         )
         VoxKeyDesign.install(stack, in: window)
         updateTrigger(.globe)
+        updateDictationChoices(configuration: TranscriptionConfiguration(), ready: false, busy: false)
         update(microphone: false, accessibility: false, modelPhase: .required, message: nil)
     }
 
@@ -163,6 +182,8 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
 
     func updateTrigger(_ trigger: DictationTrigger) {
         dictationTrigger = trigger
+        triggerPopup.selectItem(at: DictationTrigger.allCases.firstIndex(of: trigger) ?? 0)
+        triggerPopup.toolTip = trigger.hint
         triggerKeyLabel.stringValue = trigger.displayName
         readinessInstructions.stringValue = isComplete
             ? "That’s the whole flow. Finish setup, then use \(trigger.displayName) whenever you want to dictate."
@@ -171,6 +192,25 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             readinessInstructions.stringValue = "When the checks are ready, click below. Press \(trigger.displayName), say a sentence, and press again to finish."
         }
         testTextView.setAccessibilityHelp(readinessInstructions.stringValue)
+    }
+
+    func updateDictationChoices(configuration: TranscriptionConfiguration, ready: Bool, busy: Bool) {
+        availableLanguages = configuration.model.languages
+        let titles = availableLanguages.map(TranscriptionModel.languageName)
+        if languagePopup.itemTitles != titles {
+            languagePopup.removeAllItems()
+            languagePopup.addItems(withTitles: titles)
+        }
+        languagePopup.selectItem(at: availableLanguages.firstIndex(of: configuration.language) ?? 0)
+        languagePopup.isEnabled = ready && configuration.model.multilingual && !busy
+        triggerPopup.isEnabled = !busy
+        if !ready {
+            languageHint.stringValue = "Choose the language in Models and Languages before using your model."
+        } else if configuration.model.multilingual {
+            languageHint.stringValue = "Choose the language you’ll speak, or detect it automatically."
+        } else {
+            languageHint.stringValue = "This model is English only. Choose Whisper v3 Turbo for Spanish or other languages."
+        }
     }
 
     var isTestFieldFocused: Bool {
@@ -196,7 +236,8 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         microphone: Bool,
         accessibility: Bool,
         modelPhase: ModelPreparationPhase,
-        message: String?
+        message: String?,
+        downloadStatus: ModelDownloadStatus? = nil
     ) {
         setPermission(indicator: microphoneIndicator, state: microphoneState, number: "01", ready: microphone, active: true)
         setPermission(indicator: accessibilityIndicator, state: accessibilityState, number: "02", ready: accessibility, active: microphone)
@@ -214,14 +255,17 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             modelProgress.isHidden = true
             modelProgress.stopAnimation(nil)
         case let .downloading(fraction):
-            let progress = min(max(fraction, 0), 1)
-            modelState.stringValue = "\(Int((progress * 100).rounded()))%"
+            let download = downloadStatus ?? ModelDownloadStatus(fraction: fraction, elapsed: 0)
+            modelState.stringValue = download.title
             modelIndicator.stringValue = "↓"
             modelIndicator.textColor = VoxKeyDesign.accentInk
             modelButton.isHidden = true
-            modelProgress.isIndeterminate = false
-            modelProgress.doubleValue = progress
+            modelProgress.stopAnimation(nil)
+            modelProgress.isIndeterminate = download.isIndeterminate
+            modelProgress.doubleValue = download.fraction
             modelProgress.isHidden = false
+            modelProgress.setAccessibilityValue(download.message)
+            if download.isIndeterminate { modelProgress.startAnimation(nil) }
         case .prewarming:
             modelState.stringValue = "Optimizing…"
             modelIndicator.stringValue = "↻"
@@ -253,7 +297,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         accessibilityState.isHidden = !accessibilityButton.isHidden
         modelState.isHidden = !modelButton.isHidden
         if !isComplete {
-            messageLabel.stringValue = message ?? "Your audio and words stay on this Mac."
+            messageLabel.stringValue = downloadStatus?.message ?? message ?? "Your audio and words stay on this Mac."
         }
     }
 
@@ -318,5 +362,15 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     @objc private func requestMicrophone() { onRequestMicrophone?() }
     @objc private func requestAccessibility() { onRequestAccessibility?() }
     @objc private func prepareModel() { onChooseModel?() }
+    @objc private func changeLanguage() {
+        guard languagePopup.isEnabled, availableLanguages.indices.contains(languagePopup.indexOfSelectedItem) else { return }
+        onLanguageChanged?(availableLanguages[languagePopup.indexOfSelectedItem])
+    }
+    @objc private func changeTrigger() {
+        guard triggerPopup.isEnabled, DictationTrigger.allCases.indices.contains(triggerPopup.indexOfSelectedItem) else { return }
+        let trigger = DictationTrigger.allCases[triggerPopup.indexOfSelectedItem]
+        updateTrigger(trigger)
+        onTriggerChanged?(trigger)
+    }
     @objc private func finishSetup() { onFinish?() }
 }

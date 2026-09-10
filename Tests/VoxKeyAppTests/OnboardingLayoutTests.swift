@@ -95,6 +95,7 @@ func successfulReadinessCheckOffersAnExplicitFinishAction() throws {
     (false, false, ModelPreparationPhase.required),
     (true, false, .required),
     (true, true, .required),
+    (true, true, .downloading(0)),
     (true, true, .downloading(0.42)),
     (true, true, .prewarming),
     (true, true, .failed),
@@ -137,6 +138,7 @@ private extension NSView {
     var visibleButtonTitles: [String] {
         descendants
             .compactMap { $0 as? NSButton }
+            .filter { !($0 is NSPopUpButton) }
             .filter { !$0.isHiddenOrHasHiddenAncestor }
             .map(\.title)
     }
