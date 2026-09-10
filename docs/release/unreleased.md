@@ -1,3 +1,3 @@
 # Unreleased
 
-The model library and design refresh are collected in [0.3.0](0.3.0.md).
+The diagnostics privacy and website language changes are collected in [0.3.1](0.3.1.md).

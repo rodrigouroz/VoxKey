@@ -86,12 +86,6 @@ the normal controller, microphone, or model, read editor text, or insert anythin
 `treeComplete: false` means the inspection reached its node, depth, or time limit;
 absence from such a report is not proof that a control is missing.
 
-The September 10 Conductor check retrieved historical rejection logs, then
-confirmed two user-performed composer dictations after restarting with diagnostics.
-An independent metadata inspection found an enabled `AXTextArea` with a readable
-selection and writable text. No rejection with a definitely focused composer was
-reproduced, so no focus-routing change or universal compatibility claim followed.
-
 Controlled native and WebKit fixtures do not establish compatibility with Slack,
 Codex, VS Code, Chrome, or another third-party editor. Record microphone-to-editor,
 cold-launch, insertion, replacement, cancellation, and recovery results for each

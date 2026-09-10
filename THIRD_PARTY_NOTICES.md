@@ -22,7 +22,8 @@ or speaker diarization.
 Transcription model weights are downloaded separately during setup and are not
 bundled in the app or DMG. The current transcription model is distributed through
 [argmaxinc/whisperkit-coreml](https://huggingface.co/argmaxinc/whisperkit-coreml),
-derived from [Distil-Whisper](https://huggingface.co/distil-whisper/distil-large-v3).
+derived from [Distil-Whisper](https://huggingface.co/distil-whisper/distil-large-v3)
+and [OpenAI Whisper Turbo](https://huggingface.co/openai/whisper-large-v3-turbo).
 Consult those model cards for their terms and attribution.
 
 VoxKey offers an opt-in download of the GECToR
