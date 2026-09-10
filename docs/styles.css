@@ -60,11 +60,15 @@ section[id] { scroll-margin-top: 36px; }
 .wrap { width: min(1200px, calc(100% - 96px)); margin-inline: auto; }
 .skip-link { position: absolute; left: 16px; top: -80px; z-index: 10; padding: 14px; background: var(--paper); }
 .skip-link:focus { top: 16px; }
-.site-header { display: flex; align-items: center; justify-content: space-between; padding-block: 26px; border-bottom: 1px solid var(--border); }
+.site-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 26px; border-bottom: 1px solid var(--border); }
+.header-actions { display: flex; align-items: center; gap: 24px; margin-left: auto; }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-size: 23px; font-weight: 650; letter-spacing: -1px; text-decoration: none; }
 .version-tag { margin-left: 4px; padding: 5px 7px; font: 9px/1 ui-monospace, monospace; letter-spacing: 1px; border: 1px solid var(--border); border-radius: 4px; }
 nav { display: flex; align-items: center; gap: 30px; }
 nav a { font-size: 13px; text-decoration: none; }
+.language-switcher { display: inline-flex; gap: 0; padding: 3px; border: 1px solid var(--border); border-radius: 7px; background: var(--paper); }
+.language-switcher a { display: grid; place-items: center; min-width: 34px; min-height: 36px; border-radius: 4px; font-size: 11px; font-weight: 550; color: var(--muted); }
+.language-switcher a[aria-current="page"] { background: var(--lime-wash); color: var(--ink); }
 .source-link { display: inline-flex; gap: 16px; align-items: center; }
 .hero { display: grid; grid-template-columns: 1fr 1.15fr; gap: 52px; align-items: center; padding-block: 84px 78px; }
 .eyebrow { font: 500 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 1.4px; }
@@ -193,6 +197,9 @@ h3 { font-size: 16px; font-weight: 550; letter-spacing: -.3px; margin-bottom: 10
 }
 @media (max-width: 520px) {
   .nav-detail { display: none; }
+  .site-header .version-tag { display: none; }
+  .header-actions { gap: 12px; }
+  .source-link { gap: 6px; }
   .brand { font-size: 21px; }
   .brand img { width: 32px; height: 32px; }
   .hero-copy > .eyebrow { font-size: 9px; margin-bottom: 22px; }
