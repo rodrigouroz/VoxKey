@@ -9,6 +9,57 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Signed updates for VoxKey.</description>
         <language>en</language>
         <item>
+            <title>0.4.0</title>
+            <pubDate>Thu, 10 Sep 2026 17:45:13 -0300</pubDate>
+            <link>https://rodrigouroz.github.io/VoxKey/</link>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# VoxKey 0.4.0
+
+First-time setup now makes your spoken language, dictation key, and model download
+status easier to find. Requires Apple Silicon and macOS 26 or later. Internal
+build number: 11.
+
+## Set up dictation your way
+
+- Choose your spoken language before activating your first model. The choice stays
+  selected while the model downloads.
+- Language and trigger-key controls appear in onboarding before the first dictation
+  test. Choose Globe/Fn, Right Option, Right Command, or Right Control.
+- English-only models explain that Spanish and other languages require Whisper v3
+  Turbo. The model chooser prevents activating an English-only model with a
+  non-English language selected.
+
+## Clearer download feedback
+
+- An animated starting indicator appears immediately, including while the downloader
+  looks up the model files.
+- Setup and Models and Languages show download progress and elapsed time. The menu
+  also reports an active model download.
+- Completed transfers show a finishing state until the downloaded model is checked.
+- Overall time remaining is unavailable: the downloader measures progress by file,
+  rather than by byte, so the percentage cannot support a reliable countdown.
+
+## Menu alignment
+
+Menu labels now align consistently across sections. The automatically inserted
+Settings gear no longer shifts the upper section to the right.
+
+## Validation and limits
+
+Automated tests cover language selection before activation, onboarding language
+and shortcut controls, download startup, progress, completion and retry, and menu
+alignment. Light and dark layouts were rendered and inspected.
+
+Live first-install dictation on another computer and an end-to-end Sparkle update
+have not been re-tested for this release. Editor compatibility still depends on
+the destination application's macOS Accessibility support.
+]]></description>
+            <enclosure url="https://github.com/rodrigouroz/VoxKey/releases/download/v0.4.0/VoxKey-v0.4.0-arm64.dmg" length="2634833" type="application/octet-stream" sparkle:edSignature="lPdCnrVORPV31KbvoIOq09YraFMssmQhNu01oGX8EFUMf2n1NBhXpsfod1MnUKfe2tfG6SvQMRs2a+ub6OgdDA=="/>
+        </item>
+        <item>
             <title>0.3.1</title>
             <pubDate>Thu, 10 Sep 2026 19:01:44 +0000</pubDate>
             <link>https://rodrigouroz.github.io/VoxKey/</link>
@@ -163,6 +214,6 @@ vocabulary.
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: OEUuXNiPVr95X+RAIqB9+8Ba0UFpR8FIiOwCeC0yt/XjNeIdiMHkxzf0aC2aDWeY+8bV/F7wKv6md/a2XozXCA==
-length: 9463
+edSignature: 9z69w3VqqUkNlTuJHYrv3BV7P+WuU5R6Zkq43uwb6u21BdTgHszQ2ESAgH9aL4LyHQuRYzP+VeflFkZ09wgjDw==
+length: 12134
 -->

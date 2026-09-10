@@ -10,7 +10,7 @@ recognition running entirely on your Mac.
 
 Requires **Apple Silicon** and **macOS 26 or later**.
 
-[Download VoxKey 0.3.1 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.3.1/VoxKey-v0.3.1-arm64.dmg),
+[Download VoxKey 0.4.0 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.4.0/VoxKey-v0.4.0-arm64.dmg),
 open the DMG, and drag VoxKey into Applications. You can also
 [build from source](#development).
 
@@ -89,7 +89,7 @@ asks before installing and restarting. Updates wait while dictation or Safety Ne
 recovery is in progress. You can also install any newer DMG manually.
 
 VoxKey defaults to English and offers multilingual Turbo models. Editor compatibility and real-world latency
-are still being tested. See [0.3.1 release notes](docs/release/0.3.1.md) and
+are still being tested. See [0.4.0 release notes](docs/release/0.4.0.md) and
 [how to build and publish a release](docs/release/distribution.md).
 
 ## Development
