@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>VoxKey Updates</title>
+        <link>https://github.com/rodrigouroz/VoxKey/releases</link>
+        <description>Signed updates for VoxKey.</description>
+        <language>en</language>
+    </channel>
+</rss><!-- sparkle-signatures:
+edSignature: WlWveHpynOlI7EpdDFye9ITf9+bu9CYVrdfZ+KHsJW27k3gKJ3rZCrAOIHIau1C1EdCCz7zSNp53nCXI/p7pBA==
+length: 614
+-->

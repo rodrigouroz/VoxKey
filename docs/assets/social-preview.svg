@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f6f0"/>
+  <rect x="880" width="320" height="630" fill="#e5ebdd"/>
+  <path d="M64 128H1136" stroke="#d9dfd3"/>
+  <image href="voxkey-icon.png" x="64" y="48" width="48" height="48"/>
+  <text x="124" y="81" fill="#20382b" font-family="Arial, sans-serif" font-size="31" font-weight="600" letter-spacing="-1">VoxKey</text>
+  <text x="64" y="198" fill="#356040" font-family="monospace" font-size="13" letter-spacing="2.5">YOUR VOICE. YOUR MAC.</text>
+  <text x="61" y="297" fill="#20382b" font-family="Georgia, serif" font-size="76" letter-spacing="-3">A little less typing.</text>
+  <text x="61" y="386" fill="#20382b" font-family="Georgia, serif" font-size="76" letter-spacing="-3">A lot more <tspan fill="#356040" font-style="italic">you.</tspan></text>
+  <text x="64" y="455" fill="#5e6c61" font-family="Arial, sans-serif" font-size="24">Local dictation for your Mac.</text>
+  <text x="64" y="558" fill="#356040" font-family="Arial, sans-serif" font-size="17">100% local. Free forever. Fully open source.</text>
+  <rect x="932" y="236" width="216" height="164" rx="24" fill="#cad6be"/>
+  <rect x="932" y="225" width="216" height="164" rx="24" fill="#fffefa" stroke="#bccab0"/>
+  <text x="959" y="354" fill="#356040" font-family="Georgia, serif" font-size="45">fn</text>
+  <g stroke="#356040" stroke-width="6" stroke-linecap="round"><path d="M1036 286v17M1050 273v43M1064 259v71M1078 275v39M1092 285v19"/></g>
+  <text x="979" y="447" fill="#53634a" font-family="monospace" font-size="12" letter-spacing="2">HOLD. SPEAK.</text>
+  <text x="966" y="469" fill="#53634a" font-family="monospace" font-size="12" letter-spacing="2">KEEP WRITING.</text>
+</svg>

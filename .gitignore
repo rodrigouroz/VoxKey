@@ -1,0 +1,15 @@
+.build/
+.swiftpm/
+*.xcodeproj/
+VoxType.app/
+*.app/
+dist/
+*.dmg
+*.p12
+*.p8
+*.mobileprovision
+.DS_Store
+.private/
+
+# Claude Code local settings
+.claude/settings.local.json

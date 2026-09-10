@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-package:
+    name: Test and package (Apple Silicon)
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+          test "$(uname -m)" = arm64
+      - name: Validate scripts and metadata
+        run: |
+          for script in scripts/*.sh; do zsh -n "$script"; done
+          plutil -lint VoxKey/Info.plist VoxKey/Resources/*.entitlements
+          git diff --check
+      - name: Test
+        # AppKit fixtures share the main thread; concurrent UI tests can exhaust
+        # real clipboard/capture deadlines on a small hosted runner.
+        run: swift test --force-resolved-versions --no-parallel
+      - name: Build packaging preview
+        env:
+          VOXKEY_SIGNING_IDENTITY: '-'
+        run: |
+          version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' VoxKey/Info.plist)
+          ./scripts/package-release.sh "v${version}" preview
+      - name: Verify packaged grammar controls and model terms
+        env:
+          VOXKEY_GRAMMAR_APP: .build/packaging-preview/VoxKey Packaging Preview.app
+        run: swift test --force-resolved-versions --no-parallel --filter packagedGrammarControlsAreVisibleAndOffByDefault
+      - name: Retain local preview (not a release)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: VoxKey-local-packaging-preview
+          path: dist/*-LOCAL-PREVIEW/*
+          if-no-files-found: error
+          retention-days: 7

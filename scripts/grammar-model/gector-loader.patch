@@ -1,0 +1,22 @@
+diff --git a/src/gector/modeling.py b/src/gector/modeling.py
+index 8f9f61d..3d58349 100644
+--- a/src/gector/modeling.py
++++ b/src/gector/modeling.py
+@@ -40,13 +40,13 @@ class GECToR(PreTrainedModel):
+             self.config.model_id
+         )
+         if self.config.has_add_pooling_layer:
+-            self.bert = AutoModel.from_pretrained(
+-                self.config.model_id,
++            self.bert = AutoModel.from_config(
++                AutoConfig.from_pretrained(self.config.model_id, local_files_only=True),
+                 add_pooling_layer=False
+             )
+         else:
+-            self.bert = AutoModel.from_pretrained(
+-                self.config.model_id
++            self.bert = AutoModel.from_config(
++                AutoConfig.from_pretrained(self.config.model_id, local_files_only=True)
+             )
+         # +1 is for $START token
+         # Note: In transformers > 4.49.0, `self.bert` is loaded
