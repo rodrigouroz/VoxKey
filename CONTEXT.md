@@ -10,7 +10,7 @@ Apple Silicon and macOS 26+, uses Swift 6.2, and pins WhisperKit 1.1.0 and Spark
 2.9.6. [README.md](README.md) covers installation and everyday use.
 
 Accepted ADRs record decisions and intended constraints; acceptance does not mean
-every requirement has shipped. Strict Clipboard Mode, outbound diagnostics,
+every requirement has shipped. Strict Clipboard Mode,
 managed deployment, a signed transcription-model manifest, and destination-based
 overlay positioning remain unimplemented. See the [ADR implementation guide](docs/adr/README.md).
 The Core Compatibility Matrix is an acceptance target, not completed certification
@@ -196,7 +196,7 @@ The input selected only for VoxKey in Settings, defaulting to the System Input D
 _Avoid_: Device ID preference, global input override
 
 **Transcription Failure**:
-A dictation attempt for which VoxKey cannot produce completed text. VoxKey may retain non-content diagnostic metadata, but it does not create a Last Result and cannot offer an audio-based retry because the Ephemeral Audio is discarded.
+A dictation attempt for which VoxKey cannot produce completed text. Only internal builds may record non-content diagnostic metadata. It does not create a Last Result and cannot offer an audio-based retry because the Ephemeral Audio is discarded.
 _Avoid_: Last Result, saved recording
 
 **No Speech**:
@@ -212,11 +212,11 @@ The availability guarantee that an installed VoxKey application and Model Packag
 _Avoid_: Offline mode, grace period, license lease
 
 **Local Diagnostic Log**:
-Content-free operational entries written through macOS unified logging, including state transitions, durations, build identity, error categories, and delivery evidence booleans. VoxKey does not log audio, transcripts, surrounding text, clipboard contents, or destination identities. Retention is controlled by macOS; VoxKey does not currently provide its own log viewer, export flow, or fixed retention period.
+Internal-build-only, content-free operational entries written through macOS unified logging. First-party diagnostic code is absent unless `VOXKEY_INTERNAL_DIAGNOSTICS` is supplied at compilation. Public builds have no app-owned log or export flow. Internal inspection can record application identity and control capabilities, but never editor contents, dictation, audio, clipboard contents, window titles, or URLs. Retention of internal unified logs is controlled by macOS. This does not suppress macOS or third-party framework logging; see ADR-0016.
 _Avoid_: Activity log, transcript log, usage history
 
 **Optional Diagnostics**:
-A future, explicitly opt-in mechanism for sending content-free diagnostics, subject to ADR-0016. No outbound diagnostics transport or user control is implemented. Application update checks are a separate network activity.
+A retired proposal. ADR-0016 now restricts first-party diagnostics to internal builds; public builds have no telemetry transport or diagnostic opt-in. Application update checks are a separate network activity, with system profiling disabled.
 _Avoid_: Telemetry, anonymous analytics, automatic crash reporting
 
 **Supported Mac**:

@@ -25,7 +25,14 @@ if [[ "$build_kind" == "distribution" && "$configuration" != "release" ]]; then
 fi
 
 cd "$repo_root"
+diagnostic_flags=()
+# Optimization level is independent of permission to emit diagnostics.
+# Only the explicitly internal candidate includes diagnostic code.
+if [[ "$build_kind" == "candidate" ]]; then
+    diagnostic_flags=(-Xswiftc -DVOXKEY_INTERNAL_DIAGNOSTICS)
+fi
 swift build -c "$configuration" --arch arm64 --product VoxKey --force-resolved-versions \
+    "${diagnostic_flags[@]}" \
     -debug-info-format none -Xswiftc -DVOXKEY_PACKAGED \
     -Xswiftc -file-prefix-map -Xswiftc "$repo_root=." \
     -Xcc "-ffile-prefix-map=$repo_root=."
@@ -105,4 +112,7 @@ fi
 
 voxkey_verify_signature "$app" "$signing_identity"
 python3 "$repo_root/scripts/verify-artifact-privacy.py" "$app"
+if [[ "$build_kind" != "candidate" ]]; then
+    python3 "$repo_root/scripts/verify-no-diagnostics.py" "$app"
+fi
 echo "$app"

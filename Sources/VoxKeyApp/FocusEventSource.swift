@@ -1,6 +1,8 @@
 @preconcurrency import AppKit
 import ApplicationServices
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 
 @MainActor
 protocol FocusEventSource: AnyObject {
@@ -19,7 +21,9 @@ final class NoopFocusEventSource: FocusEventSource {
 final class SystemFocusEventSource: NSObject, FocusEventSource {
     var onFocusEvent: ((AXUIElement, AccessibilityProcessIdentity) -> Void)?
 
+    #if VOXKEY_INTERNAL_DIAGNOSTICS
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "focus")
+    #endif
     private var started = false
     private var observer: AXObserver?
     private var runLoopSource: CFRunLoopSource?
@@ -84,9 +88,11 @@ final class SystemFocusEventSource: NSObject, FocusEventSource {
             &createdObserver
         )
         guard createResult == .success, let createdObserver else {
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             logger.notice(
                 "focus observer unavailable pid=\(identity.processIdentifier, privacy: .public) ax_error=\(createResult.rawValue, privacy: .public)"
             )
+            #endif
             onFocusEvent?(element, identity)
             return
         }
@@ -104,9 +110,11 @@ final class SystemFocusEventSource: NSObject, FocusEventSource {
                 refcon
             )
             if result != .success && result != .notificationAlreadyRegistered {
+                #if VOXKEY_INTERNAL_DIAGNOSTICS
                 logger.notice(
                     "focus observer registration failed pid=\(identity.processIdentifier, privacy: .public) ax_error=\(result.rawValue, privacy: .public)"
                 )
+                #endif
             }
         }
 
@@ -123,9 +131,11 @@ final class SystemFocusEventSource: NSObject, FocusEventSource {
                 || notificationName == kAXApplicationActivatedNotification,
               let applicationElement,
               let process else { return }
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.debug(
             "focus event received pid=\(process.processIdentifier, privacy: .public)"
         )
+        #endif
         onFocusEvent?(applicationElement, process)
     }
 

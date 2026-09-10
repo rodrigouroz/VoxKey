@@ -57,6 +57,41 @@ release builds. See [test-host instructions](delivery-test-host.md).
 
 ## Compatibility limits
 
+### Diagnosing a rejected destination
+
+This workflow requires an internal build (`VOXKEY_INTERNAL_DIAGNOSTICS`). Public
+builds do not include these logs or the inspection entrypoint. Build an internal
+candidate with `zsh scripts/build-app.sh release candidate`, or an internal debug
+validation bundle with `zsh scripts/build-delivery-validation.sh`.
+
+Read the running internal application's logs, excluding the test helpers that use the same subsystem:
+
+```sh
+/usr/bin/log show --last 15m --style compact --info \
+  --predicate 'subsystem == "com.rodrigouroz.VoxKey" AND process == "VoxKey"'
+```
+
+An `unsupportedInsertion` capture rejection now records the target PID, AX role,
+editable/enabled flags, selection availability, and selected-text writability.
+These diagnostics contain no dictation, editor text, window title, or URL. A later
+`no_destination_token` means transcription succeeded without an accepted input;
+no insertion was attempted. It does not establish why the expected editor was not
+the captured target. Correlate the PID and timestamp before attributing it to an app.
+
+Internal builds also accept `--inspect-destination <pid> <report.json>`. Launch the
+signed internal bundle through Launch Services with `open -g -n <bundle> --args ...`
+to use its Accessibility identity. This mode compares application, system, and
+resolved focus and inspects a bounded tree of control metadata. It does not start
+the normal controller, microphone, or model, read editor text, or insert anything.
+`treeComplete: false` means the inspection reached its node, depth, or time limit;
+absence from such a report is not proof that a control is missing.
+
+The September 10 Conductor check retrieved historical rejection logs, then
+confirmed two user-performed composer dictations after restarting with diagnostics.
+An independent metadata inspection found an enabled `AXTextArea` with a readable
+selection and writable text. No rejection with a definitely focused composer was
+reproduced, so no focus-routing change or universal compatibility claim followed.
+
 Controlled native and WebKit fixtures do not establish compatibility with Slack,
 Codex, VS Code, Chrome, or another third-party editor. Record microphone-to-editor,
 cold-launch, insertion, replacement, cancellation, and recovery results for each

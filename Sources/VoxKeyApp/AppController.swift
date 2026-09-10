@@ -1,5 +1,7 @@
 import AppKit
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 import ServiceManagement
 import VoxKeyCore
 
@@ -70,8 +72,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         let buildID = Bundle.main.object(forInfoDictionaryKey: "VoxKeyBuildID") as? String ?? "development"
         Logger(subsystem: "com.rodrigouroz.VoxKey", category: "Lifecycle").notice("started build=\(buildID, privacy: .public)")
+        #endif
         NSApp.setActivationPolicy(.accessory)
         configureApplicationMenu()
         configureStatusItem()

@@ -1,7 +1,9 @@
 @preconcurrency import AppKit
 import ApplicationServices
 import Foundation
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 import VoxKeyCore
 
 struct DeliveryTiming {
@@ -16,7 +18,9 @@ struct DeliveryTiming {
 
 @MainActor
 final class AccessibilityService {
+    #if VOXKEY_INTERNAL_DIAGNOSTICS
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "delivery")
+    #endif
     private let client: any DesktopAccessibilityClient
     private let focusedElementResolver: FocusedElementResolver
     private let pasteboard: NSPasteboard
@@ -88,7 +92,15 @@ final class AccessibilityService {
         }
         guard let element else { return rejected(.focusUnavailable, label: label) }
         guard !isSecure(element) else { return rejected(.secureDestination, label: label) }
-        guard isEditable(element) else { return rejected(.unsupportedInsertion, label: label) }
+        guard isEditable(element) else {
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
+            let role: String? = copyAttribute(element, kAXRoleAttribute)
+            let editable: NSNumber? = copyAttribute(element, "AXEditable")
+            let enabled: NSNumber? = copyAttribute(element, kAXEnabledAttribute)
+            logger.notice("destination capabilities pid=\(application.identity.processIdentifier, privacy: .public) role=\(role ?? "unknown", privacy: .public) editable=\(editable?.stringValue ?? "unknown", privacy: .public) enabled=\(enabled?.stringValue ?? "unknown", privacy: .public) selection_available=\(self.selectedTextRange(element) != nil, privacy: .public) selected_text_settable=\(self.client.isSettable(element, kAXSelectedTextAttribute), privacy: .public)")
+            #endif
+            return rejected(.unsupportedInsertion, label: label)
+        }
         guard let snapshot = mutationSnapshot(for: element) else { return rejected(.selectionUnavailable, label: label) }
         guard !Task.isCancelled, client.frontmostApplication?.identity == application.identity else {
             return rejected(.destinationChanged, label: label)
@@ -99,7 +111,9 @@ final class AccessibilityService {
         intents[token] = IntentRecord(
             element: element, process: application.identity, isWebBacked: isWebBacked(element), snapshot: snapshot
         )
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.info("destination captured token=\(token.rawValue.uuidString, privacy: .public) elapsed_ms=\(self.milliseconds(since: started), privacy: .public)")
+        #endif
         return DestinationAssessment(kind: .editable, token: token, label: label)
     }
 
@@ -109,9 +123,13 @@ final class AccessibilityService {
         guard !delivering else { return .failed(.inputBusy) }
         delivering = true
         defer { delivering = false }
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         let started = ContinuousClock.now
+        #endif
         let outcome = await deliver(text, intent: intent, activate: activateDestination)
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.notice("delivery completed token=\(token.rawValue.uuidString, privacy: .public) outcome=\(String(describing: outcome), privacy: .public) elapsed_ms=\(self.milliseconds(since: started), privacy: .public)")
+        #endif
         return outcome
     }
 
@@ -228,7 +246,11 @@ final class AccessibilityService {
     }
 
     private func restore(_ lease: PasteboardLease) {
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         if lease.restoreIfOwned() == .failed { logger.fault("pasteboard restoration failed") }
+        #else
+        _ = lease.restoreIfOwned()
+        #endif
     }
 
     private enum InsertionObservation { case verified, textObserved, unavailable }
@@ -252,11 +274,15 @@ final class AccessibilityService {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         var current: TextMutationSnapshot?
         var rangeReadback = InsertedTextReadback.notAttempted
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         var observedEvidence: Set<String> = []
+        #endif
         repeat {
             guard client.trusted, !client.secureInputEnabled, !isSecure(intent.element),
                   client.frontmostApplication?.identity == intent.process else {
+                #if VOXKEY_INTERNAL_DIAGNOSTICS
                 logger.notice("confirmation interrupted reason=permissions_security_or_frontmost_changed")
+                #endif
                 return .unavailable
             }
             // Editors can publish text before their caret/selection metadata.
@@ -265,7 +291,9 @@ final class AccessibilityService {
             if anchoredContextMatches(intent: intent, text: text, deadline: deadline) {
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     logger.info("insertion confirmed source=anchored_text")
+                    #endif
                     return .verified
                 }
             }
@@ -274,13 +302,17 @@ final class AccessibilityService {
                 original: intent.snapshot, current: current, insertedText: text,
                 contextLimit: contextLimit
             )
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             observedEvidence.insert(evidence.rawValue)
+            #endif
             if evidence.result == .confirmed {
                 // Check the entire inserted range in bounded reads, not merely
                 // the last 256 characters or the caret. No document-wide AXValue.
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     logger.info("insertion confirmed source=\(evidence.rawValue, privacy: .public)")
+                    #endif
                     return .verified
                 }
             }
@@ -290,13 +322,16 @@ final class AccessibilityService {
                current.length == 0, current != intent.snapshot {
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     logger.info("insertion observed verification=\(evidence.rawValue, privacy: .public)")
+                    #endif
                     return .textObserved
                 }
             }
             guard !Task.isCancelled, ContinuousClock.now < deadline else { break }
             try? await Task.sleep(for: timing.pollInterval)
         } while true
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         let evidence = TextMutationVerification.evidence(
             original: intent.snapshot, current: current, insertedText: text,
             contextLimit: contextLimit
@@ -314,6 +349,7 @@ final class AccessibilityService {
         let caretMatches = current.map { $0.location == expectedLocation && $0.length == 0 } ?? false
         let followingIsLineBreakOnly = current?.following.map { $0 == "\n" || $0 == "\r\n" } ?? false
         logger.notice("confirmation incomplete observed_evidence=\(observedEvidence.sorted().joined(separator: ","), privacy: .public) evidence=\(evidence.rawValue, privacy: .public) range_readback=\(rangeReadback.rawValue, privacy: .public) caret_matches=\(caretMatches, privacy: .public) original_before_readable=\(intent.snapshot.preceding != nil, privacy: .public) original_after_readable=\(intent.snapshot.following != nil, privacy: .public) current_before_readable=\(current?.preceding != nil, privacy: .public) current_after_readable=\(current?.following != nil, privacy: .public) original_after_empty=\(intent.snapshot.following == "", privacy: .public) current_after_empty=\(current?.following == "", privacy: .public) current_after_line_break_only=\(followingIsLineBreakOnly, privacy: .public) web_backed=\(intent.isWebBacked, privacy: .public)")
+        #endif
         return .unavailable
     }
 
@@ -423,7 +459,9 @@ final class AccessibilityService {
     }
     private func copyAttribute<T>(_ element: AXUIElement, _ name: String) -> T? { client.attribute(element, name) as? T }
     private func rejected(_ failure: DeliveryFailure, label: DestinationLabel? = nil) -> DestinationAssessment {
-        logger.notice("destination rejected reason=\(String(describing: failure), privacy: .public)")
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        logger.notice("destination rejected reason=\(String(describing: failure), privacy: .public) pid=\(label?.processIdentifier ?? 0, privacy: .public)")
+        #endif
         return DestinationAssessment(kind: failure == .secureDestination ? .secure : .unknown, token: nil, label: label, failure: failure)
     }
     private func milliseconds(since start: ContinuousClock.Instant) -> Int {

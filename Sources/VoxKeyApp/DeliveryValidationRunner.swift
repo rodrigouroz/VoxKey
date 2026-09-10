@@ -1,4 +1,4 @@
-#if DEBUG
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import AppKit
 import ApplicationServices
 import Foundation

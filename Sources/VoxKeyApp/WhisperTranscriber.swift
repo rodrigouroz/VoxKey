@@ -1,6 +1,8 @@
 @preconcurrency import AVFoundation
 import Foundation
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 @preconcurrency import WhisperKit
 import VoxKeyCore
 
@@ -36,7 +38,9 @@ actor WhisperTranscriber {
     private let localModelRoot: URL?
     private var inferenceInFlight = false
     private var preparationInFlight = false
+    #if VOXKEY_INTERNAL_DIAGNOSTICS
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "transcription")
+    #endif
     private(set) var selectedModel = defaultModel
 
     // Let Core ML use all available processors, including
@@ -165,15 +169,21 @@ actor WhisperTranscriber {
                 } else {
                     if prompt == nil { prompt = try vocabularyPromptTokens(vocabulary) }
                     let context = try streamingPrompt(vocabulary: prompt ?? [], precedingText: transcript.confirmedText)
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     let started = ContinuousClock.now
+                    #endif
                     let text = try await decodeStreamingWindow(window.samples, prompt: context, language: language)
                     try Task.checkCancellation()
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     let boundaryRepeat = TranscriptionRepetition.boundaryWordCount(previous: transcript.confirmedText, next: text)
                     logger.notice("phrase assembly index=\(transcript.decodeCount, privacy: .public) audio_start=\(transcript.consumedSamples, privacy: .public) audio_count=\(window.samples.count, privacy: .public) boundary_repeated_words=\(boundaryRepeat, privacy: .public)")
+                    #endif
                     transcript.accept(text, window: window)
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     let seconds = started.duration(to: .now).components
                     let elapsed = Double(seconds.seconds) + Double(seconds.attoseconds) / 1e18
                     logger.debug("partial decode seconds=\(elapsed, privacy: .public) audio_seconds=\(Double(window.samples.count) / 16000, privacy: .public)")
+                    #endif
                 }
                 progress(StreamingTranscriptionProgress(
                     decodeCount: transcript.decodeCount,
@@ -211,11 +221,13 @@ actor WhisperTranscriber {
         let results = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
         guard !results.isEmpty else { throw TranscriptionError.emptyResult }
         let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         let segments = results.flatMap(\.segments)
         let repeatedWords = TranscriptionRepetition.adjacentWordCount(in: text)
         let segmentRepeatedWords = segments.map { TranscriptionRepetition.adjacentWordCount(in: $0.text) }.max() ?? 0
         let timestampTokens = segments.flatMap(\.tokens).filter { $0 >= (whisperKit.tokenizer?.specialTokens.timeTokenBegin ?? Int.max) }.count
         logger.notice("decode result repeated_words=\(repeatedWords, privacy: .public) segment_repeated_words=\(segmentRepeatedWords, privacy: .public) segments=\(segments.count, privacy: .public) timestamp_tokens=\(timestampTokens, privacy: .public) prompt_tokens=\(prompt.count, privacy: .public)")
+        #endif
         return text
     }
 

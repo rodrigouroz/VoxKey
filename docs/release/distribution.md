@@ -196,3 +196,12 @@ updates correctly from 0.1.0 beta builds even though the tag format changed.
 - [Apple notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
 - [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
 - [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
+
+## Diagnostic boundary
+
+Public packages must pass `python3 scripts/verify-no-diagnostics.py <app-bundle>`.
+`build-app.sh` enforces this for `app`, `preview`, and `distribution`, independent
+of optimization level. Only `candidate` enables `VOXKEY_INTERNAL_DIAGNOSTICS`.
+Internal candidates and validation bundles must never be published as releases.
+This gate removes VoxKey's diagnostic messages and inspection commands; it does
+not assert that macOS or third-party frameworks cannot write system logs.

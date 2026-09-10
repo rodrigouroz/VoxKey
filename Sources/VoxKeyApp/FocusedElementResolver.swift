@@ -1,6 +1,8 @@
 import ApplicationServices
 import Foundation
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 
 struct AccessibilityProcessIdentity: Hashable {
     let processIdentifier: pid_t
@@ -108,7 +110,9 @@ final class FocusedElementResolver {
 
     private let client: FocusedElementClient
     private let focusEvents: FocusEventSource
+    #if VOXKEY_INTERNAL_DIAGNOSTICS
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "focus")
+    #endif
     private struct Enablement {
         let result: AXError
         let attemptedAt: ContinuousClock.Instant
@@ -168,7 +172,9 @@ final class FocusedElementResolver {
         }
         guard let match = focusedEditorInWindow(of: application) else { return nil }
         remember(match.element, process: process, window: match.window)
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.notice("focus resolved route=focused_window pid=\(process.processIdentifier, privacy: .public)")
+        #endif
         return match.element
     }
 
@@ -191,9 +197,11 @@ final class FocusedElementResolver {
         let manual = enablementByProcess[process]?[Self.manualAccessibilityAttribute]
         if manual == nil || manual?.shouldRetry == true {
             let result = client.enable(Self.manualAccessibilityAttribute, in: application)
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             logger.notice(
                 "focus retry capability=manual_accessibility pid=\(process.processIdentifier, privacy: .public) ax_error=\(result.rawValue, privacy: .public)"
             )
+            #endif
             enablementByProcess[process, default: [:]][Self.manualAccessibilityAttribute] =
                 Enablement(result: result, attemptedAt: .now)
             if let focused = matchingFocusedElement(in: application, process: process) {
@@ -204,9 +212,11 @@ final class FocusedElementResolver {
         let enhanced = enablementByProcess[process]?[Self.enhancedUserInterfaceAttribute]
         if enhanced == nil || enhanced?.shouldRetry == true {
             let result = client.enable(Self.enhancedUserInterfaceAttribute, in: application)
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             logger.notice(
                 "focus retry capability=enhanced_user_interface pid=\(process.processIdentifier, privacy: .public) ax_error=\(result.rawValue, privacy: .public)"
             )
+            #endif
             enablementByProcess[process, default: [:]][Self.enhancedUserInterfaceAttribute] =
                 Enablement(result: result, attemptedAt: .now)
             if let focused = matchingFocusedElement(in: application, process: process) {
@@ -248,9 +258,11 @@ final class FocusedElementResolver {
         if let window = observedFocus.window {
             guard let current = client.focusedWindow(in: application), CFEqual(window, current) else { return nil }
         }
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.notice(
             "focus resolved route=observed_event pid=\(process.processIdentifier, privacy: .public)"
         )
+        #endif
         return observedFocus.element
     }
 
@@ -268,9 +280,11 @@ final class FocusedElementResolver {
               client.processIdentifier(of: focused) == process.processIdentifier else {
             return nil
         }
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.notice(
             "focus resolved route=system_wide pid=\(process.processIdentifier, privacy: .public)"
         )
+        #endif
         return focused
     }
 

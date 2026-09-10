@@ -1,5 +1,7 @@
 import Foundation
+#if VOXKEY_INTERNAL_DIAGNOSTICS
 import OSLog
+#endif
 import VoxKeyCore
 
 struct CaptureTiming: Sendable {
@@ -8,7 +10,9 @@ struct CaptureTiming: Sendable {
 }
 
 actor SessionCoordinator {
+    #if VOXKEY_INTERNAL_DIAGNOSTICS
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "session")
+    #endif
 
     let updates: AsyncStream<SessionSnapshot>
     let modelUpdates: AsyncStream<ModelPreparationPhase>
@@ -431,15 +435,19 @@ actor SessionCoordinator {
             captureStartedAt = nil
             publish(message: "Transcribing…")
             guard let transcriptionTask else { throw TranscriptionError.emptyResult }
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             let released = ContinuousClock.now
+            #endif
             await playEndCue()
 
             let transcription = try await transcriptionTask.value
             self.transcriptionTask = nil
             guard !terminating, machine.phase == .finalizing(sessionID) else { return }
+            #if VOXKEY_INTERNAL_DIAGNOSTICS
             let duration = released.duration(to: .now).components
             let seconds = Double(duration.seconds) + Double(duration.attoseconds) / 1e18
             logger.info("finalization seconds=\(seconds, privacy: .public)")
+            #endif
             switch transcription {
             case .noSpeech:
                 await accessibility.discard(destinationToken)
@@ -456,7 +464,9 @@ actor SessionCoordinator {
                 try machine.beginDelivery(sessionID: sessionID, text: deliveredText)
                 publish(message: "Delivering…")
                 guard let destinationToken else {
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     logger.notice("final result preserved reason=no_destination_token")
+                    #endif
                     try finishWithoutDestination(sessionID: sessionID, reason: captureDestinationFailure)
                     return
                 }
@@ -470,7 +480,9 @@ actor SessionCoordinator {
                     try machine.finishDelivery(sessionID: sessionID, outcome: outcome)
                     publish(message: nil)
                 case let .failed(reason):
+                    #if VOXKEY_INTERNAL_DIAGNOSTICS
                     logger.notice("final result preserved delivery_failure=\(String(describing: reason), privacy: .public)")
+                    #endif
                     try machine.finishDelivery(sessionID: sessionID, outcome: outcome)
                     publish(message: reason.recoveryMessage, attention: .deliveryBlocked(reason))
                 }
@@ -567,7 +579,9 @@ actor SessionCoordinator {
             activity = await audioCapture.speechStartStatus()
         }
         guard machine.phase == .capturing(sessionID), !Task.isCancelled, activity != .speech else { return }
+        #if VOXKEY_INTERNAL_DIAGNOSTICS
         logger.notice("capture cancelled reason=initial_silence")
+        #endif
         let detectedAudio = await audioCapture.detectedAudio()
         guard machine.phase == .capturing(sessionID), !Task.isCancelled else { return }
         await cancel(expectedSessionID: sessionID)

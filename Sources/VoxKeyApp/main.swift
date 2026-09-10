@@ -1,8 +1,12 @@
 import AppKit
 
 let application = NSApplication.shared
-#if DEBUG
-if ProcessInfo.processInfo.arguments.contains("--verify-delivery") {
+#if VOXKEY_INTERNAL_DIAGNOSTICS
+if ProcessInfo.processInfo.arguments.contains("--inspect-destination") {
+    let runner = DestinationInspectionRunner()
+    application.delegate = runner
+    withExtendedLifetime(runner) { application.run() }
+} else if ProcessInfo.processInfo.arguments.contains("--verify-delivery") {
     let runner = DeliveryValidationRunner()
     application.delegate = runner
     withExtendedLifetime(runner) { application.run() }

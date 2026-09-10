@@ -12,7 +12,7 @@ These gaps matter when describing the current release:
 | --- | --- |
 | [Verified model packages](0008-install-verified-model-packages-separately.md) | Grammar downloads verify pinned revisions, sizes, hashes, and conversion output. Transcription uses WhisperKit downloads and required-file checks; a shipped authenticated transcription manifest is still pending. |
 | [Clipboard policy](0009-use-a-guarded-pasteboard-lease.md) | Guarded pasteboard delivery exists. Strict Clipboard Mode does not yet exist. |
-| [Optional diagnostics](0016-make-outbound-diagnostics-opt-in-and-content-free.md) | No outbound diagnostics. Content-free entries use macOS unified logging; there is no app-owned log viewer, export, or retention policy. |
+| [Internal diagnostics only](0016-make-outbound-diagnostics-opt-in-and-content-free.md) | First-party logging and inspectors are compiled out of public builds. No telemetry or diagnostic opt-in. OS/dependency logs remain a separate limitation. |
 | [Direct distribution](0022-distribute-directly-with-signed-updates.md) | GitHub DMGs and signed Sparkle updates exist. Automatic checks are opt-in and installation needs confirmation. A managed installer is pending. |
 | [Overlay placement](0031-position-the-status-overlay-predictably.md) | Upper-right placement is implemented. The display is selected from the pointer position when the overlay is positioned, not the captured destination. |
 | [OS window](0006-use-a-rolling-two-version-macos-window.md) and [hardware floor](0038-set-the-hardware-floor-from-release-evidence.md) | The build floor is Apple Silicon/macOS 26. A rolling policy is not evidence of validation on every eligible OS, chip, or RAM configuration. |

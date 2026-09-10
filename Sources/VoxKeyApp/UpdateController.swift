@@ -38,6 +38,7 @@ final class UpdateController: NSObject, SPUUpdaterDelegate, NSMenuItemValidation
     func start() {
         // Command-line tests and local builds must not join the public update feed.
         guard Bundle.main.object(forInfoDictionaryKey: "VoxKeyReleaseBuild") as? Bool == true else { return }
+        controller.updater.sendsSystemProfile = false
         controller.startUpdater()
     }
 
