@@ -25,11 +25,16 @@ if [[ "$build_kind" == "distribution" && "$configuration" != "release" ]]; then
 fi
 
 cd "$repo_root"
-swift build -c "$configuration" --arch arm64 --product VoxKey --force-resolved-versions
+swift build -c "$configuration" --arch arm64 --product VoxKey --force-resolved-versions \
+    -debug-info-format none -Xswiftc -DVOXKEY_PACKAGED \
+    -Xswiftc -file-prefix-map -Xswiftc "$repo_root=." \
+    -Xcc "-ffile-prefix-map=$repo_root=."
 
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$build_root/VoxKey" "$app/Contents/MacOS/VoxKey"
+# Remove linker debug-map paths before signing the executable.
+xcrun strip -S "$app/Contents/MacOS/VoxKey"
 cp "$repo_root/VoxKey/Info.plist" "$app/Contents/Info.plist"
 
 build_id="$(date -u +%Y%m%dT%H%M%SZ)-$(git rev-parse --short HEAD)"
@@ -99,4 +104,5 @@ else
 fi
 
 voxkey_verify_signature "$app" "$signing_identity"
+python3 "$repo_root/scripts/verify-artifact-privacy.py" "$app"
 echo "$app"

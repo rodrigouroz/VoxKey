@@ -17,6 +17,9 @@ plist_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' VoxKey/Info.p
     print -u2 "Tag must match Info.plist version ($plist_version), with a positive internal build number ($plist_build)."; exit 2
 }
 if [[ "$mode" == "notarized" ]]; then
+    [[ -n "${VOXKEY_PRIVACY_DENYLIST:-}" && -s "$VOXKEY_PRIVACY_DENYLIST" ]] || {
+        print -u2 'Set VOXKEY_PRIVACY_DENYLIST to a nonempty private file of forbidden identifiers.'; exit 2
+    }
     [[ -z "$(git status --porcelain)" ]] || { print -u2 "Commit all release inputs before packaging."; exit 2; }
     [[ "$(git rev-parse "$release_tag^{commit}")" == "$(git rev-parse HEAD)" ]] || {
         print -u2 "Check out the release tag before packaging."; exit 2
@@ -31,7 +34,14 @@ output="$repo_root/dist/$release_tag$suffix"
 [[ ! -e "$output" ]] || { print -u2 "Output already exists: $output. Move it aside before retrying."; exit 2; }
 mkdir -p "$output" "$repo_root/.build"
 work_dir="$(mktemp -d "$repo_root/.build/release-package.XXXXXX")"
-trap 'rm -rf "$work_dir"' EXIT
+mounted=0
+cleanup() {
+    if (( mounted )); then
+        hdiutil detach "$work_dir/mounted" >/dev/null || return
+    fi
+    rm -rf "$work_dir"
+}
+trap cleanup EXIT
 if [[ "$mode" == "notarized" ]]; then
     ./scripts/build-app.sh release distribution
     app="$repo_root/.build/distribution/VoxKey.app"
@@ -89,4 +99,12 @@ codesign --verify --deep --strict "$app"
 } > "$output/build-info.txt"
 cd "$output"
 shasum -a 256 "$dmg_name" > SHA256SUMS
+# Verify the actual compressed artifact after all signing and notarization steps.
+mkdir "$work_dir/mounted"
+hdiutil attach -readonly -nobrowse -mountpoint "$work_dir/mounted" "$output/$dmg_name" >/dev/null
+mounted=1
+python3 "$repo_root/scripts/verify-artifact-privacy.py" \
+    "$work_dir/mounted" "$output/build-info.txt" "$output/SHA256SUMS"
+hdiutil detach "$work_dir/mounted" >/dev/null
+mounted=0
 print "Created $output/$dmg_name"

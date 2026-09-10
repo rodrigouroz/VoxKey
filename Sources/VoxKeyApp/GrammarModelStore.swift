@@ -42,7 +42,12 @@ actor GrammarModelStore {
                   let bundle = Bundle(url: resources.appendingPathComponent("VoxKey_VoxKeyApp.bundle")) else { return nil }
             return bundle.resourceURL?.appendingPathComponent("GrammarPreparation")
         }
+        #if VOXKEY_PACKAGED
+        // Packaged resources must be self-contained, including compiled metadata.
+        return nil
+        #else
         return Bundle.module.resourceURL?.appendingPathComponent("GrammarPreparation")
+        #endif
     }
     static var defaultRoot: URL {
         URL.applicationSupportDirectory.appendingPathComponent("com.rodrigouroz.VoxKey/Models", isDirectory: true)

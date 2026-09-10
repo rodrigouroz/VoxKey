@@ -13,7 +13,12 @@ enum CaptureCue: String, CaseIterable, Sendable {
                   let bundle = Bundle(url: resources.appendingPathComponent("VoxKey_VoxKeyApp.bundle")) else { return nil }
             return bundle.url(forResource: rawValue, withExtension: "wav")
         }
+        #if VOXKEY_PACKAGED
+        // Exclude SwiftPM's generated absolute build path from packaged binaries.
+        return nil
+        #else
         return Bundle.module.url(forResource: rawValue, withExtension: "wav")
+        #endif
     }
 }
 

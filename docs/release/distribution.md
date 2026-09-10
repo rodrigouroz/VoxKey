@@ -91,6 +91,7 @@ changes clearly in the release notes. The example below prepares `v0.2.0`.
 swift test --force-resolved-versions --no-parallel
 git tag -s v0.2.0 -m 'VoxKey 0.2.0'
 export VOXKEY_TEAM_ID='TEAMID'
+export VOXKEY_PRIVACY_DENYLIST='/path/to/private-release-denylist.txt'
 ./scripts/package-release.sh v0.2.0
 ```
 
@@ -99,6 +100,21 @@ the committed lockfile, signs the app and Sparkle helpers with Hardened Runtime,
 and uploads an archive through the account already signed into Xcode. No password
 export is needed. Apple receives the app and bundled resources, not user data.
 Only an accepted, stapled app that passes Gatekeeper can proceed to packaging.
+
+Packaged builds omit debug information and the SwiftPM checkout resource fallback,
+remap compiler source paths, and strip linker debug paths before signing. A privacy
+gate scans the signed app and the mounted final DMG, including resources, symlink
+targets, extended attributes, and release metadata. It rejects home directories,
+private temporary directories, the active checkout path, machine names, and the
+maintainer's forbidden identifiers. A generic runtime temporary-file template used
+by the updater is not a developer build path.
+
+For notarized releases, `VOXKEY_PRIVACY_DENYLIST` must name a nonempty private UTF-8
+file containing one forbidden literal identifier per line. Keep employer names,
+private domains, and other personal terms there, outside tracked source. The gate
+never prints matched values. CI runs the portable path checks and gate regression
+tests; the maintainer's additional terms are checked locally before publication.
+Any new resource dependency or packaging change must pass the final-artifact scan.
 
 The output is an APFS/LZFSE DMG containing the **Developer ID signed, notarized,
 stapled app**, an Applications shortcut, and the license. With Xcode authentication,
