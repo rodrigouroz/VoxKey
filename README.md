@@ -10,9 +10,9 @@ recognition running entirely on your Mac.
 
 Requires **Apple Silicon** and **macOS 26 or later**.
 
-Packaged downloads and automatic updates are temporarily unavailable.
-You can [build VoxKey from source](#development). Existing installations continue
-to work.
+[Download VoxKey 0.2.1 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.2.1/VoxKey-v0.2.1-arm64.dmg),
+open the DMG, and drag VoxKey into Applications. You can also
+[build from source](#development).
 
 1. Launch VoxKey and grant Microphone and Accessibility access.
 2. Follow setup to download and prepare the English model.
@@ -73,7 +73,7 @@ asks before installing and restarting. Updates wait while dictation or Safety Ne
 recovery is in progress. You can also install any newer DMG manually.
 
 VoxKey supports English dictation. Editor compatibility and real-world latency
-are still being tested. See [0.2.0 release notes](docs/release/0.2.0.md) and
+are still being tested. See [0.2.1 release notes](docs/release/0.2.1.md) and
 [how to build and publish a release](docs/release/distribution.md).
 
 ## Development
