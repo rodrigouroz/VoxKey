@@ -94,8 +94,6 @@ codesign --verify --deep --strict "$app"
     fi
     print "Commit: $(git rev-parse HEAD)"
     print "Built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    swift --version 2>&1
-    xcodebuild -version
 } > "$output/build-info.txt"
 cd "$output"
 shasum -a 256 "$dmg_name" > SHA256SUMS
