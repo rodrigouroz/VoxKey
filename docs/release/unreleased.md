@@ -1,4 +1,4 @@
 # Unreleased
 
-The onboarding, download-feedback, and menu-alignment changes are collected in
-[0.4.0](0.4.0.md).
+The email-feedback, typography, and vocabulary-copy changes are collected in
+[0.5.0](0.5.0.md).

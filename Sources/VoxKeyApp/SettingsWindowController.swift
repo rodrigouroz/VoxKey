@@ -97,9 +97,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
         let feedbackButton = NSButton(title: "Send Feedback…", target: self, action: #selector(openFeedback))
         VoxKeyDesign.configureButton(feedbackButton)
-        feedbackButton.setAccessibilityHelp("Open GitHub to report a bug or suggest a feature.")
+        feedbackButton.setAccessibilityHelp("Email hello@rodrigouroz.com to report a bug or suggest a feature.")
+        let feedbackAddress = VoxKeyDesign.label("hello@rodrigouroz.com", style: .caption, color: VoxKeyDesign.secondaryInk)
+        feedbackAddress.isSelectable = true
         let feedback = VoxKeyDesign.horizontal([
-            VoxKeyDesign.label("Bugs or ideas? Share them on GitHub.", style: .caption, color: VoxKeyDesign.secondaryInk),
+            feedbackAddress,
             NSView(),
             feedbackButton
         ])
@@ -198,7 +200,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     @objc private func openFeedback() {
-        guard let url = URL(string: "https://github.com/rodrigouroz/VoxKey/issues/new/choose") else { return }
+        guard let url = URL(string: "mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback") else { return }
         NSWorkspace.shared.open(url)
     }
 }

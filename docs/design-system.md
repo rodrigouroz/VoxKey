@@ -2,8 +2,8 @@
 
 VoxKey windows are macOS windows first: system neutrals, native controls, and
 grouped-form cards. VoxKey owns three brand colors, forest green for actions,
-lime for the mark and highlights, and amber for attention, plus a serif voice
-for titles that it shares with the public page. Setup, Settings, Vocabulary,
+lime for the mark and highlights, and amber for attention. Native system
+sans-serif typography runs throughout the app. Setup, Settings, Vocabulary,
 Last Dictation, and the status overlay share `Sources/VoxKeyApp/VoxKeyDesign.swift`.
 New windows should use its components. The public page in `docs/styles.css`
 declares the brand values as CSS custom properties; change a color in both
@@ -62,13 +62,15 @@ ready state and SF Symbols for capturing, busy, attention, and not-ready states.
 
 ## Typography and geometry
 
-- Titles use the system serif, New York, through `TextStyle.windowTitle` (26 pt
+- Titles use the system sans-serif through `TextStyle.windowTitle` (26 pt
   bold) and `TextStyle.onboardingHero` (33 pt bold, reserved for “Press. Speak.
-  Release.”). Everything else is the system sans: section titles 17 pt semibold,
+  Release.”). The same family is used for section titles 17 pt semibold,
   item titles 14 pt semibold, body 13 pt with a medium `emphasis` variant,
   captions 12 pt, footnotes 11 pt with a medium variant for state labels,
   `micro` 10 pt medium for keycap-sized labels, and `indicator` for monospaced
   check marks. Always pick a `TextStyle`; do not set point sizes at call sites.
+- The public page keeps its editorial serif headings; native app headings use
+  the system family to stay consistent with macOS controls.
 - No eyebrows in the app. Monospaced all-caps labels are a landing-page pattern
   and stay on the public page. Window titles and section titles carry orientation.
 - On the public page, body copy and demo captions never drop below 11 px, and

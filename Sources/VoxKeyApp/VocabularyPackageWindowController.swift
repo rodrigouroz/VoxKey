@@ -91,7 +91,7 @@ final class VocabularyPackageWindowController: NSWindowController, NSSearchField
         contents.setSelectedRange(NSRange(location: 0, length: 0))
         contents.scroll(.zero)
         countLabel.stringValue = query.isEmpty
-            ? "\(terms.count) terms · Read only"
-            : "\(terms.count) of \(package.terms.count) terms · Read only"
+            ? "\(terms.count) \(terms.count == 1 ? "term" : "terms") · Read only"
+            : "\(terms.count) of \(package.terms.count) \(package.terms.count == 1 ? "term" : "terms") · Read only"
     }
 }

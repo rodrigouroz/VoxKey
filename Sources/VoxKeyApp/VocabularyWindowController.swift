@@ -76,7 +76,7 @@ final class VocabularyWindowController: NSWindowController, NSWindowDelegate, NS
         ], spacing: VoxKeyDesign.Layout.sectionSpacing)
         VoxKeyDesign.install(content, in: window)
         refreshPackages()
-        status.stringValue = "\(store.personalTerms.count) personal terms"
+        status.stringValue = "\(store.personalTerms.count) personal \(store.personalTerms.count == 1 ? "term" : "terms")"
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -97,7 +97,7 @@ final class VocabularyWindowController: NSWindowController, NSWindowDelegate, NS
         do {
             try store.savePersonalTerms(personalEditor.string)
             personalEditor.string = store.personalTerms.joined(separator: "\n")
-            status.stringValue = "Saved · \(store.personalTerms.count) personal terms"
+            status.stringValue = "Saved · \(store.personalTerms.count) personal \(store.personalTerms.count == 1 ? "term" : "terms")"
         } catch { showError(error) }
     }
 
@@ -125,9 +125,9 @@ final class VocabularyWindowController: NSWindowController, NSWindowDelegate, NS
         activeButton.state = selected?.active == true ? .on : .off
         if let selected {
             let package = selected.package
-            packageDetails.stringValue = "\(package.terms.count) terms · English · \(package.manifest.classification)\n\(selected.active ? "Active for new dictations." : "Imported and inactive. Turn on Use this package to activate it.")"
+            packageDetails.stringValue = "\(package.terms.count) \(package.terms.count == 1 ? "term" : "terms") · English · \(package.manifest.classification)\n\(selected.active ? "Active for new dictations." : "Imported and inactive. Turn on Use this package to activate it.")"
         } else {
-            packageDetails.stringValue = "Import a package folder or its manifest.json file.\nReview its details before turning it on."
+            packageDetails.stringValue = "Import a vocabulary ZIP, package folder, or manifest.json file.\nReview its details before turning it on."
         }
     }
 
@@ -175,7 +175,7 @@ final class VocabularyWindowController: NSWindowController, NSWindowDelegate, NS
         let replacing = store.packages.contains { $0.package.manifest.identifier == manifest.identifier }
         let alert = NSAlert()
         alert.messageText = manifest.displayName
-        alert.informativeText = "Version \(manifest.version) · \(package.terms.count) terms\nEnglish · \(manifest.classification)\n\n\(replacing ? "This replaces the imported version and turns it off." : "The package will be imported inactive.") Turn on Use this package when you’re ready."
+        alert.informativeText = "Version \(manifest.version) · \(package.terms.count) \(package.terms.count == 1 ? "term" : "terms")\nEnglish · \(manifest.classification)\n\n\(replacing ? "This replaces the imported version and turns it off." : "The package will be imported inactive.") Turn on Use this package when you’re ready."
         alert.addButton(withTitle: replacing ? "Replace Package" : "Import Package")
         alert.addButton(withTitle: "Cancel")
         alert.beginSheetModal(for: window) { [weak self] response in

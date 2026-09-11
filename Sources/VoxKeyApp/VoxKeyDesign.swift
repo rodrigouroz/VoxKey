@@ -19,14 +19,14 @@ enum VoxKeyDesign {
     }
 
     /// Every label in the app picks one of these. Ad-hoc sizes belong here, not at call sites.
-    /// Titles use the system serif (New York) so the app shares the public page's voice.
+    /// Titles and controls share the native system sans-serif family.
     enum TextStyle {
         case windowTitle, sectionTitle, itemTitle, body, emphasis, caption
         case footnote, footnoteEmphasis, micro, indicator, onboardingHero
 
         var font: NSFont {
             switch self {
-            case .windowTitle: Self.serif(ofSize: 26, weight: .bold)
+            case .windowTitle: .systemFont(ofSize: 26, weight: .bold)
             case .sectionTitle: .systemFont(ofSize: 17, weight: .semibold)
             case .itemTitle: .systemFont(ofSize: 14, weight: .semibold)
             case .body: .systemFont(ofSize: 13)
@@ -36,15 +36,8 @@ enum VoxKeyDesign {
             case .footnoteEmphasis: .systemFont(ofSize: 11, weight: .medium)
             case .micro: .systemFont(ofSize: 10, weight: .medium)
             case .indicator: .monospacedSystemFont(ofSize: 11, weight: .semibold)
-            case .onboardingHero: Self.serif(ofSize: 33, weight: .bold)
+            case .onboardingHero: .systemFont(ofSize: 33, weight: .bold)
             }
-        }
-
-        private static func serif(ofSize size: CGFloat, weight: NSFont.Weight) -> NSFont {
-            let system = NSFont.systemFont(ofSize: size, weight: weight)
-            guard let descriptor = system.fontDescriptor.withDesign(.serif),
-                  let serif = NSFont(descriptor: descriptor, size: size) else { return system }
-            return serif
         }
     }
 
