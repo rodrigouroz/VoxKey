@@ -30,10 +30,45 @@ final class UpdateInstallGate {
     }
 }
 
+// Sparkle's Objective-C UI delegate runs on the main thread but lacks actor annotations.
 @MainActor
-final class UpdateController: NSObject, SPUUpdaterDelegate, NSMenuItemValidation {
+final class UpdateController: NSObject, SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverDelegate, NSMenuItemValidation {
     let installation = UpdateInstallGate()
-    private lazy var controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: self, userDriverDelegate: nil)
+    private lazy var controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: self, userDriverDelegate: self)
+    private weak var statusItem: NSStatusItem?
+    private var availableVersion: String?
+
+    func attachReminder(to statusItem: NSStatusItem) {
+        self.statusItem = statusItem
+        refreshReminder()
+    }
+
+    private func refreshReminder() {
+        // Keep the dictation icon intact and add a persistent, accessible reminder.
+        statusItem?.button?.title = availableVersion == nil ? "" : " Update"
+        statusItem?.button?.imagePosition = availableVersion == nil ? .imageOnly : .imageLeading
+        statusItem?.button?.toolTip = availableVersion.map { "VoxKey \($0) is available. Open the menu to update." }
+    }
+
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem,
+                                                              andInImmediateFocus immediateFocus: Bool) -> Bool {
+        // Setup temporarily hides the status item and puts VoxKey in the Dock;
+        // let Sparkle use its normal foreground-app presentation in that case.
+        (immediateFocus || statusItem?.isVisible == false) && installation.canInstall
+    }
+
+    func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem,
+                                                   state: SPUUserUpdateState) {
+        availableVersion = update.displayVersionString
+        refreshReminder()
+    }
+
+    func standardUserDriverWillFinishUpdateSession() {
+        availableVersion = nil
+        refreshReminder()
+    }
 
     func start() {
         // Command-line tests and local builds must not join the public update feed.
@@ -45,7 +80,14 @@ final class UpdateController: NSObject, SPUUpdaterDelegate, NSMenuItemValidation
     func addMenuItems(to menu: NSMenu) {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "development"
         menu.addItem(NSMenuItem(title: "VoxKey \(version)", action: nil, keyEquivalent: ""))
-        let check = NSMenuItem(title: installation.isWaiting ? "Update waiting for dictation recovery…" : "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+        let title = if installation.isWaiting {
+            "Update waiting for dictation recovery…"
+        } else if let availableVersion {
+            "Update to VoxKey \(availableVersion)…"
+        } else {
+            "Check for Updates…"
+        }
+        let check = NSMenuItem(title: title, action: #selector(checkForUpdates), keyEquivalent: "")
         check.target = self
         check.isEnabled = controller.updater.canCheckForUpdates && installation.canCheckForUpdates
         menu.addItem(check)

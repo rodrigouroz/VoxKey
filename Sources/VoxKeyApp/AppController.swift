@@ -195,6 +195,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         item.menu = menu
         statusItem = item
+        updates.attachReminder(to: item)
         rebuildMenu(menu, snapshot: latestSnapshot)
     }
 
