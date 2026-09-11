@@ -9,6 +9,48 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Signed updates for VoxKey.</description>
         <language>en</language>
         <item>
+            <title>0.5.0</title>
+            <pubDate>Fri, 11 Sep 2026 11:41:25 -0300</pubDate>
+            <link>https://rodrigouroz.github.io/VoxKey/</link>
+            <sparkle:version>12</sparkle:version>
+            <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# VoxKey 0.5.0
+
+Send feedback directly by email and enjoy more consistent typography throughout
+the app. Requires Apple Silicon and macOS 26 or later. Internal build number: 12.
+
+## Easier feedback
+
+- Send Feedback in Settings opens an email draft to hello@rodrigouroz.com with
+  the subject “VoxKey feedback.” The address is visible and can be copied.
+- Feedback links on the English and Spanish websites also open an email draft.
+
+## Consistent native typography
+
+App headings now use the macOS system font, matching the controls and body text.
+This includes onboarding, Models and Languages, Vocabulary, Package Contents,
+and Last Dictation/Safety Net.
+
+## Clearer vocabulary copy
+
+- Single-item counts use “1 term,” including personal terms, package details,
+  search results, and import confirmation.
+- Empty-state import instructions now include vocabulary ZIP files.
+
+## Validation and limits
+
+The automated test suite passed, including native layout and vocabulary tests.
+App windows were rendered and inspected in light and dark appearances.
+
+First-install dictation on another Mac and an end-to-end Sparkle update have not
+been re-tested for this release. Editor compatibility still depends on the
+destination application's macOS Accessibility support.
+]]></description>
+            <enclosure url="https://github.com/rodrigouroz/VoxKey/releases/download/v0.5.0/VoxKey-v0.5.0-arm64.dmg" length="2635099" type="application/octet-stream" sparkle:edSignature="9MGX/4ocAdVM2U6Zu+f5ov3VIpE3AgEXmCeLEoPhEhV188pVK3I5SjX5/LnC1wIQeZZth2NY7wsHkqW+cEahCA=="/>
+        </item>
+        <item>
             <title>0.4.0</title>
             <pubDate>Thu, 10 Sep 2026 17:45:13 -0300</pubDate>
             <link>https://rodrigouroz.github.io/VoxKey/</link>
@@ -214,6 +256,6 @@ vocabulary.
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 9z69w3VqqUkNlTuJHYrv3BV7P+WuU5R6Zkq43uwb6u21BdTgHszQ2ESAgH9aL4LyHQuRYzP+VeflFkZ09wgjDw==
-length: 12134
+edSignature: 8ZAT3chT0nOvh5FV9i6nd1QTtS8RL/Kjt0F+Fis9ozQXssIg5Zm/Oqc+WLq53wI1YsMDlY3ie2YrKNoq1IF2Bw==
+length: 14233
 -->
