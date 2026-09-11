@@ -41,8 +41,10 @@ import VoxKeyCore
 @MainActor @Test(arguments: [NSAppearance.Name.aqua, .darkAqua])
 func modelCardsKeepDownloadsSeparateFromActivation(_ appearance: NSAppearance.Name) throws {
     _ = NSApplication.shared
-    let controller = ModelSettingsWindowController()
-    controller.window?.appearance = NSAppearance(named: appearance)
+    let settings = SettingsWindowController()
+    settings.selectPane(.models)
+    let controller = settings.models
+    settings.window?.appearance = NSAppearance(named: appearance)
     let current = TranscriptionConfiguration()
     let turbo = try #require(controller.cards.first { $0.model == .turboCompressed })
     let baseline = try #require(controller.cards.first { $0.model == .distilCompressed })
@@ -76,7 +78,7 @@ func modelCardsKeepDownloadsSeparateFromActivation(_ appearance: NSAppearance.Na
     #expect(!baseline.actionButton.isEnabled)
     #expect(!controller.languagePopup.isEnabled)
     #expect(turbo.stateLabel.stringValue == "Active ✓")
-    let root = try #require(controller.window?.contentView)
+    let root = try #require(settings.window?.contentView)
     root.layoutSubtreeIfNeeded()
     #expect(abs(controller.cards[0].bounds.width - controller.cards[2].bounds.width) < 1)
     #expect(controller.cards[0].bounds.width > 360)
@@ -120,21 +122,20 @@ func modelCardsKeepDownloadsSeparateFromActivation(_ appearance: NSAppearance.Na
     let onboarding = OnboardingWindowController()
     let settings = SettingsWindowController()
     var setupOpened = false
-    var settingsOpened = false
     onboarding.onChooseModel = { setupOpened = true }
-    settings.onChooseModel = { settingsOpened = true }
     onboarding.update(microphone: true, accessibility: true, modelPhase: .required, message: nil)
     func findButton(_ view: NSView, title: String) -> NSButton? {
         if let button = view as? NSButton, button.title == title { return button }
         return view.subviews.lazy.compactMap { findButton($0, title: title) }.first
     }
     let setupRoot = try #require(onboarding.window?.contentView)
-    let settingsRoot = try #require(settings.window?.contentView)
     let setupButton = try #require(findButton(setupRoot, title: "Choose Model…"))
     #expect(!setupButton.isHiddenOrHasHiddenAncestor)
     setupButton.performClick(nil)
-    try #require(findButton(settingsRoot, title: "Manage Models…")).performClick(nil)
-    #expect(setupOpened && settingsOpened)
+    settings.selectPane(.models)
+    #expect(setupOpened)
+    #expect(settings.models.view.window === settings.window)
+    #expect(settings.models.cards.allSatisfy { $0.window === settings.window })
     for card in [onboarding.grammar, settings.grammar] {
         card.update(enabled: true, state: .ready)
         card.updateLanguage(supported: false)

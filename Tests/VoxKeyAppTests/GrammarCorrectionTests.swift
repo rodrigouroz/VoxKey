@@ -32,6 +32,7 @@ func optionalGrammarControlsFitAndStayInSync(_ appearance: NSAppearance.Name, _ 
     // one to the other; here both receive the same state and must render it.
     let setup = OnboardingWindowController(grammarAvailable: true)
     let settings = SettingsWindowController(grammarAvailable: true)
+    settings.selectPane(.dictation)
     #expect(setup.setupGrammarCheckbox.state == .off)
     #expect(settings.grammarCheckbox.state == .off)
     var requested: [Bool] = []

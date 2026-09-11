@@ -160,8 +160,11 @@ enum VoxKeyDesign {
     static func install(_ content: NSView, in window: NSWindow, fillsHeight: Bool = false) {
         window.titlebarAppearsTransparent = true
         window.backgroundColor = canvas
+        window.contentView = contentView(content, fillsHeight: fillsHeight)
+    }
+
+    static func contentView(_ content: NSView, fillsHeight: Bool = false) -> NSView {
         let root = VoxKeyCardView(fill: canvas, border: .clear, cornerRadius: 0)
-        window.contentView = root
         content.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(content)
         NSLayoutConstraint.activate([
@@ -172,6 +175,7 @@ enum VoxKeyDesign {
                 ? content.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -Layout.windowVerticalInset)
                 : content.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor, constant: -Layout.windowVerticalInset)
         ])
+        return root
     }
 
     static func configureButton(_ button: NSButton, primary: Bool = false) {

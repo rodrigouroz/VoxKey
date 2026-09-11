@@ -6,7 +6,7 @@ import VoxKeyCore
 @MainActor @Test
 func firstModelActivationUsesTheLanguageChosenBeforeDownloadFinishes() throws {
     _ = NSApplication.shared
-    let controller = ModelSettingsWindowController()
+    let controller = ModelSettingsViewController()
     let configuration = TranscriptionConfiguration()
     controller.update(active: configuration, ready: false, installed: [], busy: false)
     #expect(!controller.languagePopup.isHiddenOrHasHiddenAncestor)
@@ -63,7 +63,9 @@ func onboardingExposesLanguageAndShortcutBeforeTheFirstDictation(_ appearance: N
 func modelDownloadFeedbackCoversStartupTransferFinalizationAndRetry() throws {
     _ = NSApplication.shared
     let setup = OnboardingWindowController()
-    let models = ModelSettingsWindowController()
+    let settings = SettingsWindowController()
+    settings.selectPane(.models)
+    let models = settings.models
     let card = try #require(models.cards.first { $0.model == .turboCompressed })
     for fraction in [0.0, 0.42, 1.0, 0.0] {
         let status = ModelDownloadStatus(fraction: fraction, elapsed: 75)
@@ -79,7 +81,7 @@ func modelDownloadFeedbackCoversStartupTransferFinalizationAndRetry() throws {
         #expect(models.statusLabel.stringValue.contains("1m 15s elapsed"))
         #expect(models.statusLabel.stringValue.contains("Time remaining unavailable"))
         if let directory = ProcessInfo.processInfo.environment["VOXKEY_SETTINGS_PREVIEW_DIR"], fraction < 1 {
-            for (name, window) in [("setup", setup.window), ("models", models.window)] {
+            for (name, window) in [("setup", setup.window), ("models", settings.window)] {
                 let root = try #require(window?.contentView)
                 root.layoutSubtreeIfNeeded()
                 let bitmap = try #require(root.bitmapImageRepForCachingDisplay(in: root.bounds))

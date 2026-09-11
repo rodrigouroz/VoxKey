@@ -159,6 +159,7 @@ private extension NSView {
 func dictationSettingsFitInBothAppearances(_ appearance: NSAppearance.Name, _ grammarAvailable: Bool) throws {
     _ = NSApplication.shared
     let controller = SettingsWindowController(grammarAvailable: grammarAvailable)
+    controller.selectPane(.dictation)
     controller.window?.appearance = NSAppearance(named: appearance)
     controller.updateTrigger(.rightCommand)
     controller.updateCaptureMode(.toggle)

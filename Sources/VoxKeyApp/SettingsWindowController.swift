@@ -1,18 +1,44 @@
 import AppKit
 import VoxKeyCore
 
-/// Everyday preferences: trigger, capture gesture, microphone, grammar, login.
+/// A single window for everyday preferences and the speech-model library.
 /// First-run setup and the readiness check live in OnboardingWindowController.
 @MainActor
-final class SettingsWindowController: NSWindowController, NSWindowDelegate {
+final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate {
+    enum Pane: String, CaseIterable {
+        case general, dictation, models
+
+        var title: String {
+            switch self {
+            case .general: "General"
+            case .dictation: "Dictation"
+            case .models: "Models & Languages"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .general: "gearshape"
+            case .dictation: "mic"
+            case .models: "waveform"
+            }
+        }
+
+        var identifier: NSToolbarItem.Identifier { .init(rawValue) }
+    }
+
+    private(set) var selectedPane = Pane.general
+    let models = ModelSettingsViewController()
+    private var panes: [Pane: NSView] = [:]
+    private let defaults: UserDefaults?
+    private let grammarAvailable: Bool
+    private static let panePreferenceKey = "VoxKeySettingsPane"
     var onTriggerChanged: ((DictationTrigger) -> Void)?
     var onCaptureModeChanged: ((CaptureMode) -> Void)?
     var onMicrophoneChanged: ((String?) -> Void)?
     var onLaunchAtLoginChanged: ((Bool) -> Void)?
     var onGrammarCorrectionChanged: ((Bool) -> Void)?
     var onPrepareGrammarModel: (() -> Void)?
-    var onChooseModel: (() -> Void)?
-    let modelSummary = VoxKeyDesign.label("Choose a speech model.", style: .caption, color: VoxKeyDesign.secondaryInk)
 
     let triggerPopup = NSPopUpButton()
     let toggleCheckbox = NSButton(checkboxWithTitle: "Toggle Dictation", target: nil, action: nil)
@@ -32,27 +58,23 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     init(
         activationCoordinator: ApplicationActivationCoordinator = ApplicationActivationCoordinator(),
-        grammarAvailable: Bool = GrammarCorrector.isAvailable
+        grammarAvailable: Bool = GrammarCorrector.isAvailable,
+        defaults: UserDefaults? = nil
     ) {
         self.activationCoordinator = activationCoordinator
+        self.grammarAvailable = grammarAvailable
+        self.defaults = defaults
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: grammarAvailable ? 810 : 670),
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 270),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
-        window.title = "VoxKey Settings"
         window.isReleasedWhenClosed = false
-        window.center()
+        window.backgroundColor = VoxKeyDesign.canvas
+        window.toolbarStyle = .preference
         super.init(window: window)
         window.delegate = self
-
-        let modelsButton = NSButton(title: "Manage Models…", target: self, action: #selector(chooseModel))
-        VoxKeyDesign.configureButton(modelsButton)
-        let models = VoxKeyDesign.section([
-            VoxKeyDesign.horizontal([VoxKeyDesign.label("Speech model", style: .sectionTitle), NSView(), modelsButton]),
-            modelSummary
-        ])
 
         triggerPopup.addItems(withTitles: DictationTrigger.allCases.map(\.displayName))
         triggerPopup.setAccessibilityLabel("Dictation trigger")
@@ -100,17 +122,22 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         feedbackButton.setAccessibilityHelp("Email hello@rodrigouroz.com to report a bug or suggest a feature.")
         let feedbackAddress = VoxKeyDesign.label("hello@rodrigouroz.com", style: .caption, color: VoxKeyDesign.secondaryInk)
         feedbackAddress.isSelectable = true
-        let feedback = VoxKeyDesign.horizontal([
-            feedbackAddress,
-            NSView(),
-            feedbackButton
+        let feedback = VoxKeyDesign.section([
+            VoxKeyDesign.label("Feedback", style: .sectionTitle),
+            VoxKeyDesign.horizontal([feedbackAddress, NSView(), feedbackButton])
         ])
 
-        let content = VoxKeyDesign.vertical(
-            [models, dictation, microphone, grammar, general, feedback],
-            spacing: VoxKeyDesign.Layout.sectionSpacing
-        )
-        VoxKeyDesign.install(content, in: window)
+        panes[.general] = VoxKeyDesign.contentView(VoxKeyDesign.vertical([general, feedback], spacing: VoxKeyDesign.Layout.sectionSpacing))
+        panes[.dictation] = VoxKeyDesign.contentView(VoxKeyDesign.vertical([dictation, microphone, grammar], spacing: VoxKeyDesign.Layout.sectionSpacing))
+        panes[.models] = models.view
+        let toolbar = NSToolbar(identifier: "VoxKey.Settings")
+        toolbar.delegate = self
+        toolbar.allowsUserCustomization = false
+        toolbar.allowsDisplayModeCustomization = false
+        toolbar.displayMode = .iconAndLabel
+        window.toolbar = toolbar
+        selectPane(Pane(rawValue: defaults?.string(forKey: Self.panePreferenceKey) ?? "") ?? .general)
+        window.center()
         updateMicrophones(AudioInputCatalog(), pinnedUID: nil)
         updateTrigger(.globe)
         updateCaptureMode(.hold)
@@ -120,13 +147,62 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func present() {
+    func present(pane: Pane? = nil) {
+        if let pane { selectPane(pane) }
         showWindow(nil)
         window?.orderFrontRegardless()
         activationCoordinator.present { [weak window] in
             guard window?.isVisible == true else { return }
             window?.makeKeyAndOrderFront(nil)
         }
+    }
+
+    func selectPane(_ pane: Pane) {
+        guard let window, let content = panes[pane] else { return }
+        window.makeFirstResponder(nil)
+        let topLeft = NSPoint(x: window.frame.minX, y: window.frame.maxY)
+        selectedPane = pane
+        window.contentView = content
+        let size: NSSize = switch pane {
+        case .general: NSSize(width: 580, height: 270)
+        case .dictation: NSSize(width: 580, height: grammarAvailable ? 590 : 440)
+        case .models: NSSize(width: 820, height: 750)
+        }
+        window.setContentSize(size)
+        window.setFrameTopLeftPoint(topLeft)
+        window.title = pane.title
+        window.toolbar?.selectedItemIdentifier = pane.identifier
+        defaults?.set(pane.rawValue, forKey: Self.panePreferenceKey)
+        content.layoutSubtreeIfNeeded()
+        window.recalculateKeyViewLoop()
+    }
+
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        Pane.allCases.map(\.identifier)
+    }
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        toolbarDefaultItemIdentifiers(toolbar)
+    }
+
+    func toolbarSelectableItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        toolbarDefaultItemIdentifiers(toolbar)
+    }
+
+    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
+                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        guard let pane = Pane(rawValue: identifier.rawValue) else { return nil }
+        let item = NSToolbarItem(itemIdentifier: identifier)
+        item.label = pane.title
+        item.image = NSImage(systemSymbolName: pane.symbol, accessibilityDescription: pane.title)
+        item.target = self
+        item.action = #selector(changePane(_:))
+        return item
+    }
+
+    @objc private func changePane(_ sender: NSToolbarItem) {
+        guard let pane = Pane(rawValue: sender.itemIdentifier.rawValue) else { return }
+        selectPane(pane)
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -177,8 +253,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     func updateGrammarCorrection(enabled: Bool, state: GrammarCorrectionState) {
         grammar.update(enabled: enabled, state: state)
     }
-
-    @objc private func chooseModel() { onChooseModel?() }
 
     @objc private func changeTrigger() {
         let trigger = DictationTrigger.allCases[triggerPopup.indexOfSelectedItem]

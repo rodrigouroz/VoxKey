@@ -23,7 +23,8 @@ VoxKey lives in the menu bar. Turn off **Capture Sounds** for silent use and spe
 when the overlay says **Listening**. Add recognition hints in **Vocabulary…** or
 import a vocabulary package and inspect it with **View Contents**.
 
-Open **Models and Languages…** from the menu bar or Settings to compare local
+Open **Settings… → Models & Languages** (or **Models and Languages…** from the
+menu bar, which opens the same Settings pane) to compare local
 speech models. Each card explains the model, download size, and supported languages.
 Choose **Download** to keep a model on this Mac, then **Use Model** to activate it.
 You can keep several downloaded models; only one is active. Downloads leave the
@@ -47,12 +48,12 @@ Caps Lock is unsupported. A brief chord-detection delay precedes activation;
 joining a shortcut while holding the trigger cancels dictation. Left modifiers
 keep their normal meaning. Settings changes apply on the next press.
 
-Enable **Toggle Dictation** in Settings to press once to start and
+Enable **Toggle Dictation** in **Settings… → Dictation** to press once to start and
 again to finish. The overlay stays visibly active and names the finish trigger.
 Escape cancels; initial silence stops capture after about three seconds, and
 the ten-minute Dictation Limit still applies with a 70-second warning.
 
-Choose a **Microphone** in Settings to pin an input just for VoxKey. The default
+Choose a **Microphone** in **Settings… → Dictation** to pin an input just for VoxKey. The default
 follows macOS. If a pinned input is disconnected, the next dictation uses the
 system default and Settings explains the fallback. Changes never move an open
 capture; losing its microphone ends that capture safely.
@@ -61,7 +62,7 @@ While **Listening**, six small bars show incoming microphone audio. No bars and
 “No audio detected” mean you should check Microphone in Settings. The meter
 hides as soon as capture ends and never displays words or a microphone name.
 
-Enable **Correct grammar locally** during setup or in **Settings…**
+Enable **Correct grammar locally** during setup or in **Settings… → Dictation**
 to download the optional grammar model (519 MB). It defaults off. Dictation continues
 during preparation; correction starts automatically when the model is ready and works
 offline afterward. The model is for noncommercial use and may change words.

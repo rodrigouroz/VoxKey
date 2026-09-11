@@ -1,9 +1,9 @@
 import AppKit
 import VoxKeyCore
 
-/// The same model library is reachable from first-run setup, Settings, and the menu bar.
+/// One retained Settings pane, shared by setup and menu-bar navigation.
 @MainActor
-final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate {
+final class ModelSettingsViewController: NSViewController {
     var onActivate: ((TranscriptionConfiguration) -> Void)?
     var onDownload: ((TranscriptionModel) -> Void)?
     let cards = TranscriptionModel.allCases.map { TranscriptionModelCard(model: $0) }
@@ -12,25 +12,17 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
     let activeLabel = VoxKeyDesign.label("", style: .caption, color: VoxKeyDesign.secondaryInk)
     let statusLabel = VoxKeyDesign.label("", style: .caption, color: VoxKeyDesign.secondaryInk)
     private let languagePanel: VoxKeyCardView
-    private let activationCoordinator: ApplicationActivationCoordinator
     private var active = TranscriptionConfiguration()
     private var ready = false
     private var selectedLanguage = "en"
     private var availableLanguages = TranscriptionModel.turboFull.languages
 
-    init(activationCoordinator: ApplicationActivationCoordinator = ApplicationActivationCoordinator()) {
-        self.activationCoordinator = activationCoordinator
+    init() {
         languagePanel = VoxKeyDesign.section([
             VoxKeyDesign.horizontal([VoxKeyDesign.label("Dictation language", style: .emphasis), languagePopup]),
             grammarNote
         ])
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 820, height: 750),
-                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
-        window.title = "Models and Languages"
-        window.isReleasedWhenClosed = false
-        window.center()
-        super.init(window: window)
-        window.delegate = self
+        super.init(nibName: nil, bundle: nil)
         languagePopup.setAccessibilityLabel("Dictation language")
         languagePopup.target = self
         languagePopup.action = #selector(changeLanguage)
@@ -53,20 +45,11 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
             VoxKeyDesign.label("Download any models you want to keep. Activate one for dictation.\nRecognition varies with your voice; compare a few familiar phrases.", color: VoxKeyDesign.secondaryInk),
             activeLabel, grid, languagePanel, statusLabel
         ], spacing: 16)
-        VoxKeyDesign.install(content, in: window)
+        view = VoxKeyDesign.contentView(content)
         update(active: active, ready: false, installed: [], busy: false)
     }
 
     required init?(coder: NSCoder) { nil }
-
-    func present() {
-        showWindow(nil)
-        activationCoordinator.present { [weak window] in window?.makeKeyAndOrderFront(nil) }
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        activationCoordinator.restorePreviousApplication()
-    }
 
     func update(active: TranscriptionConfiguration, ready: Bool, installed: Set<TranscriptionModel>, busy: Bool,
                 downloading: TranscriptionModel? = nil, downloadProgress: Double = 0,
@@ -99,7 +82,7 @@ final class ModelSettingsWindowController: NSWindowController, NSWindowDelegate 
         grammarNote.stringValue = !ready
             ? "Choose your spoken language before Use Model. Spanish and automatic detection require Whisper v3 Turbo."
             : active.supportsGrammarCorrection
-            ? "Optional English grammar correction is managed in Settings."
+            ? "Optional English grammar correction is in the Dictation pane."
             : "Grammar correction is paused for this language setting. Dictation stays in the spoken language."
         statusLabel.stringValue = message ?? (downloading != nil
             ? ModelDownloadStatus(fraction: downloadProgress, elapsed: downloadElapsed).detail

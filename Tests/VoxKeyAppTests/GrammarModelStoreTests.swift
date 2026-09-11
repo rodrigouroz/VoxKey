@@ -114,6 +114,7 @@ func packagedGrammarControlsAreVisibleAndOffByDefault() throws {
     #expect(!setup.setupGrammarCheckbox.isHiddenOrHasHiddenAncestor)
     #expect(setup.setupGrammarCheckbox.state == .off)
     let settings = SettingsWindowController(grammarAvailable: available)
+    settings.selectPane(.dictation)
     #expect(!settings.grammarCheckbox.isHiddenOrHasHiddenAncestor)
     #expect(settings.grammarCheckbox.state == .off)
 }

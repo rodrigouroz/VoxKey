@@ -16,7 +16,6 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let updates = UpdateController()
     private let overlay = StatusOverlayController()
     let onboarding = OnboardingWindowController()
-    private var modelSettings: ModelSettingsWindowController?
     private var activeModelReady = false
     private let modelLibrary = TranscriptionModelLibrary()
     private var installedModels: Set<TranscriptionModel> = []
@@ -27,7 +26,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var preparingModel: TranscriptionModel?
     private var modelSelectionMessage: String?
     private var transcriptionConfiguration: TranscriptionConfiguration { TranscriptionConfiguration(defaults: defaults) }
-    let settings = SettingsWindowController()
+    let settings: SettingsWindowController
     private lazy var vocabularyStore = Result { try VocabularyStore() }
     private var vocabularyWindow: VocabularyWindowController?
 
@@ -67,6 +66,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        settings = SettingsWindowController(defaults: defaults)
         super.init()
         triggerMonitor.trigger = DictationTrigger(rawValue: defaults.string(forKey: triggerKey) ?? "") ?? .globe
         onboarding.onClose = { [weak self] in
@@ -169,6 +169,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         let application = NSMenuItem()
         let applicationMenu = NSMenu(title: "VoxKey")
+        let settingsItem = applicationMenu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        applicationMenu.addItem(.separator())
         applicationMenu.addItem(withTitle: "Quit VoxKey", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         application.submenu = applicationMenu
         menu.addItem(application)
@@ -267,7 +270,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func configureWindows() {
         onboarding.onChooseModel = { [weak self] in self?.openModelSettings() }
-        settings.onChooseModel = { [weak self] in self?.openModelSettings() }
+        settings.models.onActivate = { [weak self] configuration in
+            Task { @MainActor in await self?.prepareModel(download: false, selection: configuration) }
+        }
+        settings.models.onDownload = { [weak self] model in self?.downloadModel(model) }
         updateGrammarLanguage()
         let grammarEnabled = defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable
         updateGrammarCorrection(enabled: grammarEnabled, state: grammarEnabled ? .waiting : .off)
@@ -585,10 +591,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let configuration = transcriptionConfiguration
         onboarding.updateDictationChoices(configuration: configuration, ready: activeModelReady,
                                            busy: modelPreparationTaskActive || latestSnapshot.phase.isBusy)
-        settings.modelSummary.stringValue = activeModelReady
-            ? "\(configuration.model.name) · \(TranscriptionModel.languageName(configuration.language))"
-            : "Download a model and choose which one to use."
-        modelSettings?.update(active: configuration, ready: activeModelReady, installed: installedModels,
+        settings.models.update(active: configuration, ready: activeModelReady, installed: installedModels,
                               busy: modelPreparationTaskActive || latestSnapshot.phase.isBusy,
                               downloading: downloadingModel, downloadProgress: modelDownloadProgress,
                               downloadElapsed: modelDownloadElapsed,
@@ -596,16 +599,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openModelSettings() {
-        if modelSettings == nil {
-            let controller = ModelSettingsWindowController()
-            controller.onActivate = { [weak self] configuration in
-                Task { @MainActor in await self?.prepareModel(download: false, selection: configuration) }
-            }
-            controller.onDownload = { [weak self] model in self?.downloadModel(model) }
-            modelSettings = controller
-        }
         updateModelSettings()
-        modelSettings?.present()
+        updateLaunchAtLogin()
+        settings.present(pane: .models)
         Task {
             installedModels = await modelLibrary.installedModels()
             updateModelSettings()

@@ -91,9 +91,13 @@ ready state and SF Symbols for capturing, busy, attention, and not-ready states.
   hero, three checks, optional grammar, readiness check, Finish Setup. It
   reopens from the menu while any check is unmet and shows the app in the Dock
   so permission dialogs cannot strand the user.
-- **Settings** (`SettingsWindowController`, ⌘,) holds everyday preferences:
-  trigger, Toggle Dictation, microphone, grammar, Launch at Login, feedback. It
-  is an ordinary window that returns focus to the previous app when closed.
+- **Settings** (`SettingsWindowController`, ⌘,) is one window with a persistent,
+  noncustomizable native toolbar: General (login and feedback), Dictation
+  (trigger, Toggle Dictation, microphone, grammar), and Models & Languages
+  (`ModelSettingsViewController`). It remembers the selected pane, updates its
+  title and size for that pane, and returns focus to the previous app when closed.
+  Model shortcuts select the same Models pane; they never create a second window.
+  This follows [Apple's macOS Settings guidance](https://developer.apple.com/design/human-interface-guidelines/settings).
 - Both windows show a `GrammarCorrectionCard`; AppController mirrors a change in
   one to the other.
 
