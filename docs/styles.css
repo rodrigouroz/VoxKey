@@ -80,6 +80,14 @@ h1 { font: 400 clamp(43px, 4.5vw, 63px)/1.09 var(--serif); letter-spacing: -2.7p
 em { font-family: var(--serif); font-weight: 400; color: var(--accent); }
 .hero-description { font-size: 16px; line-height: 1.85; color: var(--muted); margin-bottom: 29px; }
 .hero-tagline { font: 400 20px/1.5 var(--serif); color: var(--accent); margin: -10px 0 18px; }
+.product-details { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; padding-bottom: 40px; }
+.product-details > div { padding: 30px; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; }
+.product-details .eyebrow { color: var(--accent); margin-bottom: 18px; }
+.product-details h2 { font: 400 34px/1.15 var(--serif); letter-spacing: -1px; margin-bottom: 20px; }
+.product-details p:not(.eyebrow) { font-size: 14px; line-height: 1.85; color: var(--muted); }
+.product-details p.feature-note { font-size: 12px; }
+@media (max-width: 800px) { .product-details { grid-template-columns: 1fr; gap: 20px; } }
+@media (max-width: 520px) { .product-details > div { padding: 25px; } .product-details h2 { font-size: 30px; } }
 .comparison-link { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 0; margin-bottom: 40px; border-block: 1px solid var(--border); }
 .comparison-link h2 { font: 400 25px/1.25 var(--serif); margin-bottom: 8px; letter-spacing: -.5px; }
 .comparison-link p { font-size: 13px; line-height: 1.7; color: var(--muted); margin-bottom: 0; }

@@ -67,7 +67,7 @@
         <h2 id="choice-title">Start with what you need.</h2>
         <div class="choice-columns">
           <div><h3>Keep Apple Dictation if…</h3><p>It already handles your everyday writing well. It is built into macOS and supports spoken punctuation and formatting commands. You may not need another app.</p></div>
-          <div><h3>Try VoxKey if…</h3><p>You want a free, open-source app with selectable local speech models and a hold-to-talk workflow that inserts the finished text when you release the key.</p></div>
+          <div><h3>Try VoxKey if…</h3><p>You want a free, native Mac app with selectable local speech models, a hold-to-talk workflow, and optional English cleanup that also runs on your Mac.</p></div>
         </div>
       </section>
 
@@ -92,6 +92,31 @@
         <p class="source-note">Apple sources: <a href="https://support.apple.com/en-ie/guide/mac-help/mh40584/mac">Dictation guide</a>, <a href="https://support.apple.com/guide/mac-help/commands-for-dictating-text-on-mac-mh40695/26/mac/26">spoken commands</a>, and <a href="https://www.apple.com/lae/macos/feature-availability/">language availability</a>. VoxKey sources: <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md">0.6.0 usage guide</a> and <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/CONTEXT.md">implementation scope</a>.</p>
       </section>
 
+      <section class="article-section" aria-labelledby="native-title">
+        <h2 id="native-title">A native Mac app, from menu to models</h2>
+        <p>VoxKey is built with Swift and AppKit. Its menu bar controls and Settings window use native macOS components, and its speech and editing models run inside the app. There is no local server, Python environment, or Homebrew runtime for you to set up.</p>
+        <p>Apple Dictation is native to macOS too. VoxKey’s reason to try it is the combination of selectable speech models, deliberate hold-to-talk delivery, and optional local editing. You can inspect the implementation in the <a href="https://github.com/rodrigouroz/VoxKey/tree/v0.6.0/Sources">open-source app</a>.</p>
+      </section>
+
+      <section class="article-section" id="local-improvement" aria-labelledby="improvement-title">
+        <h2 id="improvement-title">English cleanup that stays on your Mac</h2>
+        <p><strong>Improve transcription</strong> is an optional step that removes fillers and repetitions and improves English grammar. It defaults off. When enabled, three stages turn speech into the text delivered to your editor:</p>
+        <ol class="try-steps">
+          <li><strong>Whisper transcribes.</strong> The selected local speech model converts your recording to text.</li>
+          <li><strong>S1-mini cleans up.</strong> Superwhisper’s editing model runs through directly linked llama.cpp with Metal support. Prompt lookup accelerates decoding by reusing matching text from the input.</li>
+          <li><strong>GECToR checks grammar.</strong> A Core ML grammar model applies restricted edits. Guards protect technical literals and limit word substitutions in this stage.</li>
+        </ol>
+        <p>VoxKey integrates and validates these models; it did not create S1-mini or GECToR. Failed, cancelled, unsupported, or oversized improvement requests preserve the original recognition result.</p>
+        <div class="research-note">
+          <h3>What the published validation shows</h3>
+          <p>On one Apple Silicon Mac, S1-mini’s warm median editing time fell from <strong>362 ms to 121 ms</strong> with prompt lookup. Plain decoding and prompt lookup produced identical text and output tokens across 124 natural-speech inputs.</p>
+          <p>The complete guarded editing pipeline matched all 124 qualified outputs with the signed bundled framework, at <strong>128 ms median and 431 ms p95</strong>. Guard decisions also matched 388 frozen cases.</p>
+          <p>These are editing-stage measurements. They exclude speech recognition, startup, and text delivery, and do not compare VoxKey with Apple Dictation. Matching qualified outputs validates the implementation; it does not guarantee correct grammar or preserved meaning for every voice or sentence.</p>
+          <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">Read the validation summary and model terms</a>
+        </div>
+        <p>Improvement requires <strong>English</strong> as the selected language and up to <strong>2.03 GB</strong> of optional model downloads. It pauses for Spanish, other languages, and Automatic. The GECToR model is for <strong>noncommercial use</strong>, under terms separate from VoxKey’s MIT-licensed app. Models can still change names, meaning, or spoken corrections; review important text.</p>
+      </section>
+
       <section class="article-section" aria-labelledby="offline-title">
         <h2 id="offline-title">Check offline use before you need it.</h2>
         <p>Apple’s Dictation guide explains how to check whether general text dictation is processed on-device; its notice distinguishes that from dictation in a search box. Read the privacy information for your configuration.</p>
@@ -102,7 +127,7 @@
       <section class="article-section" aria-labelledby="spanish-title">
         <h2 id="spanish-title">Dictating in English and Spanish</h2>
         <p>In VoxKey, open <strong>Settings → Models &amp; Languages</strong>, download a Whisper v3 Turbo model, and select <strong>Use Model</strong>. Choose Spanish or English explicitly for a short phrase, or try Automatic for language detection. An English-only Distil model will not provide Spanish dictation.</p>
-        <p>VoxKey’s optional <strong>Improve transcription</strong> setting defaults off and currently requires English to be selected. It pauses for Spanish and Automatic. The optional grammar model has noncommercial terms, and improvement may change words; review the <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">behavior and model terms</a> before enabling it.</p>
+        <p>Spanish dictation works independently of the <a href="#local-improvement">optional English improvement pipeline</a>. Selecting Spanish or Automatic pauses improvement, while speech recognition remains available.</p>
         <p>A <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/testing/model-comparison-2026-09-10/README.md">small published VoxKey model experiment</a> used synthetic English and Spanish speech. It did not test Apple Dictation, personal voices, or end-to-end text delivery, so it cannot establish that VoxKey is more accurate or faster.</p>
       </section>
 
