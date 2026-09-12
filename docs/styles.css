@@ -79,6 +79,12 @@ h1, h2 { text-wrap: balance; }
 h1 { font: 400 clamp(43px, 4.5vw, 63px)/1.09 var(--serif); letter-spacing: -2.7px; margin-bottom: 26px; }
 em { font-family: var(--serif); font-weight: 400; color: var(--accent); }
 .hero-description { font-size: 16px; line-height: 1.85; color: var(--muted); margin-bottom: 29px; }
+.hero-tagline { font: 400 20px/1.5 var(--serif); color: var(--accent); margin: -10px 0 18px; }
+.comparison-link { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 0; margin-bottom: 40px; border-block: 1px solid var(--border); }
+.comparison-link h2 { font: 400 25px/1.25 var(--serif); margin-bottom: 8px; letter-spacing: -.5px; }
+.comparison-link p { font-size: 13px; line-height: 1.7; color: var(--muted); margin-bottom: 0; }
+.comparison-link > a { flex-shrink: 0; }
+@media (max-width: 800px) { .comparison-link { align-items: flex-start; flex-direction: column; gap: 12px; } }
 .hero-actions { display: flex; align-items: center; gap: 25px; flex-wrap: wrap; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 49px; padding: 14px 21px; border-radius: 7px; font-size: 13px; font-weight: 550; text-decoration: none; transition: transform 160ms ease-out, background-color 160ms ease; }
 .primary { background: var(--green); color: var(--forest-ink); box-shadow: 0 2px 2px color-mix(in srgb, var(--forest) 4%, transparent), inset 0 1px 0 color-mix(in srgb, var(--forest-ink) 8%, transparent); }
