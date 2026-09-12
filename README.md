@@ -10,7 +10,7 @@ recognition running entirely on your Mac.
 
 Requires **Apple Silicon** and **macOS 26 or later**.
 
-[Download VoxKey 0.5.0 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.5.0/VoxKey-v0.5.0-arm64.dmg),
+[Download VoxKey 0.6.0 for Mac](https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg),
 open the DMG, and drag VoxKey into Applications. You can also
 [build from source](#development).
 
