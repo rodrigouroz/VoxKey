@@ -44,7 +44,7 @@ The two signed probe builds require the maintainer certificate described in
 fixture, run:
 
 ```sh
-open -g -n .build/VoxKeyValidation.app --args --verify-delivery 20 /tmp/voxkey-delivery-report.json /tmp/voxkey-editor-oracle.json web
+open -g -n .build/VoxKeyDevelopment.app --args --verify-delivery 20 /tmp/voxkey-delivery-report.json /tmp/voxkey-editor-oracle.json web
 ```
 
 The runner is restricted to the test-host bundle, requires an empty editor, and
@@ -59,7 +59,7 @@ release builds. See [test-host instructions](delivery-test-host.md).
 
 ### Diagnosing a rejected destination
 
-This workflow requires an internal build (`VOXKEY_INTERNAL_DIAGNOSTICS`). Public
+This workflow requires an internal build (`DEBUG` and `VOXKEY_LOCAL_DIAGNOSTICS`). Public
 builds do not include these logs or the inspection entrypoint. Build an internal
 candidate with `zsh scripts/build-app.sh release candidate`, or an internal debug
 validation bundle with `zsh scripts/build-delivery-validation.sh`.

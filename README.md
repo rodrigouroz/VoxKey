@@ -62,13 +62,18 @@ While **Listening**, six small bars show incoming microphone audio. No bars and
 “No audio detected” mean you should check Microphone in Settings. The meter
 hides as soon as capture ends and never displays words or a microphone name.
 
-Enable **Correct grammar locally** during setup or in **Settings… → Dictation**
-to download the optional grammar model (519 MB). It defaults off. Dictation continues
-during preparation; correction starts automatically when the model is ready and works
-offline afterward. The model is for noncommercial use and may change words.
-Grammar correction currently requires **English** as the selected dictation
-language. It pauses for Spanish, other languages, and Automatic; transcription
-still works. A qualified Spanish grammar model is not included yet.
+Enable **Improve transcription** during setup or in **Settings… → Dictation**
+to remove fillers and repetitions and improve grammar after you finish speaking.
+It defaults off, including when the previous grammar-only option was enabled.
+The optional models require up to 2.03 GB; valid installed models are reused.
+Dictation continues during preparation and improvement works offline once ready.
+S1-mini by Superwhisper runs through directly linked llama.cpp with prompt lookup,
+followed by restricted GECToR edits. The grammar model is for noncommercial use;
+improvement can change words. See the [behavior and validation summary](docs/improve-transcription.md).
+
+Improvement currently requires **English** as the selected dictation language.
+It pauses for Spanish, other languages, and Automatic; transcription still works.
+A qualified Spanish improvement model is not included yet.
 
 ## Privacy
 
@@ -90,7 +95,7 @@ asks before installing and restarting. Updates wait while dictation or Safety Ne
 recovery is in progress. You can also install any newer DMG manually.
 
 VoxKey defaults to English and offers multilingual Turbo models. Editor compatibility and real-world latency
-are still being tested. See [0.5.0 release notes](docs/release/0.5.0.md) and
+are still being tested. See [0.6.0 release notes](docs/release/0.6.0.md) and
 [how to build and publish a release](docs/release/distribution.md).
 
 ## Development

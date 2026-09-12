@@ -10,13 +10,13 @@ enum GrammarCorrectionState: Sendable, Equatable {
     var message: String {
         switch self {
         case .off: "Off. No extra processing."
-        case .waiting: "On. Prepares locally when recording starts."
-        case .loading: "Preparing grammar correction…"
-        case .ready: "On. English dictation is corrected locally."
-        case .unavailable: "Correction unavailable. Original transcriptions are still delivered."
-        case .downloadRequired: "Download the grammar model to enable correction."
-        case let .downloading(fraction): "Downloading grammar model… \(Int(fraction * 100))%. Dictation continues without correction."
-        case .preparing: "Preparing grammar correction… Dictation continues without correction."
+        case .waiting: "On. Preparing local transcription improvement."
+        case .loading: "Preparing transcription improvement…"
+        case .ready: "On. English dictation is improved locally."
+        case .unavailable: "Improvement unavailable. Original transcriptions are still delivered."
+        case .downloadRequired: "Download the improvement models to enable this option."
+        case let .downloading(fraction): "Downloading improvement models… \(Int(fraction * 100))%. Dictation continues without improvement."
+        case .preparing: "Preparing transcription improvement… Dictation continues without improvement."
         }
     }
 }
@@ -47,6 +47,18 @@ actor GrammarCorrector {
     private var labels: [String: String] = [:]
     private var verbs: [String: String] = [:]
     var isLoaded: Bool { model != nil }
+    private(set) var state: GrammarCorrectionState = .off
+
+    private func publish(_ state: GrammarCorrectionState) {
+        self.state = state
+        continuation.yield(state)
+    }
+
+    func waitForPreparation() async -> Bool {
+        let requestGeneration = generation
+        await installationTask?.value
+        return enabled && generation == requestGeneration && assets != nil
+    }
 
     init(assets: URL? = nil, computeUnits: MLComputeUnits = .cpuAndGPU, store: GrammarModelStore = GrammarModelStore()) {
         self.assets = assets
@@ -74,7 +86,7 @@ actor GrammarCorrector {
             verbs = [:]
             assets = suppliedAssets
         }
-        continuation.yield(value ? .waiting : .off)
+        publish(value ? .waiting : .off)
         guard value, suppliedAssets == nil else { return }
         model = nil
         assets = nil
@@ -91,11 +103,11 @@ actor GrammarCorrector {
                 guard !Task.isCancelled, enabled, generation == requestGeneration else { return }
                 assets = prepared
                 installationGeneration = nil
-                continuation.yield(.waiting)
+                publish(.waiting)
             } catch {
                 guard !Task.isCancelled, enabled, generation == requestGeneration else { return }
                 installationGeneration = nil
-                continuation.yield(error as? GrammarInstallationError == .downloadRequired
+                publish(error as? GrammarInstallationError == .downloadRequired
                     ? .downloadRequired : .unavailable)
             }
         }
@@ -103,7 +115,7 @@ actor GrammarCorrector {
 
     private func preparationProgress(_ state: GrammarCorrectionState, generation: Int) {
         guard enabled, installationGeneration == generation else { return }
-        continuation.yield(state)
+        publish(state)
     }
 
     func correct(_ original: String, enabledForSession: Bool) async -> String {
@@ -123,14 +135,14 @@ actor GrammarCorrector {
                 _ = try await correctChunk("This is a sentence.", generation: requestGeneration)
             }
         } catch {
-            if enabled, generation == requestGeneration, !Task.isCancelled { continuation.yield(.unavailable) }
+            if enabled, generation == requestGeneration, !Task.isCancelled { publish(.unavailable) }
         }
     }
 
     func correctUsingCache(_ original: String, enabledForSession: Bool,
                            cache: GrammarCorrectionCache,
                            preserveShortContext: Bool = true) async -> GrammarCorrectionResult {
-        let unchanged = GrammarCorrectionResult(text: original, cache: .init())
+        let unchanged = GrammarCorrectionResult(text: original, cache: .init(), completed: false)
         guard enabledForSession, enabled, assets != nil, !Task.isCancelled,
               !original.isEmpty,
               !["$START", "$DELETE", "$MERGE_", "<s>", "</s>", "<mask>", "<pad>", "<unk>"].contains(where: original.contains)
@@ -169,7 +181,7 @@ actor GrammarCorrector {
             result += original[cursor...]
             return GrammarCorrectionResult(text: result, cache: nextCache)
         } catch {
-            if enabled, generation == requestGeneration, !Task.isCancelled { continuation.yield(.unavailable) }
+            if enabled, generation == requestGeneration, !Task.isCancelled { publish(.unavailable) }
             return unchanged
         }
     }
@@ -220,7 +232,7 @@ actor GrammarCorrector {
 
     private func loadAssets() throws {
         guard model == nil else { return }
-        continuation.yield(.loading)
+        publish(.loading)
         guard let assets else { throw GrammarCorrectionError.invalidAssets }
         let newTokenizer = try GectorTokenizer(contentsOf: assets.appendingPathComponent("tokenizer.json"))
         struct Configuration: Decodable { let id2label: [String: String] }
@@ -242,7 +254,7 @@ actor GrammarCorrector {
         labels = configuration.id2label
         verbs = newVerbs
         model = newModel
-        continuation.yield(.ready)
+        publish(.ready)
     }
 
     static func tokenize(_ words: [String], with tokenizer: GectorTokenizer) throws -> (ids: [Int], masks: [Int], starts: [Int]) {

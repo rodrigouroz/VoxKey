@@ -2,9 +2,15 @@
 import ApplicationServices
 import Foundation
 import VoxKeyCore
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+import OSLog
+#endif
 
 @MainActor
 final class GlobalTriggerMonitor {
+    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+    private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "trigger")
+    #endif
     var onPress: (@MainActor @Sendable () -> Void)?
     var onRelease: (@MainActor @Sendable () -> Void)?
     var onCancel: (@MainActor @Sendable () -> Void)?
@@ -66,6 +72,14 @@ final class GlobalTriggerMonitor {
     }
 
     private func handle(type: CGEventType, event: CGEvent) {
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            logger.notice("trigger listener disabled timeout=\(type == .tapDisabledByTimeout, privacy: .public)")
+        }
+        if type == .flagsChanged, event.getIntegerValueField(.keyboardEventKeycode) == trigger.keyCode {
+            logger.notice("trigger modifier received flags=\(event.flags.rawValue, privacy: .public) state=\(self.classifier.diagnosticState, privacy: .public)")
+        }
+        #endif
         let keyCode = type == .keyDown || type == .keyUp
             ? CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
             : nil
@@ -84,6 +98,11 @@ final class GlobalTriggerMonitor {
             type: type, keyCode: CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode)),
             flags: event.flags, trigger: trigger
         )
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        if let action {
+            logger.notice("trigger decision action=\(String(describing: action), privacy: .public)")
+        }
+        #endif
         switch action {
         case .pending:
             pendingPress?.cancel()
@@ -91,6 +110,9 @@ final class GlobalTriggerMonitor {
                 try? await Task.sleep(for: .milliseconds(150))
                 guard !Task.isCancelled, let self,
                       classifier.acceptPendingPress() == .pressed else { return }
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                logger.notice("trigger hold accepted")
+                #endif
                 onPress?()
             }
         case .released: onRelease?()

@@ -1,6 +1,6 @@
 @preconcurrency import AVFoundation
 import Foundation
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 import OSLog
 #endif
 @preconcurrency import WhisperKit
@@ -38,7 +38,7 @@ actor WhisperTranscriber {
     private let localModelRoot: URL?
     private var inferenceInFlight = false
     private var preparationInFlight = false
-    #if VOXKEY_INTERNAL_DIAGNOSTICS
+    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "transcription")
     #endif
     private(set) var selectedModel = defaultModel
@@ -169,17 +169,17 @@ actor WhisperTranscriber {
                 } else {
                     if prompt == nil { prompt = try vocabularyPromptTokens(vocabulary) }
                     let context = try streamingPrompt(vocabulary: prompt ?? [], precedingText: transcript.confirmedText)
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     let started = ContinuousClock.now
                     #endif
                     let text = try await decodeStreamingWindow(window.samples, prompt: context, language: language)
                     try Task.checkCancellation()
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     let boundaryRepeat = TranscriptionRepetition.boundaryWordCount(previous: transcript.confirmedText, next: text)
                     logger.notice("phrase assembly index=\(transcript.decodeCount, privacy: .public) audio_start=\(transcript.consumedSamples, privacy: .public) audio_count=\(window.samples.count, privacy: .public) boundary_repeated_words=\(boundaryRepeat, privacy: .public)")
                     #endif
                     transcript.accept(text, window: window)
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     let seconds = started.duration(to: .now).components
                     let elapsed = Double(seconds.seconds) + Double(seconds.attoseconds) / 1e18
                     logger.debug("partial decode seconds=\(elapsed, privacy: .public) audio_seconds=\(Double(window.samples.count) / 16000, privacy: .public)")
@@ -221,7 +221,7 @@ actor WhisperTranscriber {
         let results = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
         guard !results.isEmpty else { throw TranscriptionError.emptyResult }
         let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         let segments = results.flatMap(\.segments)
         let repeatedWords = TranscriptionRepetition.adjacentWordCount(in: text)
         let segmentRepeatedWords = segments.map { TranscriptionRepetition.adjacentWordCount(in: $0.text) }.max() ?? 0

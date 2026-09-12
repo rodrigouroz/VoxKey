@@ -1,7 +1,7 @@
 import AppKit
 
 let application = NSApplication.shared
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 if ProcessInfo.processInfo.arguments.contains("--inspect-destination") {
     let runner = DestinationInspectionRunner()
     application.delegate = runner

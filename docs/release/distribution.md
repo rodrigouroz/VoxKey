@@ -199,9 +199,29 @@ updates correctly from 0.1.0 beta builds even though the tag format changed.
 
 ## Diagnostic boundary
 
-Public packages must pass `python3 scripts/verify-no-diagnostics.py <app-bundle>`.
-`build-app.sh` enforces this for `app`, `preview`, and `distribution`, independent
-of optimization level. Only `candidate` enables `VOXKEY_INTERNAL_DIAGNOSTICS`.
-Internal candidates and validation bundles must never be published as releases.
-This gate removes VoxKey's diagnostic messages and inspection commands; it does
-not assert that macOS or third-party frameworks cannot write system logs.
+All app, release-candidate, preview, and distribution packages must pass
+`python3 scripts/verify-no-diagnostics.py <app-bundle>`, including the app mounted
+from the final DMG. These builds define `VOXKEY_RELEASE` and never enable diagnostics.
+Release compilation rejects `VOXKEY_LOCAL_DIAGNOSTICS`, even if supplied manually.
+Stored preferences cannot enable code that is absent from the binary.
+
+For local debugging only:
+
+```sh
+VOXKEY_LOCAL_DIAGNOSTICS=1 ./scripts/build-app.sh debug development
+swift test --no-parallel -Xswiftc -DVOXKEY_LOCAL_DIAGNOSTICS
+```
+
+The development bundle is `.build/VoxKeyDevelopment.app`. It shares the official
+app identity and models to preserve local privacy grants; quit other VoxKey copies
+first. It must never be distributed. Both `DEBUG` and the explicit local flag are
+required. An unflagged Debug build is diagnostic-free too.
+
+Local Debug builds expose an additional, default-off text-trace checkbox in
+Settings. These opted-in records stay in owner-only bounded local files; no audio
+is stored. Disable recording and use Delete Traces to clear an investigation.
+Content-free timing and trigger logs are also restricted to flagged Debug builds.
+
+This boundary removes VoxKey's diagnostic code, trace controls, and inspection
+commands. macOS and third-party frameworks may still produce their own system logs;
+VoxKey does not collect those as user diagnostics.

@@ -44,7 +44,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
     let toggleCheckbox = NSButton(checkboxWithTitle: "Toggle Dictation", target: nil, action: nil)
     let microphonePopup = NSPopUpButton()
     let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "Launch at Login", target: nil, action: nil)
-    let grammar = GrammarCorrectionCard(title: "Correct grammar locally")
+    let grammar = GrammarCorrectionCard(title: "Improve transcription")
     var grammarCheckbox: NSButton { grammar.checkbox }
     private(set) var dictationTrigger: DictationTrigger = .globe
 
@@ -128,7 +128,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
         ])
 
         panes[.general] = VoxKeyDesign.contentView(VoxKeyDesign.vertical([general, feedback], spacing: VoxKeyDesign.Layout.sectionSpacing))
-        panes[.dictation] = VoxKeyDesign.contentView(VoxKeyDesign.vertical([dictation, microphone, grammar], spacing: VoxKeyDesign.Layout.sectionSpacing))
+        var dictationSections: [NSView] = [dictation, microphone, grammar]
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        dictationSections.append(TranscriptionDiagnosticsCard())
+        #endif
+        panes[.dictation] = VoxKeyDesign.contentView(VoxKeyDesign.vertical(dictationSections, spacing: VoxKeyDesign.Layout.sectionSpacing))
         panes[.models] = models.view
         let toolbar = NSToolbar(identifier: "VoxKey.Settings")
         toolbar.delegate = self
@@ -168,7 +172,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
         case .dictation: NSSize(width: 580, height: grammarAvailable ? 590 : 440)
         case .models: NSSize(width: 820, height: 750)
         }
-        window.setContentSize(size)
+        var contentSize = size
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        if pane == .dictation { contentSize.height += 180 }
+        #endif
+        window.setContentSize(contentSize)
         window.setFrameTopLeftPoint(topLeft)
         window.title = pane.title
         window.toolbar?.selectedItemIdentifier = pane.identifier

@@ -9,10 +9,19 @@ build_kind="${2:-app}"
 case "$build_kind" in
     app) app="$repo_root/.build/VoxKey.app" ;;
     candidate) app="$repo_root/.build/VoxKeyCandidate.app" ;;
+    development) app="$repo_root/.build/VoxKeyDevelopment.app" ;;
     preview) app="$repo_root/.build/packaging-preview/VoxKey Packaging Preview.app" ;;
     distribution) app="$repo_root/.build/distribution/VoxKey.app" ;;
-    *) print -u2 "Usage: build-app.sh [debug|release] [app|candidate|preview|distribution]"; exit 2 ;;
+    *) print -u2 "Usage: build-app.sh [debug|release] [app|candidate|development|preview|distribution]"; exit 2 ;;
 esac
+local_diagnostics="${VOXKEY_LOCAL_DIAGNOSTICS:-0}"
+[[ "$local_diagnostics" == 0 || "$local_diagnostics" == 1 ]] || { print -u2 'VOXKEY_LOCAL_DIAGNOSTICS must be 0 or 1.'; exit 2; }
+if [[ "$build_kind" == development && "$configuration" != debug ]]; then
+    print -u2 'Development bundles require Debug configuration.'; exit 2
+fi
+if [[ "$local_diagnostics" == 1 && ( "$configuration" != debug || "$build_kind" != development ) ]]; then
+    print -u2 'Diagnostics require an explicit local Debug development build; release candidates and public bundles never allow them.'; exit 2
+fi
 if [[ -n "${VOXKEY_GRAMMAR_ASSETS:-}" ]]; then
     print -u2 "Grammar weights are now downloaded by VoxKey. Remove VOXKEY_GRAMMAR_ASSETS; no model is bundled."
     exit 2
@@ -25,17 +34,19 @@ if [[ "$build_kind" == "distribution" && "$configuration" != "release" ]]; then
 fi
 
 cd "$repo_root"
-diagnostic_flags=()
-# Optimization level is independent of permission to emit diagnostics.
-# Only the explicitly internal candidate includes diagnostic code.
-if [[ "$build_kind" == "candidate" ]]; then
-    diagnostic_flags=(-Xswiftc -DVOXKEY_INTERNAL_DIAGNOSTICS)
+diagnostic_flags=(-Xswiftc -DVOXKEY_RELEASE)
+if [[ "$build_kind" == development ]]; then
+    diagnostic_flags=()
+    if [[ "$local_diagnostics" == 1 ]]; then
+        diagnostic_flags=(-Xswiftc -DVOXKEY_LOCAL_DIAGNOSTICS)
+    fi
 fi
 swift build -c "$configuration" --arch arm64 --product VoxKey --force-resolved-versions \
     "${diagnostic_flags[@]}" \
     -debug-info-format none -Xswiftc -DVOXKEY_PACKAGED \
     -Xswiftc -file-prefix-map -Xswiftc "$repo_root=." \
     -Xcc "-ffile-prefix-map=$repo_root=."
+"$repo_root/scripts/prepare-proofreader-runtime.sh"
 
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
@@ -59,6 +70,9 @@ mkdir -p "$app/Contents/Resources/Licenses"
 cp "$repo_root/LICENSE" "$app/Contents/Resources/Licenses/VoxKey.txt"
 cp "$repo_root/THIRD_PARTY_NOTICES.md" "$app/Contents/Resources/Licenses/"
 ditto "$repo_root/licenses/grammar" "$app/Contents/Resources/Licenses/Grammar"
+ditto "$repo_root/licenses/improvement" "$app/Contents/Resources/Licenses/Improvement"
+ditto "$repo_root/.build/proofreader-runtime/licenses" "$app/Contents/Resources/Licenses/ProofreaderRuntime"
+cp "$repo_root/.build/proofreader-runtime/manifest.json" "$app/Contents/Resources/Licenses/ProofreaderRuntime/manifest.json"
 for dependency in argmax-oss-swift ZIPFoundation swift-argument-parser; do
     license="$repo_root/.build/checkouts/$dependency/LICENSE"
     [[ -f "$license" ]] || license="$license.txt"
@@ -69,6 +83,7 @@ sparkle_root="$repo_root/.build/artifacts/sparkle/Sparkle"
 cp "$sparkle_root/LICENSE" "$app/Contents/Resources/Licenses/Sparkle.txt"
 mkdir -p "$app/Contents/Frameworks"
 ditto "$sparkle_root/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
+ditto "$repo_root/.build/proofreader-runtime/llama.framework" "$app/Contents/Frameworks/llama.framework"
 
 xcrun actool \
     --compile "$app/Contents/Resources" \
@@ -101,6 +116,7 @@ for code in "$framework/Versions/B/XPCServices/Downloader.xpc" \
             "$framework/Versions/B/Updater.app" "$framework"; do
     codesign "${signing_options[@]}" --preserve-metadata=entitlements "$code"
 done
+codesign "${signing_options[@]}" "$app/Contents/Frameworks/llama.framework"
 
 if [[ "$signing_identity" != "-" ]]; then
     codesign --force --sign "$signing_identity" --options runtime --timestamp \
@@ -112,7 +128,7 @@ fi
 
 voxkey_verify_signature "$app" "$signing_identity"
 python3 "$repo_root/scripts/verify-artifact-privacy.py" "$app"
-if [[ "$build_kind" != "candidate" ]]; then
+if [[ "$local_diagnostics" != 1 ]]; then
     python3 "$repo_root/scripts/verify-no-diagnostics.py" "$app"
 fi
 echo "$app"

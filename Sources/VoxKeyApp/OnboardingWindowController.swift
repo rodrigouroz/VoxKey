@@ -16,7 +16,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     var onGrammarCorrectionChanged: ((Bool) -> Void)?
     var onPrepareGrammarModel: (() -> Void)?
 
-    let grammar = GrammarCorrectionCard(title: "Correct grammar locally (optional)")
+    let grammar = GrammarCorrectionCard(title: "Improve transcription")
     var setupGrammarCheckbox: NSButton { grammar.checkbox }
     let testTextView = NSTextView()
     let languagePopup = NSPopUpButton()

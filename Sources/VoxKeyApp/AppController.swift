@@ -1,5 +1,5 @@
 import AppKit
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 import OSLog
 #endif
 import ServiceManagement
@@ -75,7 +75,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         let buildID = Bundle.main.object(forInfoDictionaryKey: "VoxKeyBuildID") as? String ?? "development"
         Logger(subsystem: "com.rodrigouroz.VoxKey", category: "Lifecycle").notice("started build=\(buildID, privacy: .public)")
         #endif
@@ -256,7 +256,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .ready: "Ready — \(captureMode == .hold ? "hold" : "press") \(triggerMonitor.trigger.displayName) to dictate"
         case .arming: "Starting capture…"
         case .capturing: "Listening…"
-        case .finalizing: snapshot.message == "Correcting grammar…" ? "Correcting grammar…" : "Transcribing…"
+        case .finalizing: snapshot.message == "Improving transcription…" ? "Improving transcription…" : "Transcribing…"
         case .delivering: "Delivering…"
         case let .notReady(reason):
             switch reason {
@@ -275,13 +275,13 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         settings.models.onDownload = { [weak self] model in self?.downloadModel(model) }
         updateGrammarLanguage()
-        let grammarEnabled = defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable
+        let grammarEnabled = defaults.bool(forKey: TranscriptionImprover.preferenceKey) && GrammarCorrector.isAvailable
         updateGrammarCorrection(enabled: grammarEnabled, state: grammarEnabled ? .waiting : .off)
         applyGrammarPreference(grammarEnabled)
         // Setup and Settings each show a grammar card; a change in one is mirrored to the other.
         let grammarChanged: (Bool) -> Void = { [weak self] enabled in
             guard let self else { return }
-            defaults.set(enabled, forKey: GrammarCorrector.preferenceKey)
+            defaults.set(enabled, forKey: TranscriptionImprover.preferenceKey)
             updateGrammarCorrection(enabled: enabled, state: enabled ? .waiting : .off)
             applyGrammarPreference(enabled, download: enabled)
         }
@@ -298,7 +298,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             for await state in coordinator.grammarUpdates {
                 guard !Task.isCancelled else { return }
                 updateGrammarCorrection(
-                    enabled: defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable,
+                    enabled: defaults.bool(forKey: TranscriptionImprover.preferenceKey) && GrammarCorrector.isAvailable,
                     state: state)
             }
         }
@@ -490,6 +490,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func handleTriggerPress() {
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        Logger(subsystem: "com.rodrigouroz.VoxKey", category: "trigger").notice("trigger controller received busy=\(self.latestSnapshot.phase.isBusy, privacy: .public)")
+        #endif
         if latestSnapshot.phase.isBusy {
             Task { await coordinator.triggerPressed() }
             return
@@ -503,6 +506,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let preparation = Task { @MainActor in
             await focusObservationTask?.value
             await grammarPreferenceTask?.value
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+            Logger(subsystem: "com.rodrigouroz.VoxKey", category: "trigger").notice("trigger preparation dependencies complete")
+            #endif
             return await coordinator.triggerPressed(vocabulary: vocabulary, captureMode: captureMode, trigger: trigger, microphoneUID: microphoneUID)
         }
         triggerPreparationTask = preparation
@@ -570,7 +576,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeModelReady = true
             defaults.set(true, forKey: modelInstalledKey)
             updateGrammarLanguage()
-            applyGrammarPreference(defaults.bool(forKey: GrammarCorrector.preferenceKey) && GrammarCorrector.isAvailable)
+            applyGrammarPreference(defaults.bool(forKey: TranscriptionImprover.preferenceKey) && GrammarCorrector.isAvailable)
             modelSelectionMessage = "Ready. Your selection will be used for the next dictation."
         } catch {
             defaults.set(activeModelReady, forKey: modelInstalledKey)

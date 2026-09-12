@@ -41,3 +41,18 @@ additional rights to the trained weights.
 
 The bundled capture cues are synthesized tones created for VoxKey. No Star Trek
 recording or other downloaded sound effect is included.
+
+## Optional transcription improvement
+
+“Improve transcription” uses **S1-mini** by **Superwhisper**, followed by the
+restricted GECToR correction described above. S1-mini is derived from
+Qwen3-0.6B (Alibaba Cloud). Its publisher license contains Apache 2.0 terms plus
+an additional requirement to retain the exact model and author identification.
+The complete license and notice are included under
+`Contents/Resources/Licenses/Improvement` and in [licenses/improvement](licenses/improvement).
+
+The qualified S1-mini F16 GGUF is downloaded directly from
+[Superwhisper's pinned revision](https://huggingface.co/superwhisper/s1-mini-GGUF/tree/34add00a48a2e5d24e5a4ee5405a99620a3a240c)
+only after opt-in; its size and SHA-256 are verified before activation.
+The app links llama.cpp directly for local inference and prompt lookup.
+Its pinned runtime's upstream license is included in the app bundle.

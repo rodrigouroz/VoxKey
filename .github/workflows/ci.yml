@@ -33,6 +33,7 @@ jobs:
           plutil -lint VoxKey/Info.plist VoxKey/Resources/*.entitlements
           git diff --check
           python3 scripts/test-artifact-privacy.py
+          python3 scripts/test-diagnostic-boundary.py
       - name: Test
         # AppKit fixtures share the main thread; concurrent UI tests can exhaust
         # real clipboard/capture deadlines on a small hosted runner.

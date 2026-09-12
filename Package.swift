@@ -17,6 +17,17 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.6")
     ],
     targets: [
+        .binaryTarget(
+            name: "llama",
+            url: "https://github.com/ggml-org/llama.cpp/releases/download/b10809/llama-b10809-xcframework.zip",
+            checksum: "d6813b3b6c73728a19f0bc0d1d7cea04ccdb07f9583c1d930c0b38af2377606d"
+        ),
+        .target(
+            name: "VoxKeyS1",
+            dependencies: ["llama"],
+            publicHeadersPath: "include",
+            cxxSettings: [.unsafeFlags(["-std=c++17"])]
+        ),
         .target(
             name: "VoxKeyAudioRing",
             publicHeadersPath: "include"
@@ -29,6 +40,7 @@ let package = Package(
         .executableTarget(
             name: "VoxKeyApp",
             dependencies: [
+                "VoxKeyS1",
                 "VoxKeyCore",
                 "VoxKeyAudioRing",
                 .product(name: "WhisperKit", package: "argmax-oss-swift"),

@@ -9,6 +9,13 @@ struct TriggerClassifier {
     private var accepted = false
     private var chord = false
 
+    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+    var diagnosticState: String {
+        let physicallyHeld = heldKeys.filter { CGEventSource.keyState(.combinedSessionState, key: $0) }.count
+        return "tracked=\(heldKeys.count) physically_held=\(physicallyHeld) active=\(activeTrigger != nil) accepted=\(accepted) chord=\(chord)"
+    }
+    #endif
+
     mutating func classify(type: CGEventType, keyCode: CGKeyCode, flags: CGEventFlags,
                            trigger: DictationTrigger) -> Action? {
         if type == .keyUp { heldKeys.remove(keyCode); return nil }

@@ -103,6 +103,7 @@ hdiutil attach -readonly -nobrowse -mountpoint "$work_dir/mounted" "$output/$dmg
 mounted=1
 python3 "$repo_root/scripts/verify-artifact-privacy.py" \
     "$work_dir/mounted" "$output/build-info.txt" "$output/SHA256SUMS"
+python3 "$repo_root/scripts/verify-no-diagnostics.py" "$work_dir/mounted/${app:t}"
 hdiutil detach "$work_dir/mounted" >/dev/null
 mounted=0
 print "Created $output/$dmg_name"

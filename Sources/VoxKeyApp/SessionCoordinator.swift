@@ -1,5 +1,5 @@
 import Foundation
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 import OSLog
 #endif
 import VoxKeyCore
@@ -10,7 +10,7 @@ struct CaptureTiming: Sendable {
 }
 
 actor SessionCoordinator {
-    #if VOXKEY_INTERNAL_DIAGNOSTICS
+    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "session")
     #endif
 
@@ -22,7 +22,7 @@ actor SessionCoordinator {
     private let modelUpdateContinuation: AsyncStream<ModelPreparationPhase>.Continuation
     private let audioCapture: AudioCaptureService
     private let transcriber: WhisperTranscriber
-    private let grammarCorrector: GrammarCorrector
+    private let improver: TranscriptionImprover
     private var grammarCorrectionEnabled = false
     private var sessionGrammarCorrectionEnabled = false
     private let accessibility: AccessibilityService
@@ -30,7 +30,7 @@ actor SessionCoordinator {
     private let cuePlayer: CaptureCuePlayer?
     private var armingCueTask: Task<Void, Never>?
     private var transcriptionTask: Task<TranscriptionOutcome, Error>?
-    private var grammarSession: GrammarCorrectionSession?
+    private var grammarSession: TranscriptionImprovementSession?
     private var captureStartTask: Task<Void, Error>?
     private var terminating = false
 
@@ -79,8 +79,9 @@ actor SessionCoordinator {
         modelUpdateContinuation = modelStream.continuation
         self.audioCapture = audioCapture
         self.transcriber = transcriber
-        self.grammarCorrector = grammarCorrector
-        grammarUpdates = grammarCorrector.updates
+        let improver = TranscriptionImprover(grammar: grammarCorrector)
+        self.improver = improver
+        grammarUpdates = improver.updates
         self.accessibility = accessibility
         self.captureTiming = captureTiming
         self.cuePlayer = cuePlayer
@@ -125,7 +126,13 @@ actor SessionCoordinator {
 
     func setGrammarCorrectionEnabled(_ enabled: Bool, download: Bool = false, repair: Bool = false) async {
         grammarCorrectionEnabled = enabled
-        await grammarCorrector.setEnabled(enabled, download: download, repair: repair)
+        if !enabled {
+            // Opting out invalidates this dictation even if opt-in returns before delivery.
+            sessionGrammarCorrectionEnabled = false
+            grammarSession?.cancel()
+            grammarSession = nil
+        }
+        await improver.setEnabled(enabled, download: download, repair: repair)
     }
 
     func prepareDefaultModel(download: Bool = true) async throws {
@@ -161,11 +168,17 @@ actor SessionCoordinator {
 
     func triggerPressed(vocabulary: [VocabularyTerm] = [], captureMode: CaptureMode = .hold,
                         trigger: DictationTrigger = .globe, microphoneUID: String? = nil) async -> DictationSessionID? {
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        logger.notice("trigger session received phase=\(String(describing: self.machine.phase), privacy: .public) model_ready=\(self.modelReady, privacy: .public) preparing=\(self.modelPreparationInFlight, privacy: .public) terminating=\(self.terminating, privacy: .public) recovery=\(self.recoveryDeliveryInFlight, privacy: .public)")
+        #endif
         if case let .finish(id) = machine.triggerPressAction {
             await stopAndProcess(id)
             return nil
         }
         guard !terminating, !modelPreparationInFlight, AudioCaptureService.microphoneAuthorized(), AccessibilityService.isTrusted, modelReady else {
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+            logger.notice("trigger readiness rejected microphone=\(AudioCaptureService.microphoneAuthorized(), privacy: .public) accessibility=\(AccessibilityService.isTrusted, privacy: .public)")
+            #endif
             await refreshReadiness()
             await rejectTrigger()
             return nil
@@ -187,6 +200,9 @@ actor SessionCoordinator {
             // Reserve the session before focus resolution can suspend. A quick
             // trigger release must be remembered while an AX tree wakes up.
             let assessment = await accessibility.captureCurrentDestination()
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+            logger.notice("trigger destination resolved secure=\(assessment.kind == .secure, privacy: .public)")
+            #endif
             guard machine.phase == .arming(sessionID) else {
                 await accessibility.discard(assessment.token)
                 return nil
@@ -214,6 +230,9 @@ actor SessionCoordinator {
     }
 
     func startCapture(sessionID: DictationSessionID) async {
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        logger.notice("trigger capture requested phase=\(String(describing: self.machine.phase), privacy: .public) cancelling=\(self.cancellingSessionID != nil, privacy: .public) cue_pending=\(self.armingCueTask != nil, privacy: .public) capture_pending=\(self.captureStartTask != nil, privacy: .public)")
+        #endif
         guard !terminating, machine.phase == .arming(sessionID), cancellingSessionID == nil,
               armingCueTask == nil, captureStartTask == nil else { return }
         if releaseRequestedFor != sessionID {
@@ -244,14 +263,12 @@ actor SessionCoordinator {
             captureStartedAt = .now
             let vocabulary = sessionVocabulary
             let correction = sessionGrammarCorrectionEnabled
-                ? GrammarCorrectionSession(corrector: grammarCorrector, enabled: true) : nil
+                ? TranscriptionImprovementSession(improver: improver, requestID: sessionID.rawValue) : nil
             grammarSession = correction
             let language = sessionLanguage
             transcriptionTask = Task { [weak self, transcriber, audioCapture] in
                 do {
-                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary, language: language) { update in
-                        correction?.observe(update.confirmedText)
-                    }
+                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary, language: language) { _ in }
                 } catch {
                     await self?.streamingFailed(sessionID)
                     throw error
@@ -415,7 +432,7 @@ actor SessionCoordinator {
         await audioCapture.cancel()
         _ = await transcriptionTask?.result
         transcriptionTask = nil
-        await grammarCorrector.setEnabled(false)
+        await improver.setEnabled(false)
         await accessibility.shutDown()
     }
 
@@ -435,7 +452,7 @@ actor SessionCoordinator {
             captureStartedAt = nil
             publish(message: "Transcribing…")
             guard let transcriptionTask else { throw TranscriptionError.emptyResult }
-            #if VOXKEY_INTERNAL_DIAGNOSTICS
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             let released = ContinuousClock.now
             #endif
             await playEndCue()
@@ -443,7 +460,7 @@ actor SessionCoordinator {
             let transcription = try await transcriptionTask.value
             self.transcriptionTask = nil
             guard !terminating, machine.phase == .finalizing(sessionID) else { return }
-            #if VOXKEY_INTERNAL_DIAGNOSTICS
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             let duration = released.duration(to: .now).components
             let seconds = Double(duration.seconds) + Double(duration.attoseconds) / 1e18
             logger.info("finalization seconds=\(seconds, privacy: .public)")
@@ -455,23 +472,50 @@ actor SessionCoordinator {
                 try machine.finishWithoutResult(sessionID: sessionID)
                 publish(message: "No speech detected")
             case let .final(text):
-                if sessionGrammarCorrectionEnabled { publish(message: "Correcting grammar…") }
+                if sessionGrammarCorrectionEnabled { publish(message: "Improving transcription…") }
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                let improvementStarted = ContinuousClock.now
+                var deliveryTrace = TranscriptionDiagnostics.shared.begin(id: sessionID.rawValue, raw: text, event: "delivery")
+                deliveryTrace?.status = "cancelled_before_delivery"
+                deliveryTrace?.language = sessionLanguage ?? "auto"
+                deliveryTrace?.recognitionFinalizationMilliseconds = seconds * 1000
+                defer { TranscriptionDiagnostics.shared.save(deliveryTrace) }
+                #endif
                 let correctedText: String
                 if let grammarSession { correctedText = await grammarSession.finish(text) }
                 else { correctedText = text }
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                if sessionGrammarCorrectionEnabled {
+                    let elapsed = improvementStarted.duration(to: .now).components
+                    let seconds = Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+                    logger.info("improvement seconds=\(seconds, privacy: .public)")
+                }
+                #endif
                 guard !terminating, machine.phase == .finalizing(sessionID) else { return }
-                let deliveredText = grammarCorrectionEnabled ? correctedText : text
+                let deliveredText = grammarCorrectionEnabled && sessionGrammarCorrectionEnabled ? correctedText : text
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                deliveryTrace?.output = deliveredText
+                deliveryTrace?.status = "delivery_started"
+                #endif
                 try machine.beginDelivery(sessionID: sessionID, text: deliveredText)
                 publish(message: "Delivering…")
                 guard let destinationToken else {
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                    deliveryTrace?.status = "no_destination_token"
                     logger.notice("final result preserved reason=no_destination_token")
                     #endif
                     try finishWithoutDestination(sessionID: sessionID, reason: captureDestinationFailure)
                     return
                 }
                 self.destinationToken = nil
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                let deliveryStarted = ContinuousClock.now
+                #endif
                 let outcome = await accessibility.deliver(deliveredText, to: destinationToken)
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                deliveryTrace?.deliveryMilliseconds = TranscriptionDiagnostics.milliseconds(since: deliveryStarted)
+                deliveryTrace?.status = String(describing: outcome)
+                #endif
                 switch outcome {
                 case .delivered:
                     try machine.finishDelivery(sessionID: sessionID)
@@ -480,7 +524,7 @@ actor SessionCoordinator {
                     try machine.finishDelivery(sessionID: sessionID, outcome: outcome)
                     publish(message: nil)
                 case let .failed(reason):
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.notice("final result preserved delivery_failure=\(String(describing: reason), privacy: .public)")
                     #endif
                     try machine.finishDelivery(sessionID: sessionID, outcome: outcome)
@@ -579,7 +623,7 @@ actor SessionCoordinator {
             activity = await audioCapture.speechStartStatus()
         }
         guard machine.phase == .capturing(sessionID), !Task.isCancelled, activity != .speech else { return }
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         logger.notice("capture cancelled reason=initial_silence")
         #endif
         let detectedAudio = await audioCapture.detectedAudio()

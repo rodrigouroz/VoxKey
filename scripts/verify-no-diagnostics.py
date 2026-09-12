@@ -16,7 +16,11 @@ def diagnostic_markers():
     messages = re.compile(
         r'(?:\blogger\.\w+|\bLogger\([^\n]+?\)\.\w+)\(\s*"((?:\\.|[^"\\])*)"'
     )
-    markers = {b"--inspect-destination", b"--verify-delivery"}
+    markers = {b"--inspect-destination", b"--verify-delivery",
+               b"VoxKeyTemporaryTranscriptionTraceEnabled",
+               b"Record temporary transcription traces", b"Diagnostics/Transcription"}
+    markers.update({b"TranscriptionDiagnostics", b"TranscriptionTrace",
+                    b"TranscriptionDiagnosticsCard"})
     for path in source_root.glob("*.swift"):
         for literal in messages.findall(path.read_text()):
             prefix = literal.split(r"\(", 1)[0]

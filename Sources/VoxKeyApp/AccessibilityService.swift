@@ -1,7 +1,7 @@
 @preconcurrency import AppKit
 import ApplicationServices
 import Foundation
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 import OSLog
 #endif
 import VoxKeyCore
@@ -18,7 +18,7 @@ struct DeliveryTiming {
 
 @MainActor
 final class AccessibilityService {
-    #if VOXKEY_INTERNAL_DIAGNOSTICS
+    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "delivery")
     #endif
     private let client: any DesktopAccessibilityClient
@@ -93,7 +93,7 @@ final class AccessibilityService {
         guard let element else { return rejected(.focusUnavailable, label: label) }
         guard !isSecure(element) else { return rejected(.secureDestination, label: label) }
         guard isEditable(element) else {
-            #if VOXKEY_INTERNAL_DIAGNOSTICS
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             let role: String? = copyAttribute(element, kAXRoleAttribute)
             let editable: NSNumber? = copyAttribute(element, "AXEditable")
             let enabled: NSNumber? = copyAttribute(element, kAXEnabledAttribute)
@@ -111,7 +111,7 @@ final class AccessibilityService {
         intents[token] = IntentRecord(
             element: element, process: application.identity, isWebBacked: isWebBacked(element), snapshot: snapshot
         )
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         logger.info("destination captured token=\(token.rawValue.uuidString, privacy: .public) elapsed_ms=\(self.milliseconds(since: started), privacy: .public)")
         #endif
         return DestinationAssessment(kind: .editable, token: token, label: label)
@@ -123,11 +123,11 @@ final class AccessibilityService {
         guard !delivering else { return .failed(.inputBusy) }
         delivering = true
         defer { delivering = false }
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         let started = ContinuousClock.now
         #endif
         let outcome = await deliver(text, intent: intent, activate: activateDestination)
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         logger.notice("delivery completed token=\(token.rawValue.uuidString, privacy: .public) outcome=\(String(describing: outcome), privacy: .public) elapsed_ms=\(self.milliseconds(since: started), privacy: .public)")
         #endif
         return outcome
@@ -246,7 +246,7 @@ final class AccessibilityService {
     }
 
     private func restore(_ lease: PasteboardLease) {
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         if lease.restoreIfOwned() == .failed { logger.fault("pasteboard restoration failed") }
         #else
         _ = lease.restoreIfOwned()
@@ -274,13 +274,13 @@ final class AccessibilityService {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         var current: TextMutationSnapshot?
         var rangeReadback = InsertedTextReadback.notAttempted
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         var observedEvidence: Set<String> = []
         #endif
         repeat {
             guard client.trusted, !client.secureInputEnabled, !isSecure(intent.element),
                   client.frontmostApplication?.identity == intent.process else {
-                #if VOXKEY_INTERNAL_DIAGNOSTICS
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 logger.notice("confirmation interrupted reason=permissions_security_or_frontmost_changed")
                 #endif
                 return .unavailable
@@ -291,7 +291,7 @@ final class AccessibilityService {
             if anchoredContextMatches(intent: intent, text: text, deadline: deadline) {
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion confirmed source=anchored_text")
                     #endif
                     return .verified
@@ -302,7 +302,7 @@ final class AccessibilityService {
                 original: intent.snapshot, current: current, insertedText: text,
                 contextLimit: contextLimit
             )
-            #if VOXKEY_INTERNAL_DIAGNOSTICS
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             observedEvidence.insert(evidence.rawValue)
             #endif
             if evidence.result == .confirmed {
@@ -310,7 +310,7 @@ final class AccessibilityService {
                 // the last 256 characters or the caret. No document-wide AXValue.
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion confirmed source=\(evidence.rawValue, privacy: .public)")
                     #endif
                     return .verified
@@ -322,7 +322,7 @@ final class AccessibilityService {
                current.length == 0, current != intent.snapshot {
                 rangeReadback = insertedTextReadback(text, intent: intent, deadline: deadline)
                 if rangeReadback == .matched {
-                    #if VOXKEY_INTERNAL_DIAGNOSTICS
+                    #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion observed verification=\(evidence.rawValue, privacy: .public)")
                     #endif
                     return .textObserved
@@ -331,7 +331,7 @@ final class AccessibilityService {
             guard !Task.isCancelled, ContinuousClock.now < deadline else { break }
             try? await Task.sleep(for: timing.pollInterval)
         } while true
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         let evidence = TextMutationVerification.evidence(
             original: intent.snapshot, current: current, insertedText: text,
             contextLimit: contextLimit
@@ -459,7 +459,7 @@ final class AccessibilityService {
     }
     private func copyAttribute<T>(_ element: AXUIElement, _ name: String) -> T? { client.attribute(element, name) as? T }
     private func rejected(_ failure: DeliveryFailure, label: DestinationLabel? = nil) -> DestinationAssessment {
-        #if VOXKEY_INTERNAL_DIAGNOSTICS
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         logger.notice("destination rejected reason=\(String(describing: failure), privacy: .public) pid=\(label?.processIdentifier ?? 0, privacy: .public)")
         #endif
         return DestinationAssessment(kind: failure == .secureDestination ? .secure : .unknown, token: nil, label: label, failure: failure)

@@ -39,7 +39,7 @@ func pendingGrammarDownloadKeepsDictationReadyAndPassesTranscriptsThrough() asyn
     // This must return while the real installer is waiting for more HTTP bytes.
     // Otherwise the app's trigger, which awaits the preference update, would stall.
     await coordinator.setGrammarCorrectionEnabled(true, download: true)
-    for await state in corrector.updates {
+    for await state in await coordinator.grammarUpdates {
         if case let .downloading(fraction) = state, fraction > 0 { break }
         try #require(state != .unavailable)
     }

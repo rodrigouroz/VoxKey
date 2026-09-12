@@ -8,6 +8,7 @@ struct GrammarCorrectionCache: Sendable {
 struct GrammarCorrectionResult: Sendable {
     let text: String
     let cache: GrammarCorrectionCache
+    var completed: Bool = true
 }
 
 /// One bounded worker per dictation. Only committed transcription enters it;

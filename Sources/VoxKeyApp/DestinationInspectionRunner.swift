@@ -1,4 +1,4 @@
-#if VOXKEY_INTERNAL_DIAGNOSTICS
+#if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
 import AppKit
 import ApplicationServices
 
