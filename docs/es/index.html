@@ -14,15 +14,15 @@
   <meta property="og:title" content="VoxKey — Dictado gratis y sin conexión para Mac">
   <meta property="og:description" content="Dictado nativo y gratis para Mac con Apple Silicon. Voz a texto en español e inglés, con mejora opcional en inglés. Sin conexión tras descargar los modelos.">
   <meta property="og:url" content="https://voxkey.rodrigouroz.com/es/">
-  <meta property="og:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
+  <meta property="og:image" content="https://voxkey.rodrigouroz.com/assets/social-preview-es.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="VoxKey. Dictado local para tu Mac.">
+  <meta property="og:image:alt" content="VoxKey. Menos teclado. Más vos. El reconocimiento de voz se procesa en tu Mac.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VoxKey — Dictado gratis y sin conexión para Mac">
   <meta name="twitter:description" content="Dictado nativo y gratis para Mac con Apple Silicon. Voz a texto en español e inglés, con mejora opcional en inglés. Sin conexión tras descargar los modelos.">
-  <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
-  <meta name="twitter:image:alt" content="VoxKey. Dictado local para tu Mac.">
+  <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview-es.png">
+  <meta name="twitter:image:alt" content="VoxKey. Menos teclado. Más vos. El reconocimiento de voz se procesa en tu Mac.">
   <link rel="canonical" href="https://voxkey.rodrigouroz.com/es/">
   <link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/">
   <link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/">
@@ -31,6 +31,7 @@
   <meta property="og:locale:alternate" content="en_US">
   <link rel="icon" type="image/svg+xml" href="../assets/voxkey-icon.svg">
   <link rel="icon" type="image/png" href="../assets/voxkey-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="../styles.css">
   <script type="application/ld+json">
   {
@@ -51,8 +52,106 @@
         "description": "Dictado nativo y gratis para Mac con Apple Silicon. Voz a texto en español e inglés, con mejora opcional en inglés. Sin conexión tras descargar los modelos.",
         "inLanguage": "es",
         "isPartOf": {"@id": "https://voxkey.rodrigouroz.com/#website"},
-        "primaryImageOfPage": {"@type": "ImageObject", "url": "https://voxkey.rodrigouroz.com/assets/social-preview.png", "width": 1200, "height": 630},
-        "author": {"@type": "Person", "name": "Rodrigo Uroz", "url": "https://cv.rodrigouroz.com/"}
+        "primaryImageOfPage": {"@type": "ImageObject", "url": "https://voxkey.rodrigouroz.com/assets/social-preview-es.png", "width": 1200, "height": 630},
+        "author": {"@type": "Person", "name": "Rodrigo Uroz", "url": "https://cv.rodrigouroz.com/"},
+        "mainEntity": {"@id": "https://voxkey.rodrigouroz.com/#app"}
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://voxkey.rodrigouroz.com/#app",
+        "name": "VoxKey",
+        "url": "https://voxkey.rodrigouroz.com/",
+        "description": "Dictado nativo y gratis para Mac con Apple Silicon. Voz a texto en español e inglés, con mejora opcional en inglés. Sin conexión tras descargar los modelos.",
+        "applicationCategory": "UtilitiesApplication",
+        "applicationSubCategory": "Dictation",
+        "operatingSystem": "macOS 26 o posterior en Apple Silicon",
+        "processorRequirements": "Apple Silicon (arm64)",
+        "softwareVersion": "0.6.0",
+        "datePublished": "2026-09-12",
+        "downloadUrl": "https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg",
+        "installUrl": "https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg",
+        "releaseNotes": "https://github.com/rodrigouroz/VoxKey/releases/tag/v0.6.0",
+        "license": "https://github.com/rodrigouroz/VoxKey/blob/main/LICENSE",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        },
+        "featureList": [
+          "Dictado manteniendo una tecla, directo en el campo de texto activo",
+          "Reconocimiento de voz local con modelos Whisper v3 Turbo y Distil-Whisper v3 a elección",
+          "Dictado en español e inglés; los modelos multilingües cubren más idiomas",
+          "Mejora local opcional del inglés que quita muletillas y repeticiones y corrige la gramática",
+          "Pistas de vocabulario y recuperación con Safety Net",
+          "Sin grabaciones guardadas ni historial de dictados"
+        ],
+        "screenshot": "https://voxkey.rodrigouroz.com/assets/social-preview-es.png",
+        "image": "https://voxkey.rodrigouroz.com/assets/voxkey-icon.png",
+        "inLanguage": [
+          "en",
+          "es"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Rodrigo Uroz",
+          "url": "https://cv.rodrigouroz.com/"
+        },
+        "sameAs": [
+          "https://github.com/rodrigouroz/VoxKey"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://voxkey.rodrigouroz.com/es/#faq",
+        "url": "https://voxkey.rodrigouroz.com/es/#get-started",
+        "inLanguage": "es",
+        "isPartOf": {
+          "@id": "https://voxkey.rodrigouroz.com/es/#webpage"
+        },
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "¿Puedo dictar sin conexión en español e inglés?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sí. Descargá un modelo Whisper v3 Turbo multilingüe para dictar en español, inglés u otros idiomas compatibles. Los modelos Distil-Whisper v3 solo admiten inglés. Después de configurar el modelo, el reconocimiento de voz funciona sin conexión en tu Mac. La descarga de modelos y la búsqueda de actualizaciones de la app sí usan internet."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Qué necesito?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Una Mac con Apple Silicon y macOS 26 o posterior. Elegí un modelo Distil-Whisper v3 para inglés o un modelo Whisper v3 Turbo multilingüe para español y otros idiomas. Necesitás conexión a internet para descargar modelos; podés conservar varios y cambiar el activo en Settings (Configuración)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Funciona en todas las apps?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "La compatibilidad con editores y los tiempos de respuesta siguen en evaluación. Probalo donde escribís habitualmente. Si no se puede confirmar la inserción, recuperá el texto con Safety Net. Si algo falla, indicanos la app, la versión de macOS y la compilación de VoxKey, usando texto inventado."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cómo se actualiza?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Elegí Check for Updates (Buscar actualizaciones) en el menú de VoxKey. Las actualizaciones esperan a que terminen el dictado y la recuperación, y piden confirmación antes de reiniciar. También podés descargarlas desde GitHub Releases."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Puede mejorar mi transcripción?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "El dictado funciona por sí solo. La opción Improve transcription viene desactivada y permite eliminar muletillas y repeticiones y mejorar la gramática en inglés. Sus modelos se descargan por separado (hasta 2,03 GB) y funcionan en tu Mac. Se pausa al elegir otros idiomas o la detección automática. El modelo gramatical es para uso no comercial y puede cambiar tus palabras. Revisá los términos del modelo y las notas de las pruebas antes de activarla."
+            }
+          }
+        ]
       }
     ]
   }
@@ -74,19 +173,19 @@
   <main id="main">
     <section class="hero wrap" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> DICTADO SIN CONEXIÓN PARA MAC</p>
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> APPLE SILICON · MACOS 26+</p>
         <h1 id="hero-title">Dictado gratis<br>y sin conexión<br>para <em>Mac.</em></h1>
         <p class="hero-tagline">Menos teclado. Más vos.</p>
-        <p class="hero-description">VoxKey es una app nativa de dictado para Mac, gratis y de código abierto. Mantené una tecla, hablá y convertí tu voz en texto donde estás escribiendo. El reconocimiento y la mejora opcional en inglés se procesan en tu Mac, sin enviar tu audio ni tu texto a la nube.</p>
+        <p class="hero-description">VoxKey es una app nativa de dictado para Mac, gratis y de código abierto. Mantené presionada una tecla, hablá y convertí tu voz en texto donde estás escribiendo. El reconocimiento y la mejora opcional en inglés se procesan en tu Mac; tu audio y tu texto no salen de él durante el procesamiento.</p>
         <div class="hero-actions">
           <a class="button primary" data-download-placement="hero" href="https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5"/></svg>Descargar para Mac</a>
           <a class="text-link" href="https://github.com/rodrigouroz/VoxKey/releases">Todas las versiones <span aria-hidden="true">↗</span></a>
         </div>
-        <p class="promise">100% local. Gratis para siempre. De código abierto.</p>
-        <p class="requirements">Inglés, español y más · Apple Silicon · macOS 26+<br>Versión 0.6.0</p>
+        <p class="promise">Gratis y de código abierto. Funciona en tu Mac.</p>
+        <p class="requirements">Inglés, español y más · Versión 0.6.0</p>
       </div>
-      <div class="demo" id="how-it-works" aria-label="Demostración ilustrada del dictado">
-        <div class="demo-topline"><span class="eyebrow">DE LA IDEA AL TEXTO</span><span class="local-badge"><span class="status-dot" aria-hidden="true"></span> En tu Mac</span></div>
+      <section class="demo" id="how-it-works" aria-label="Demostración ilustrada del dictado">
+        <div class="demo-topline"><span class="eyebrow">CÓMO FUNCIONA</span><span class="local-badge"><span class="status-dot" aria-hidden="true"></span> En tu Mac</span></div>
         <fieldset class="demo-controls">
           <legend>Explorá los tres pasos</legend>
           <input type="radio" name="demo-step" id="step-hold" class="step-radio"><label for="step-hold"><span>01</span> Mantené</label>
@@ -97,18 +196,18 @@
           <div class="note-window">
             <div class="window-toolbar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span>Una nota para el equipo</span><span aria-hidden="true">↗</span></div>
             <div class="note-content">
-              <p class="note-date">UNA IDEA QUE TOMA FORMA</p>
-              <h2>Equipo, se me ocurrió algo.</h2>
+              <p class="note-date">MARTES, 9:41</p>
+              <p class="note-title">Equipo, se me ocurrió algo.</p>
               <p class="note-intro">Esto es lo que tengo en mente…</p>
               <div class="dictation-text"><span class="inserted-text">Hagamos una primera versión simple. Podemos probarla juntos y mejorar lo que funciona.</span><span class="caret" aria-hidden="true"></span></div>
               <div class="note-lines" aria-hidden="true"><i></i><i></i></div>
             </div>
           </div>
-          <div class="capture-pill"><span class="waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="state-hold">Cuando quieras</span><span class="state-speak">Escuchando</span><span class="state-release">Tu idea, por escrito.</span><span class="pill-key" aria-hidden="true">fn</span></div>
+          <div class="capture-pill"><span class="waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="state-hold">Mantené para hablar</span><span class="state-speak">Escuchando</span><span class="state-release">Insertado</span><span class="pill-key" aria-hidden="true">fn</span></div>
           <div class="demo-caption"><span class="state-hold">Hacé clic donde quieras escribir. Mantené Globo/Fn para empezar.</span><span class="state-speak">Hablá con naturalidad. VoxKey te escucha en tu Mac.</span><span class="state-release">Soltá la tecla. Tus palabras aparecen donde estás escribiendo.</span></div>
         </div>
         <p class="demo-footnote">Una ilustración del proceso. Acá no hace falta usar el micrófono.</p>
-      </div>
+      </section>
     </section>
     <section class="product-details wrap" aria-label="Por qué VoxKey">
       <div>
@@ -121,7 +220,7 @@
         <h2>Menos muletillas.<br>Un inglés más claro.</h2>
         <p>Activá Improve transcription para quitar muletillas y repeticiones y mejorar la gramática en inglés. S1-mini, de Superwhisper, y un modelo gramatical GECToR trabajan juntos en tu Mac después de descargar sus modelos.</p>
         <p class="feature-note">Desactivada por defecto · Solo inglés · Hasta 2,03 GB de modelos. El modelo gramatical es para uso no comercial. La edición puede cambiar palabras; revisá los textos importantes.</p>
-        <a class="text-link" href="compare/apple-dictation/#local-improvement" hreflang="es">Cómo funciona y qué medimos <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="improve-transcription/" hreflang="es">Cómo funciona y qué medí <span aria-hidden="true">↗</span></a>
       </div>
     </section>
     <aside class="comparison-link wrap" aria-label="Comparar apps de dictado">
@@ -130,10 +229,10 @@
     </aside>
     <section class="privacy-panel wrap" id="privacy" aria-labelledby="privacy-title">
       <div class="privacy-copy"><p class="eyebrow">DICTADO 100% LOCAL</p><h2 id="privacy-title">Tus palabras quedan<br>en tu Mac.</h2></div>
-      <div class="privacy-summary"><p>El reconocimiento de voz funciona en tu dispositivo. Sin grabaciones guardadas ni historial de dictados. Funciona sin conexión después de configurar el modelo.</p><p>La descarga de modelos y la búsqueda de actualizaciones usan internet. Una vez insertado o copiado, el texto queda en manos de la app de destino y del portapapeles.</p><p>Este sitio mide visitas y clics de descarga con PostHog mediante un identificador anónimo del navegador. No graba sesiones.</p><a class="text-link" href="https://github.com/rodrigouroz/VoxKey#privacy">Más sobre privacidad <span aria-hidden="true">↗</span></a></div>
+      <div class="privacy-summary"><p>El reconocimiento de voz funciona en tu dispositivo. Sin grabaciones guardadas ni historial de dictados. Funciona sin conexión después de configurar el modelo.</p><p>La descarga de modelos y la búsqueda de actualizaciones usan internet. Una vez insertado o copiado, el texto queda en manos de la app de destino y del portapapeles.</p><p>Este sitio mide visitas, clics y tiempos de carga con PostHog mediante un identificador anónimo del navegador. No graba sesiones.</p><a class="text-link" href="https://github.com/rodrigouroz/VoxKey#privacy">Más sobre privacidad <span aria-hidden="true">↗</span></a></div>
     </section>
     <section class="getting-started wrap" id="get-started" aria-labelledby="setup-title">
-      <div class="setup-intro"><p class="eyebrow">PRIMEROS PASOS</p><h2 id="setup-title">Empezá en tres pasos.</h2><p>Creado por <a href="https://cv.rodrigouroz.com/" rel="author">Rodrigo Uroz</a>. Gratis y de código abierto.<br>Tus comentarios y contribuciones son bienvenidos.</p><a class="text-link" href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">Escribime a hello@rodrigouroz.com <span aria-hidden="true">↗</span></a></div>
+      <div class="setup-intro"><p class="eyebrow">PRIMEROS PASOS</p><h2 id="setup-title">Empezá en tres pasos.</h2><p>Hice VoxKey como una app gratis y de código abierto.<br>Tus comentarios y contribuciones son bienvenidos.</p><a class="text-link" href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">Escribime a hello@rodrigouroz.com <span aria-hidden="true">↗</span></a></div>
       <div class="setup-details">
         <h3>Instalá VoxKey</h3>
         <ol class="install-steps">
@@ -143,8 +242,8 @@
         </ol>
         <h3 class="faq-title">Preguntas frecuentes</h3>
         <div class="faq">
-          <details><summary>¿Puedo dictar sin conexión en español e inglés?<span aria-hidden="true">+</span></summary><p>Sí. Descargá un modelo Whisper Turbo multilingüe para dictar en español, inglés u otros idiomas compatibles. Los modelos Distil solo admiten inglés. Después de configurar el modelo, el reconocimiento de voz funciona sin conexión en tu Mac. La descarga de modelos y la búsqueda de actualizaciones de la app sí usan internet.</p></details>
-          <details><summary>¿Qué necesito?<span aria-hidden="true">+</span></summary><p>Una Mac con Apple Silicon y macOS 26 o posterior. Elegí un modelo Distil para inglés o un modelo Turbo multilingüe para español y otros idiomas. Necesitás conexión a internet para descargar modelos; podés conservar varios y cambiar el activo en Settings (Configuración).</p></details>
+          <details><summary>¿Puedo dictar sin conexión en español e inglés?<span aria-hidden="true">+</span></summary><p>Sí. Descargá un modelo Whisper v3 Turbo multilingüe para dictar en español, inglés u otros idiomas compatibles. Los modelos Distil-Whisper v3 solo admiten inglés. Después de configurar el modelo, el reconocimiento de voz funciona sin conexión en tu Mac. La descarga de modelos y la búsqueda de actualizaciones de la app sí usan internet.</p></details>
+          <details><summary>¿Qué necesito?<span aria-hidden="true">+</span></summary><p>Una Mac con Apple Silicon y macOS 26 o posterior. Elegí un modelo Distil-Whisper v3 para inglés o un modelo Whisper v3 Turbo multilingüe para español y otros idiomas. Necesitás conexión a internet para descargar modelos; podés conservar varios y cambiar el activo en Settings (Configuración).</p></details>
           <details><summary>¿Funciona en todas las apps?<span aria-hidden="true">+</span></summary><p>La compatibilidad con editores y los tiempos de respuesta siguen en evaluación. Probalo donde escribís habitualmente. Si no se puede confirmar la inserción, recuperá el texto con Safety Net. Si algo falla, <a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">indicanos la app, la versión de macOS y la compilación de VoxKey</a>, usando texto inventado.</p></details>
           <details><summary>¿Cómo se actualiza?<span aria-hidden="true">+</span></summary><p>Elegí Check for Updates (Buscar actualizaciones) en el menú de VoxKey. Las actualizaciones esperan a que terminen el dictado y la recuperación, y piden confirmación antes de reiniciar. También podés descargarlas desde <a href="https://github.com/rodrigouroz/VoxKey/releases">GitHub Releases</a>.</p></details>
           <details><summary>¿Puede mejorar mi transcripción?<span aria-hidden="true">+</span></summary><p>El dictado funciona por sí solo. La opción Improve transcription viene desactivada y permite eliminar muletillas y repeticiones y mejorar la gramática en inglés. Sus modelos se descargan por separado (hasta 2,03 GB) y funcionan en tu Mac. Se pausa al elegir otros idiomas o la detección automática. El modelo gramatical es para uso no comercial y puede cambiar tus palabras. Revisá los <a href="https://github.com/rodrigouroz/VoxKey/blob/main/docs/improve-transcription.md">términos del modelo y las notas de las pruebas</a> antes de activarla.</p></details>
@@ -152,6 +251,6 @@
       </div>
     </section>
   </main>
-  <footer class="site-footer wrap"><a class="brand" href="./"><img src="../assets/voxkey-icon.png" width="26" height="26" alt="">VoxKey</a><p>Una pequeña app para darle voz a tus ideas.</p><nav aria-label="Pie de página"><a href="/es/compare/">Comparar</a><a href="https://github.com/rodrigouroz/VoxKey">Código fuente</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">Comentarios</a><a href="https://github.com/rodrigouroz/VoxKey/blob/main/LICENSE">Licencia MIT</a></nav></footer>
+  <footer class="site-footer wrap"><a class="brand" href="./"><img src="../assets/voxkey-icon.png" width="26" height="26" alt="">VoxKey</a><p>Dictado gratis y de código abierto para Mac.</p><nav aria-label="Pie de página"><a href="/es/compare/">Comparar</a><a href="https://github.com/rodrigouroz/VoxKey">Código fuente</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">Comentarios</a><a href="https://github.com/rodrigouroz/VoxKey/blob/main/LICENSE">Licencia MIT</a></nav></footer>
 </body>
 </html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5f0">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171C1B">
+  <title>Improve Transcription: Local English Cleanup in VoxKey</title>
+  <meta name="description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta name="author" content="Rodrigo Uroz">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://voxkey.rodrigouroz.com/improve-transcription/">
+  <link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/improve-transcription/">
+  <link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/improve-transcription/">
+  <link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/improve-transcription/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="VoxKey">
+  <meta property="og:title" content="Improve Transcription: Local English Cleanup in VoxKey">
+  <meta property="og:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta property="og:url" content="https://voxkey.rodrigouroz.com/improve-transcription/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_AR">
+  <meta property="og:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Improve Transcription: Local English Cleanup in VoxKey">
+  <meta name="twitter:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
+  <meta name="twitter:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
+  <link rel="icon" type="image/svg+xml" href="/assets/voxkey-icon.svg">
+  <link rel="icon" type="image/png" href="/assets/voxkey-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/article.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "WebSite", "@id": "https://voxkey.rodrigouroz.com/#website", "name": "VoxKey", "url": "https://voxkey.rodrigouroz.com/", "inLanguage": ["en", "es"]},
+    {
+      "@type": "WebPage",
+      "@id": "https://voxkey.rodrigouroz.com/improve-transcription/#webpage",
+      "url": "https://voxkey.rodrigouroz.com/improve-transcription/",
+      "name": "Improve Transcription: Local English Cleanup in VoxKey",
+      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.",
+      "inLanguage": "en",
+      "isPartOf": {"@id": "https://voxkey.rodrigouroz.com/#website"},
+      "breadcrumb": {"@id": "https://voxkey.rodrigouroz.com/improve-transcription/#breadcrumb"},
+      "primaryImageOfPage": {"@type": "ImageObject", "url": "https://voxkey.rodrigouroz.com/assets/social-preview.png", "width": 1200, "height": 630},
+      "author": {"@type": "Person", "name": "Rodrigo Uroz", "url": "https://cv.rodrigouroz.com/"},
+      "mainEntity": {"@id": "https://voxkey.rodrigouroz.com/improve-transcription/#article"}
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://voxkey.rodrigouroz.com/improve-transcription/#breadcrumb",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "VoxKey", "item": "https://voxkey.rodrigouroz.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Improve transcription", "item": "https://voxkey.rodrigouroz.com/improve-transcription/"}
+      ]
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://voxkey.rodrigouroz.com/improve-transcription/#article",
+      "headline": "Improve Transcription: Local English Cleanup in VoxKey",
+      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.",
+      "url": "https://voxkey.rodrigouroz.com/improve-transcription/",
+      "mainEntityOfPage": {"@id": "https://voxkey.rodrigouroz.com/improve-transcription/#webpage"},
+      "image": "https://voxkey.rodrigouroz.com/assets/social-preview.png",
+      "datePublished": "2026-09-12",
+      "dateModified": "2026-09-14",
+      "inLanguage": "en",
+      "author": {"@type": "Person", "name": "Rodrigo Uroz", "url": "https://cv.rodrigouroz.com/"},
+      "publisher": {"@type": "Organization", "name": "VoxKey", "url": "https://voxkey.rodrigouroz.com/"},
+      "about": {"@type": "SoftwareApplication", "@id": "https://voxkey.rodrigouroz.com/#app", "name": "VoxKey", "url": "https://voxkey.rodrigouroz.com/"}
+    }
+  ]
+}
+  </script>
+  <script defer src="/analytics.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="/"><img src="/assets/voxkey-icon.png" width="36" height="36" alt="">VoxKey</a>
+    <div class="header-actions">
+      <nav aria-label="Main navigation"><a href="/" class="nav-detail">Home</a><a href="/compare/">Compare</a></nav>
+      <nav class="language-switcher" aria-label="Language">
+        <a href="/improve-transcription/" lang="en" hreflang="en" aria-current="page">EN</a>
+        <a href="/es/improve-transcription/" lang="es" hreflang="es">ES</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="article wrap">
+    <article>
+      <header class="article-header">
+        <a class="article-back" href="/">← VoxKey home</a>
+        <p class="eyebrow">OPTIONAL LOCAL CLEANUP</p>
+        <h1>Improve transcription,<br><em>on your Mac.</em></h1>
+        <p class="article-lead">An optional step that removes fillers and repetitions and improves English grammar after you dictate.</p>
+        <p class="article-scope">What VoxKey 0.6.0 does, what I measured, and the terms of the models it uses. Off by default. English only. Edits can change words, so review important text.</p>
+      </header>
+
+      <section class="choice-panel" aria-labelledby="choice-title">
+        <h2 id="choice-title">Turn it on when it helps.</h2>
+        <div class="choice-columns">
+          <div><h3>Leave it off if…</h3><p>You dictate in Spanish or other languages, you want your exact words kept, or you would rather not download up to 2.03 GB of extra models. Plain dictation works on its own.</p></div>
+          <div><h3>Turn it on if…</h3><p>You dictate in English and want fillers, repetitions, and small grammar slips fixed before the text lands, without sending it to a server.</p></div>
+        </div>
+      </section>
+
+      <section class="article-section" aria-labelledby="how-title">
+        <h2 id="how-title">How it works</h2>
+        <p>Open <strong>Settings → Dictation</strong> and turn on <strong>Improve transcription</strong>. The models download once and then run inside the app. When the setting is on, three stages turn speech into the text delivered to your editor:</p>
+        <ol class="try-steps">
+          <li><strong>Whisper transcribes.</strong> The speech model you selected converts your recording to text.</li>
+          <li><strong>S1-mini cleans up.</strong> Superwhisper’s editing model removes fillers and repetitions. It runs through llama.cpp with Metal support, linked directly into the app. Prompt lookup speeds up decoding by reusing matching text from the input.</li>
+          <li><strong>GECToR checks grammar.</strong> A Core ML grammar model applies restricted edits. Guards protect technical literals and limit word substitutions in this stage.</li>
+        </ol>
+        <p>I integrated and validated these models; I did not create S1-mini or GECToR. Failed, cancelled, unsupported, or oversized improvement requests keep the original recognition result, and turning the setting off restores plain transcription.</p>
+      </section>
+
+      <section class="article-section" aria-labelledby="measured-title">
+        <h2 id="measured-title">What I measured</h2>
+        <div class="research-note">
+          <p>On one Apple Silicon Mac, S1-mini’s warm median editing time fell from <strong>362 ms to 121 ms</strong> with prompt lookup. Plain decoding and prompt lookup produced identical text and output tokens across 124 natural-speech inputs.</p>
+          <p>The complete guarded editing pipeline matched all 124 qualified outputs with the signed bundled framework, at <strong>128 ms median and 431 ms p95</strong>. Guard decisions also matched 388 frozen cases.</p>
+          <p>These are editing-stage measurements. They exclude speech recognition, startup, and text delivery. Matching qualified outputs validates the implementation; it does not guarantee correct grammar or preserved meaning for every voice or sentence.</p>
+          <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">Read the validation summary and model terms</a>
+        </div>
+      </section>
+
+      <section class="article-section" aria-labelledby="terms-title">
+        <h2 id="terms-title">Requirements and terms</h2>
+        <p>Improvement requires <strong>English</strong> as the selected dictation language and up to <strong>2.03 GB</strong> of optional model downloads. It pauses for Spanish, other languages, and Automatic; speech recognition keeps working in those languages without it.</p>
+        <p>The GECToR grammar model is for <strong>noncommercial use</strong>, under terms separate from VoxKey’s MIT-licensed app. S1-mini has its own terms. Review both in the <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">behavior and validation summary</a> before enabling the setting.</p>
+        <p>Models can still change names, meaning, or a correction you spoke on purpose. Review important text before sending it.</p>
+      </section>
+
+      <section class="article-section" aria-labelledby="try-title">
+        <h2 id="try-title">Try it with your own voice</h2>
+        <p>Dictate the same passage twice into a local document, once with improvement off and once with it on. Use the same microphone, room, and speech model, and note your Mac chip, macOS version, and VoxKey version.</p>
+        <div class="sample-grid">
+          <blockquote><p>“So, um, the meeting is on Tuesday at three. Please, please send the updated document to María before lunch.”</p><footer>English test prompt with fillers · improvement should remove “um” and the repeated “please”</footer></blockquote>
+          <blockquote lang="es"><p>“La reunión es el martes a las tres. Revisá el documento y avisame si podés enviarlo antes del almuerzo.”</p><footer>Spanish test prompt · improvement pauses; the text should arrive unchanged</footer></blockquote>
+        </div>
+        <p class="source-note">These are suggested prompts, not recorded results.</p>
+        <ol class="try-steps">
+          <li><strong>Check the words.</strong> Compare both versions for missing words, names, accents, and any change in meaning. Score punctuation separately.</li>
+          <li><strong>Check the wait.</strong> Time from your last spoken word to usable text, including releasing the trigger. Improvement adds its editing time on top of recognition.</li>
+          <li><strong>Check your apps.</strong> Try the editors you use each day with disposable text. If delivery cannot be confirmed, Safety Net keeps the last result for recovery; it is not a saved history.</li>
+        </ol>
+      </section>
+
+      <section class="article-cta" aria-labelledby="download-title">
+        <div><h2 id="download-title">See how it fits your writing.</h2><p>Free, open source, and local. Apple Silicon · macOS 26+</p></div>
+        <a class="button primary" data-download-placement="install" href="https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg">Download VoxKey for Mac</a>
+      </section>
+      <p class="article-privacy">This website measures visits, clicks, and page loading times with PostHog using an anonymous browser identifier. No session recordings. <a href="/#privacy">Privacy details</a>.</p>
+    </article>
+  </main>
+  <footer class="site-footer wrap"><a class="brand" href="/"><img src="/assets/voxkey-icon.png" width="26" height="26" alt="">VoxKey</a><p>Free, open-source dictation for Mac.</p><nav aria-label="Footer"><a href="/compare/">Compare</a><a href="https://github.com/rodrigouroz/VoxKey">GitHub</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20feedback">Feedback</a></nav></footer>
+</body>
+</html>
