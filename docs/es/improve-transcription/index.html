@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f4f5f0">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171C1B">
   <title>Improve transcription: mejora local del inglés en VoxKey</title>
-  <meta name="description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, qué medí y los términos de los modelos. Viene desactivado.">
+  <meta name="description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, y los términos de los modelos que usa. Viene desactivado.">
   <meta name="author" content="Rodrigo Uroz">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://voxkey.rodrigouroz.com/es/improve-transcription/">
@@ -16,7 +16,7 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="VoxKey">
   <meta property="og:title" content="Improve transcription: mejora local del inglés en VoxKey">
-  <meta property="og:description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, qué medí y los términos de los modelos. Viene desactivado.">
+  <meta property="og:description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, y los términos de los modelos que usa. Viene desactivado.">
   <meta property="og:url" content="https://voxkey.rodrigouroz.com/es/improve-transcription/">
   <meta property="og:locale" content="es_AR">
   <meta property="og:locale:alternate" content="en_US">
@@ -26,7 +26,7 @@
   <meta property="og:image:alt" content="VoxKey. Menos teclado. Más vos. El reconocimiento de voz se procesa en tu Mac.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Improve transcription: mejora local del inglés en VoxKey">
-  <meta name="twitter:description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, qué medí y los términos de los modelos. Viene desactivado.">
+  <meta name="twitter:description" content="Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, y los términos de los modelos que usa. Viene desactivado.">
   <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview-es.png">
   <meta name="twitter:image:alt" content="VoxKey. Menos teclado. Más vos. El reconocimiento de voz se procesa en tu Mac.">
   <link rel="icon" type="image/svg+xml" href="/assets/voxkey-icon.svg">
@@ -44,7 +44,7 @@
       "@id": "https://voxkey.rodrigouroz.com/es/improve-transcription/#webpage",
       "url": "https://voxkey.rodrigouroz.com/es/improve-transcription/",
       "name": "Improve transcription: mejora local del inglés en VoxKey",
-      "description": "Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, qué medí y los términos de los modelos. Viene desactivado.",
+      "description": "Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, y los términos de los modelos que usa. Viene desactivado.",
       "inLanguage": "es",
       "isPartOf": {"@id": "https://voxkey.rodrigouroz.com/#website"},
       "breadcrumb": {"@id": "https://voxkey.rodrigouroz.com/es/improve-transcription/#breadcrumb"},
@@ -64,7 +64,7 @@
       "@type": "TechArticle",
       "@id": "https://voxkey.rodrigouroz.com/es/improve-transcription/#article",
       "headline": "Improve transcription: mejora local del inglés en VoxKey",
-      "description": "Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, qué medí y los términos de los modelos. Viene desactivado.",
+      "description": "Cómo el paso opcional Improve transcription de VoxKey quita muletillas y corrige la gramática en inglés en tu Mac, y los términos de los modelos que usa. Viene desactivado.",
       "url": "https://voxkey.rodrigouroz.com/es/improve-transcription/",
       "mainEntityOfPage": {"@id": "https://voxkey.rodrigouroz.com/es/improve-transcription/#webpage"},
       "image": "https://voxkey.rodrigouroz.com/assets/social-preview-es.png",
@@ -99,7 +99,7 @@
         <p class="eyebrow">MEJORA LOCAL OPCIONAL</p>
         <h1>Improve transcription,<br><em>en tu Mac.</em></h1>
         <p class="article-lead">Un paso opcional que quita muletillas y repeticiones y mejora la gramática en inglés después de dictar.</p>
-        <p class="article-scope">Qué hace VoxKey 0.6.0, qué medí y los términos de los modelos que usa. Viene desactivado. Solo inglés. La edición puede cambiar palabras; revisá los textos importantes.</p>
+        <p class="article-scope">Qué hace VoxKey 0.6.0 y los términos de los modelos que usa. Viene desactivado. Solo inglés. La edición puede cambiar palabras; revisá los textos importantes.</p>
       </header>
 
       <section class="choice-panel" aria-labelledby="choice-title">
@@ -119,16 +119,6 @@
           <li><strong>GECToR revisa la gramática.</strong> Un modelo gramatical en Core ML aplica cambios restringidos. Las protecciones preservan literales técnicos y limitan las sustituciones de palabras en esta etapa.</li>
         </ol>
         <p>Integré y validé estos modelos; no creé S1-mini ni GECToR. Si la mejora falla, se cancela, no está disponible o el texto es demasiado largo, se conserva el resultado original del reconocimiento. Desactivar la opción restaura la transcripción sin cambios.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="measured-title">
-        <h2 id="measured-title">Qué medí</h2>
-        <div class="research-note">
-          <p>En una Mac con Apple Silicon, la mediana de edición de S1-mini en caliente pasó de <strong>362 ms a 121 ms</strong> con búsqueda de prompt. La decodificación simple y la búsqueda de prompt produjeron texto y tokens idénticos en 124 entradas de habla natural.</p>
-          <p>El proceso completo de edición con protecciones coincidió con las 124 salidas calificadas usando el framework firmado incluido en la app: <strong>128 ms de mediana y 431 ms en el percentil 95</strong>. Las decisiones de protección también coincidieron en 388 casos congelados.</p>
-          <p>Son mediciones de la etapa de edición. Excluyen el reconocimiento de voz, el arranque y la inserción del texto. Que las salidas calificadas coincidan valida la implementación; no garantiza gramática correcta ni que se preserve el significado con cada voz u oración.</p>
-          <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">Leé el resumen de validación y los términos de los modelos</a>
-        </div>
       </section>
 
       <section class="article-section" aria-labelledby="terms-title">

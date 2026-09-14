@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f4f5f0">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171C1B">
   <title>Improve Transcription: Local English Cleanup in VoxKey</title>
-  <meta name="description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta name="description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, and the terms of the models it uses. Off by default.">
   <meta name="author" content="Rodrigo Uroz">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://voxkey.rodrigouroz.com/improve-transcription/">
@@ -16,7 +16,7 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="VoxKey">
   <meta property="og:title" content="Improve Transcription: Local English Cleanup in VoxKey">
-  <meta property="og:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta property="og:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, and the terms of the models it uses. Off by default.">
   <meta property="og:url" content="https://voxkey.rodrigouroz.com/improve-transcription/">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_AR">
@@ -26,7 +26,7 @@
   <meta property="og:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Improve Transcription: Local English Cleanup in VoxKey">
-  <meta name="twitter:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.">
+  <meta name="twitter:description" content="How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, and the terms of the models it uses. Off by default.">
   <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
   <meta name="twitter:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
   <link rel="icon" type="image/svg+xml" href="/assets/voxkey-icon.svg">
@@ -44,7 +44,7 @@
       "@id": "https://voxkey.rodrigouroz.com/improve-transcription/#webpage",
       "url": "https://voxkey.rodrigouroz.com/improve-transcription/",
       "name": "Improve Transcription: Local English Cleanup in VoxKey",
-      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.",
+      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, and the terms of the models it uses. Off by default.",
       "inLanguage": "en",
       "isPartOf": {"@id": "https://voxkey.rodrigouroz.com/#website"},
       "breadcrumb": {"@id": "https://voxkey.rodrigouroz.com/improve-transcription/#breadcrumb"},
@@ -64,7 +64,7 @@
       "@type": "TechArticle",
       "@id": "https://voxkey.rodrigouroz.com/improve-transcription/#article",
       "headline": "Improve Transcription: Local English Cleanup in VoxKey",
-      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, what I measured, and the model terms. Off by default.",
+      "description": "How VoxKey’s optional Improve transcription step removes fillers and fixes English grammar on your Mac, and the terms of the models it uses. Off by default.",
       "url": "https://voxkey.rodrigouroz.com/improve-transcription/",
       "mainEntityOfPage": {"@id": "https://voxkey.rodrigouroz.com/improve-transcription/#webpage"},
       "image": "https://voxkey.rodrigouroz.com/assets/social-preview.png",
@@ -99,7 +99,7 @@
         <p class="eyebrow">OPTIONAL LOCAL CLEANUP</p>
         <h1>Improve transcription,<br><em>on your Mac.</em></h1>
         <p class="article-lead">An optional step that removes fillers and repetitions and improves English grammar after you dictate.</p>
-        <p class="article-scope">What VoxKey 0.6.0 does, what I measured, and the terms of the models it uses. Off by default. English only. Edits can change words, so review important text.</p>
+        <p class="article-scope">What VoxKey 0.6.0 does and the terms of the models it uses. Off by default. English only. Edits can change words, so review important text.</p>
       </header>
 
       <section class="choice-panel" aria-labelledby="choice-title">
@@ -119,16 +119,6 @@
           <li><strong>GECToR checks grammar.</strong> A Core ML grammar model applies restricted edits. Guards protect technical literals and limit word substitutions in this stage.</li>
         </ol>
         <p>I integrated and validated these models; I did not create S1-mini or GECToR. Failed, cancelled, unsupported, or oversized improvement requests keep the original recognition result, and turning the setting off restores plain transcription.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="measured-title">
-        <h2 id="measured-title">What I measured</h2>
-        <div class="research-note">
-          <p>On one Apple Silicon Mac, S1-mini’s warm median editing time fell from <strong>362 ms to 121 ms</strong> with prompt lookup. Plain decoding and prompt lookup produced identical text and output tokens across 124 natural-speech inputs.</p>
-          <p>The complete guarded editing pipeline matched all 124 qualified outputs with the signed bundled framework, at <strong>128 ms median and 431 ms p95</strong>. Guard decisions also matched 388 frozen cases.</p>
-          <p>These are editing-stage measurements. They exclude speech recognition, startup, and text delivery. Matching qualified outputs validates the implementation; it does not guarantee correct grammar or preserved meaning for every voice or sentence.</p>
-          <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">Read the validation summary and model terms</a>
-        </div>
       </section>
 
       <section class="article-section" aria-labelledby="terms-title">

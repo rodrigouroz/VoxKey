@@ -16,7 +16,7 @@ choose_other = "Try Apple Dictation first if you want speech to text without ins
 note = "Apple Dictation can process general text on-device in supported configurations. Check the Keyboard settings notice for your Mac and language; dictation in a search box is handled separately. I make no claim that VoxKey is more accurate."
 extra_h = "English cleanup that stays on your Mac"
 extra_p = "VoxKey’s optional Improve transcription step removes fillers and repetitions and improves English grammar on your Mac. It is off by default and English only."
-extra_link = "How it works and what I measured"
+extra_link = "How it works"
 extra_href = "/improve-transcription/"
 
 [[en.rows]]
@@ -68,7 +68,7 @@ choose_other = "Probá primero el dictado de Apple si querés voz a texto sin in
 note = "El dictado de Apple puede procesar texto general en el dispositivo en configuraciones compatibles. Revisá el aviso de Teclado para tu Mac e idioma; el dictado en búsquedas se trata aparte. No afirmo que VoxKey sea más preciso."
 extra_h = "Mejora en inglés que se procesa en tu Mac"
 extra_p = "El paso opcional Improve transcription de VoxKey quita muletillas y repeticiones y mejora la gramática en inglés en tu Mac. Viene desactivado y solo funciona en inglés."
-extra_link = "Cómo funciona y qué medí"
+extra_link = "Cómo funciona"
 extra_href = "/es/improve-transcription/"
 
 [[es.rows]]
