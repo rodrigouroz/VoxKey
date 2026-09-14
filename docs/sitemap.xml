@@ -1,12 +1,115 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<?xml version='1.0' encoding='utf-8'?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://voxkey.rodrigouroz.com/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/" />
   </url>
   <url>
     <loc>https://voxkey.rodrigouroz.com/es/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/wispr-flow/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/wispr-flow/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/wispr-flow/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/wispr-flow/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/superwhisper/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/superwhisper/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/superwhisper/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/superwhisper/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/openwhispr/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/openwhispr/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/openwhispr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/openwhispr/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/dragon/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/dragon/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/dragon/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/dragon/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/compare/macwhisper/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/macwhisper/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/macwhisper/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/macwhisper/" />
   </url>
   <url>
     <loc>https://voxkey.rodrigouroz.com/compare/apple-dictation/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/apple-dictation/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/apple-dictation/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/apple-dictation/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/wispr-flow/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/wispr-flow/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/wispr-flow/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/wispr-flow/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/superwhisper/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/superwhisper/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/superwhisper/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/superwhisper/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/openwhispr/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/openwhispr/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/openwhispr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/openwhispr/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/dragon/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/dragon/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/dragon/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/dragon/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/macwhisper/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/macwhisper/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/macwhisper/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/macwhisper/" />
+  </url>
+  <url>
+    <loc>https://voxkey.rodrigouroz.com/es/compare/apple-dictation/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://voxkey.rodrigouroz.com/compare/apple-dictation/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://voxkey.rodrigouroz.com/es/compare/apple-dictation/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://voxkey.rodrigouroz.com/compare/apple-dictation/" />
   </url>
 </urlset>
