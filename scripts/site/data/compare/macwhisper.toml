@@ -1,0 +1,100 @@
+slug = "macwhisper"
+order = 5
+published = "2026-09-14"
+researched = "2026-09-14"
+
+[en]
+name = "MacWhisper"
+title = "VoxKey vs MacWhisper: Mac Dictation Compared"
+description = "Compare VoxKey vs MacWhisper for Mac dictation, local transcription, pricing, audio files, and subtitles. Includes direct-download vs App Store differences."
+eyebrow = "DICTATION VS FILE TRANSCRIPTION"
+lead = "Compare a focused dictation app with a file-transcription workspace."
+card = "Compare a focused dictation app with a file-transcription workspace."
+glance = { price = "Free version; paid Pro", processing = "Local option", useful_for = "Files + subtitles" }
+choose_voxkey = "Choose VoxKey when the job is speaking into your current text field, then getting back to writing. It offers local speech-model selection, vocabulary hints, and recovery without a saved dictation archive."
+choose_other = "Choose MacWhisper if you also transcribe audio or video files, export subtitles, or need batch processing. It offers local transcription as well as optional AI integrations."
+note = "MacWhisper’s direct-download edition supports system-wide dictation. Its App Store edition does not offer that feature. Compare the edition you would actually install."
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Free version; website lists Pro at €64 per license, with lifetime updates."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "Local transcription; optional AI integrations."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Mac; this comparison covers the direct-download edition."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "File transcription, subtitle exports, and Pro batch processing."
+
+[[en.sources]]
+url = "https://www.macwhisper.com/"
+label = "Product & direct-download pricing"
+
+[[en.sources]]
+url = "https://docs.macwhisper.com/article/14-how-to-use-the-dictation-feature"
+label = "Dictation availability"
+
+[[en.sources]]
+url = "https://docs.macwhisper.com/article/40-macwhisper-whisper-transcription-difference"
+label = "Direct download vs App Store"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "MacWhisper"
+title = "VoxKey vs MacWhisper: dictado para Mac"
+description = "Compará VoxKey con MacWhisper: dictado local en Mac, precios, archivos y subtítulos. Incluye diferencias entre la descarga directa y la App Store."
+eyebrow = "DICTADO VS TRANSCRIPCIÓN DE ARCHIVOS"
+lead = "Compará una app enfocada en dictado con un espacio para transcribir archivos."
+card = "Compará una app enfocada en dictado con un espacio para transcribir archivos."
+glance = { price = "Versión gratuita; Pro pago", processing = "Opción local", useful_for = "Archivos + subtítulos" }
+choose_voxkey = "Elegí VoxKey cuando querés hablar en el campo de texto actual y seguir escribiendo. Ofrece selección de modelos locales, pistas de vocabulario y recuperación sin guardar un historial de dictados."
+choose_other = "Elegí MacWhisper si también transcribís archivos de audio o video, exportás subtítulos o necesitás procesamiento por lotes. Ofrece transcripción local e integraciones opcionales de IA."
+note = "La edición de MacWhisper descargada desde su web permite dictar en todo el sistema. La edición de la App Store no ofrece esa función. Compará la edición que realmente instalarías."
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Versión gratuita; la web indica Pro a €64 por licencia con actualizaciones de por vida."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "Transcripción local; integraciones de IA opcionales."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Mac; esta comparación cubre la descarga directa."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "Transcripción de archivos, subtítulos y lotes en Pro."
+
+[[es.sources]]
+url = "https://www.macwhisper.com/"
+label = "Producto y precios de la descarga directa"
+
+[[es.sources]]
+url = "https://docs.macwhisper.com/article/14-how-to-use-the-dictation-feature"
+label = "Disponibilidad del dictado"
+
+[[es.sources]]
+url = "https://docs.macwhisper.com/article/40-macwhisper-whisper-transcription-difference"
+label = "Descarga directa y App Store"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5f0">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171C1B">
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}">
+  <meta name="author" content="Rodrigo Uroz">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="{{url}}">
+  <link rel="alternate" hreflang="en" href="{{url_en}}">
+  <link rel="alternate" hreflang="es" href="{{url_es}}">
+  <link rel="alternate" hreflang="x-default" href="{{url_en}}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VoxKey">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:url" content="{{url}}">
+  <meta property="og:locale" content="{{locale}}">
+  <meta property="og:locale:alternate" content="{{locale_alt}}">
+  <meta property="og:image" content="{{og_image}}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{og_image_alt}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{title}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta name="twitter:image" content="{{og_image}}">
+  <meta name="twitter:image:alt" content="{{og_image_alt}}">
+  <link rel="icon" type="image/svg+xml" href="/assets/voxkey-icon.svg">
+  <link rel="icon" type="image/png" href="/assets/voxkey-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/compare.css">
+  <script type="application/ld+json">
+{{ld_json}}
+  </script>
+  <script defer src="/analytics.js"></script>
+</head>
+<body class="comparison-page">
+  <a class="skip-link" href="#main">{{skip}}</a>
+  <header class="site-header wrap">
+    <a class="brand" href="{{home_href}}"><img src="/assets/voxkey-icon.png" width="36" height="36" alt="">VoxKey</a>
+    <div class="header-actions">
+      <nav aria-label="{{nav_label}}"><a href="{{home_href}}" class="nav-detail">{{nav_home}}</a><a href="{{hub_href}}">{{nav_compare}}</a></nav>
+      <nav class="language-switcher" aria-label="{{lang_switch_label}}">
+        <a href="{{path_en}}" lang="en" hreflang="en"{{current_en}}>EN</a>
+        <a href="{{path_es}}" lang="es" hreflang="es"{{current_es}}>ES</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="wrap">
+    <section class="compare-hero" aria-labelledby="page-title"><p class="eyebrow">{{hub_eyebrow}}</p><h1 id="page-title">{{hub_h1}}</h1><p class="compare-lead">{{hub_lead}}</p><p class="compare-date"><time datetime="{{researched_iso}}">{{researched}}</time></p></section>
+    <aside class="compare-position"><p>{{hub_callout}}</p></aside>
+    <section aria-labelledby="quick-title" class="compare-section"><h2 id="quick-title">{{glance_h}}</h2><div class="table-scroll" tabindex="0" role="region" aria-labelledby="quick-title"><table><caption>{{hub_h1}}</caption><thead><tr><th scope="col">{{col_app}}</th><th scope="col">{{col_price}}</th><th scope="col">{{col_processing}}</th><th scope="col">{{col_useful}}</th></tr></thead><tbody>
+{{glance_rows}}
+    </tbody></table></div></section>
+    <section class="compare-section" aria-labelledby="all-title"><h2 id="all-title">{{all_h}}</h2><div class="compare-grid">
+{{cards}}
+    </div></section>
+    <section class="compare-method compare-section" id="method" aria-labelledby="method-title"><h2 id="method-title">{{method_h}}</h2><p>{{method_p1}}</p><p>{{method_p2}}</p></section>
+    <section class="compare-limitations compare-section" id="limits" aria-labelledby="limits-title"><h2 id="limits-title">{{limits_h}}</h2><p>{{limits_p}} <a href="{{model_terms_href}}">{{model_terms}}</a></p></section>
+    <section class="compare-cta" aria-labelledby="try-title"><div><h2 id="try-title">{{cta_h}}</h2><p>{{cta_p}}</p></div><a href="{{cta_href}}" class="button primary">{{cta_button}}</a></section>
+  </main>
+  <footer class="site-footer wrap"><a class="brand" href="{{home_href}}">VoxKey</a><p>{{footer_tagline}}</p><nav aria-label="Footer"><a href="https://github.com/rodrigouroz/VoxKey">{{footer_github}}</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20comparison%20correction">{{footer_correction}}</a></nav></footer>
+  <p class="compare-analytics wrap">{{analytics}}</p>
+</body>
+</html>

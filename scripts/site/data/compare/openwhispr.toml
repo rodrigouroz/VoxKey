@@ -1,0 +1,100 @@
+slug = "openwhispr"
+order = 3
+published = "2026-09-14"
+researched = "2026-09-14"
+
+[en]
+name = "OpenWhispr"
+title = "VoxKey vs OpenWhispr: Mac Dictation Compared"
+description = "Compare VoxKey vs OpenWhispr: two free, open-source dictation apps. Explore local processing, transcript history, platform support, and workflow differences."
+eyebrow = "TWO OPEN-SOURCE APPS"
+lead = "Free local dictation on both sides, with a real choice about history and platforms."
+card = "Free local dictation on both sides, with a real choice about history and platforms."
+glance = { price = "Free local dictation", processing = "Local by default", useful_for = "Open source + more platforms" }
+choose_voxkey = "Choose VoxKey if you want a native Mac dictation utility that does not keep a transcript archive. Safety Net retains a result for recovery when delivery cannot be confirmed; confirmed delivery clears it."
+choose_other = "Choose OpenWhispr if you want free, open-source local dictation on Mac, Windows, or Linux, with optional cloud providers and a wider set of meeting and agent features."
+note = "OpenWhispr defaults to local processing and audio retention is off by default. Its policy says transcribed text is stored in a local database. VoxKey’s distinction is no dictation history, not exclusive access to private or free transcription."
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Unlimited local dictation free; paid plans add cloud and other features."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "Local by default; own API keys or managed cloud optional."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Mac, Windows, Linux; iOS companion offered with Pro."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "Local transcript history; meeting and agent features."
+
+[[en.sources]]
+url = "https://openwhispr.com/pricing"
+label = "Plans & pricing"
+
+[[en.sources]]
+url = "https://github.com/OpenWhispr/openwhispr"
+label = "Source code & platforms"
+
+[[en.sources]]
+url = "https://openwhispr.com/privacy"
+label = "Processing & retention policy"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "OpenWhispr"
+title = "VoxKey vs OpenWhispr: dictado para Mac"
+description = "Compará VoxKey con OpenWhispr: dos apps de dictado gratis y de código abierto. Procesamiento local, historial, plataformas y diferencias de uso."
+eyebrow = "DOS APPS DE CÓDIGO ABIERTO"
+lead = "Ambas ofrecen dictado local gratis; cambian el historial y las plataformas."
+card = "Ambas ofrecen dictado local gratis; cambian el historial y las plataformas."
+glance = { price = "Dictado local gratis", processing = "Local por defecto", useful_for = "Código abierto + más plataformas" }
+choose_voxkey = "Elegí VoxKey si querés una utilidad nativa de Mac que no guarde un archivo de transcripciones. Safety Net conserva un resultado para recuperarlo si no puede confirmar la entrega; una entrega confirmada lo borra."
+choose_other = "Elegí OpenWhispr si buscás dictado local gratuito y de código abierto en Mac, Windows o Linux, con proveedores en la nube opcionales y más funciones de reuniones y agentes."
+note = "OpenWhispr procesa localmente por defecto y no guarda audio salvo que actives esa opción. Su política indica que el texto transcrito se guarda en una base local. VoxKey se distingue por no guardar historial, no por ser la única opción gratuita o privada."
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Dictado local ilimitado gratis; los planes pagos agregan nube y otras funciones."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "Local por defecto; claves API propias o nube administrada opcionales."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Mac, Windows, Linux; app complementaria iOS ofrecida con Pro."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "Historial local; funciones de reuniones y agentes."
+
+[[es.sources]]
+url = "https://openwhispr.com/pricing"
+label = "Planes y precios"
+
+[[es.sources]]
+url = "https://github.com/OpenWhispr/openwhispr"
+label = "Código fuente y plataformas"
+
+[[es.sources]]
+url = "https://openwhispr.com/privacy"
+label = "Política de procesamiento y retención"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"

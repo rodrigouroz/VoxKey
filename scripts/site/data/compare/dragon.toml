@@ -1,0 +1,92 @@
+slug = "dragon"
+order = 4
+published = "2026-09-14"
+researched = "2026-09-14"
+
+[en]
+name = "Dragon Professional"
+title = "VoxKey vs Dragon Professional: Mac Dictation Compared"
+description = "Compare VoxKey vs Dragon Professional for dictation. See current Mac support, Windows workflows, custom commands, cost, and the discontinued Dragon for Mac."
+eyebrow = "MAC VS WINDOWS"
+lead = "A Mac alternative for people searching for Dragon NaturallySpeaking."
+card = "A Mac alternative for people searching for Dragon NaturallySpeaking."
+glance = { price = "Commercial license", processing = "Windows desktop", useful_for = "Professional Windows workflows" }
+choose_voxkey = "Choose VoxKey if you need a current Mac app for short dictations into your text fields. It is free and runs locally, but requires Apple Silicon and macOS 26 or later."
+choose_other = "Choose Dragon Professional v16 for Windows documentation workflows that depend on custom commands, auto-text, and managed deployment. VoxKey does not replace those capabilities."
+note = "“Dragon NaturallySpeaking” and “Dragon Dictate” are familiar older names. This page compares VoxKey with Dragon Professional v16 for Windows. Nuance discontinued Dragon Professional Individual for Mac in October 2018. Dragon Professional Anywhere and Dragon Anywhere Mobile are separate products."
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Commercial license; contact vendor for current pricing."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "Windows desktop product; separate cloud products exist."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Windows 10/11. Dragon for Mac is discontinued."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "Custom words, commands, auto-text, and file transcription."
+
+[[en.sources]]
+url = "https://dragon.nuance.com/en-us/dragon-professional"
+label = "Dragon Professional v16 for Windows"
+
+[[en.sources]]
+url = "https://nuance.custhelp.com/app/answers/detail/a_id/27843/~/dragon-professional-for-mac-6%3A-end-of-life%2C-end-of-support-dates"
+label = "Dragon for Mac end of life"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "Dragon Professional"
+title = "VoxKey vs Dragon Professional: dictado para Mac"
+description = "Compará VoxKey con Dragon Professional: dictado actual en Mac, funciones de Windows, comandos, costos y qué pasó con Dragon para Mac."
+eyebrow = "MAC VS WINDOWS"
+lead = "Una alternativa para Mac si estás buscando Dragon NaturallySpeaking."
+card = "Una alternativa para Mac si estás buscando Dragon NaturallySpeaking."
+glance = { price = "Licencia comercial", processing = "Escritorio Windows", useful_for = "Uso profesional en Windows" }
+choose_voxkey = "Elegí VoxKey si necesitás una app actual para dictados breves en los campos de texto de tu Mac. Es gratis y funciona localmente, pero requiere Apple Silicon y macOS 26 o posterior."
+choose_other = "Elegí Dragon Professional v16 para documentación en Windows que dependa de comandos personalizados, textos automáticos y administración de instalaciones. VoxKey no reemplaza esas funciones."
+note = "“Dragon NaturallySpeaking” y “Dragon Dictate” son nombres anteriores conocidos. Esta página compara VoxKey con Dragon Professional v16 para Windows. Nuance discontinuó Dragon Professional Individual para Mac en octubre de 2018. Dragon Professional Anywhere y Dragon Anywhere Mobile son productos distintos."
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Licencia comercial; consultá al proveedor por el precio actual."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "Producto de escritorio para Windows; hay productos en la nube separados."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Windows 10/11. Dragon para Mac está discontinuado."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "Vocabulario, comandos, textos automáticos y transcripción de archivos."
+
+[[es.sources]]
+url = "https://dragon.nuance.com/en-us/dragon-professional"
+label = "Dragon Professional v16 para Windows"
+
+[[es.sources]]
+url = "https://nuance.custhelp.com/app/answers/detail/a_id/27843/~/dragon-professional-for-mac-6%3A-end-of-life%2C-end-of-support-dates"
+label = "Fin de vida de Dragon para Mac"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"

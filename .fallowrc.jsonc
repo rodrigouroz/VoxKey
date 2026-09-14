@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  // The website in docs/ is static HTML served from the docs root on GitHub Pages.
+  // Pages load their stylesheets and analytics through root-absolute URLs such as
+  // "/styles.css", which the browser resolves at request time and the static import
+  // graph cannot. Declare those files as runtime-loaded and skip the unresolved
+  // specifier findings for them.
+  "dynamicallyLoaded": ["docs/*.css", "docs/analytics.js"],
+  "ignoreUnresolvedImports": ["/*.css", "/analytics.js"]
+}

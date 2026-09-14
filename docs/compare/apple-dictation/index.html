@@ -18,20 +18,22 @@
   <meta property="og:title" content="VoxKey vs Apple Dictation: Mac Dictation Compared">
   <meta property="og:description" content="Compare VoxKey and Apple Dictation for offline use, English and Spanish, local cleanup, setup, and text delivery. Includes sources and testing limitations.">
   <meta property="og:url" content="https://voxkey.rodrigouroz.com/compare/apple-dictation/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_AR">
   <meta property="og:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="VoxKey. A little less typing. A lot more you. Local dictation for your Mac.">
-  <meta property="og:locale" content="en_US">
-  <meta property="og:locale:alternate" content="es_AR">
+  <meta property="og:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VoxKey vs Apple Dictation: Mac Dictation Compared">
   <meta name="twitter:description" content="Compare VoxKey and Apple Dictation for offline use, English and Spanish, local cleanup, setup, and text delivery. Includes sources and testing limitations.">
   <meta name="twitter:image" content="https://voxkey.rodrigouroz.com/assets/social-preview.png">
-  <link rel="icon" type="image/svg+xml" href="../../assets/voxkey-icon.svg">
-  <link rel="icon" type="image/png" href="../../assets/voxkey-icon.png">
-  <link rel="stylesheet" href="../../styles.css">
-  <link rel="stylesheet" href="../../comparison.css">
+  <meta name="twitter:image:alt" content="VoxKey. A little less typing. A lot more you. Speech recognition runs on your Mac.">
+  <link rel="icon" type="image/svg+xml" href="/assets/voxkey-icon.svg">
+  <link rel="icon" type="image/png" href="/assets/voxkey-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/compare.css">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -137,9 +139,9 @@
   ]
 }
   </script>
-  <script defer src="../../analytics.js"></script>
+  <script defer src="/analytics.js"></script>
 </head>
-<body>
+<body class="comparison-page">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header wrap">
     <a class="brand" href="/"><img src="/assets/voxkey-icon.png" width="36" height="36" alt="">VoxKey</a>
@@ -151,113 +153,31 @@
       </nav>
     </div>
   </header>
-  <main id="main" class="article wrap">
-    <article>
-      <header class="article-header">
-        <a class="article-back" href="/compare/">← All dictation comparisons</a>
-        <p class="eyebrow">CHOOSING A DICTATION APP</p>
-        <h1>VoxKey vs<br><em>Apple Dictation.</em></h1>
-        <p class="article-lead">Your Mac already includes dictation. When is it worth adding another app?</p>
-        <p class="article-byline">By <a href="https://rodrigouroz.com/" rel="author">Rodrigo Uroz</a>, creator of VoxKey · <time datetime="2026-09-12">September 12, 2026</time></p>
-        <p class="article-scope">A comparison of documented features in VoxKey 0.6.0 and macOS Tahoe 26. This is written by VoxKey’s creator, not an independent review. No head-to-head accuracy or speed test has been completed.</p>
-      </header>
-
-      <section class="choice-panel" aria-labelledby="choice-title">
-        <h2 id="choice-title">Start with what you need.</h2>
-        <div class="choice-columns">
-          <div><h3>Keep Apple Dictation if…</h3><p>It already handles your everyday writing well. It is built into macOS and supports spoken punctuation and formatting commands. You may not need another app.</p></div>
-          <div><h3>Try VoxKey if…</h3><p>You want a free, native Mac app with selectable local speech models, a hold-to-talk workflow, and optional English cleanup that also runs on your Mac.</p></div>
-        </div>
-      </section>
-
-      <section class="article-section" aria-labelledby="comparison-title">
-        <h2 id="comparison-title">What actually differs?</h2>
-        <p>Offline use alone does not distinguish them: Apple Dictation can also process speech on-device. Check its Keyboard settings for the processing mode available on your Mac.</p>
-        <div class="comparison-table" role="region" aria-labelledby="comparison-title" tabindex="0">
-          <table>
-            <caption>Documented features, reviewed September 12, 2026. Apple features vary by language and region.</caption>
-            <thead><tr><th scope="col">What matters</th><th scope="col">Apple Dictation</th><th scope="col">VoxKey 0.6.0</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Getting started</th><td>Included with macOS; enable it in Keyboard settings.</td><td>Install the app, grant Microphone and Accessibility access, and download a speech model. Requires Apple Silicon and macOS 26+.</td></tr>
-              <tr><th scope="row">Offline speech</th><td>On-device processing is available for supported configurations. Check the notice in Keyboard settings.</td><td>Speech recognition always runs locally. Download a model first; model downloads and update checks use the internet.</td></tr>
-              <tr><th scope="row">English and Spanish</th><td>Available; feature support varies by language and region.</td><td>Choose a multilingual Whisper v3 Turbo model for either language. Distil-v3 models are English-only.</td></tr>
-              <tr><th scope="row">Writing flow</th><td>Text appears as you speak. On Apple Silicon, you can also type during dictation.</td><td>Hold a trigger, speak, and release. Only the completed text is inserted. Toggle Dictation offers press-to-start, press-to-finish.</td></tr>
-              <tr><th scope="row">Punctuation and formatting</th><td>Spoken commands and automatic punctuation in supported languages.</td><td>The model supplies transcription punctuation. Spoken formatting commands are not a supported feature.</td></tr>
-              <tr><th scope="row">Speech models</th><td>Managed by macOS.</td><td>Select compact or full Distil-v3 and Whisper v3 Turbo models. Keep several downloaded; use one at a time.</td></tr>
-              <tr><th scope="row">Accuracy and speed</th><td colspan="2">No comparable measurements here. Try your own voice, microphone, language, and everyday text fields before choosing.</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="source-note">Apple sources: <a href="https://support.apple.com/en-ie/guide/mac-help/mh40584/mac">Dictation guide</a>, <a href="https://support.apple.com/guide/mac-help/commands-for-dictating-text-on-mac-mh40695/26/mac/26">spoken commands</a>, and <a href="https://www.apple.com/lae/macos/feature-availability/">language availability</a>. VoxKey sources: <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md">0.6.0 usage guide</a> and <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/CONTEXT.md">implementation scope</a>.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="native-title">
-        <h2 id="native-title">A native Mac app, from menu to models</h2>
-        <p>VoxKey is built with Swift and AppKit. Its menu bar controls and Settings window use native macOS components, and its speech and editing models run inside the app. There is no local server, Python environment, or Homebrew runtime for you to set up.</p>
-        <p>Apple Dictation is native to macOS too. VoxKey’s reason to try it is the combination of selectable speech models, deliberate hold-to-talk delivery, and optional local editing. You can inspect the implementation in the <a href="https://github.com/rodrigouroz/VoxKey/tree/v0.6.0/Sources">open-source app</a>.</p>
-      </section>
-
-      <section class="article-section" id="local-improvement" aria-labelledby="improvement-title">
-        <h2 id="improvement-title">English cleanup that stays on your Mac</h2>
-        <p><strong>Improve transcription</strong> is an optional step that removes fillers and repetitions and improves English grammar. It defaults off. When enabled, three stages turn speech into the text delivered to your editor:</p>
-        <ol class="try-steps">
-          <li><strong>Whisper transcribes.</strong> The selected local speech model converts your recording to text.</li>
-          <li><strong>S1-mini cleans up.</strong> Superwhisper’s editing model runs through directly linked llama.cpp with Metal support. Prompt lookup accelerates decoding by reusing matching text from the input.</li>
-          <li><strong>GECToR checks grammar.</strong> A Core ML grammar model applies restricted edits. Guards protect technical literals and limit word substitutions in this stage.</li>
-        </ol>
-        <p>VoxKey integrates and validates these models; it did not create S1-mini or GECToR. Failed, cancelled, unsupported, or oversized improvement requests preserve the original recognition result.</p>
-        <div class="research-note">
-          <h3>What the published validation shows</h3>
-          <p>On one Apple Silicon Mac, S1-mini’s warm median editing time fell from <strong>362 ms to 121 ms</strong> with prompt lookup. Plain decoding and prompt lookup produced identical text and output tokens across 124 natural-speech inputs.</p>
-          <p>The complete guarded editing pipeline matched all 124 qualified outputs with the signed bundled framework, at <strong>128 ms median and 431 ms p95</strong>. Guard decisions also matched 388 frozen cases.</p>
-          <p>These are editing-stage measurements. They exclude speech recognition, startup, and text delivery, and do not compare VoxKey with Apple Dictation. Matching qualified outputs validates the implementation; it does not guarantee correct grammar or preserved meaning for every voice or sentence.</p>
-          <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/improve-transcription.md">Read the validation summary and model terms</a>
-        </div>
-        <p>Improvement requires <strong>English</strong> as the selected language and up to <strong>2.03 GB</strong> of optional model downloads. It pauses for Spanish, other languages, and Automatic. The GECToR model is for <strong>noncommercial use</strong>, under terms separate from VoxKey’s MIT-licensed app. Models can still change names, meaning, or spoken corrections; review important text.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="offline-title">
-        <h2 id="offline-title">Check offline use before you need it.</h2>
-        <p>Apple’s Dictation guide explains how to check whether general text dictation is processed on-device; its notice distinguishes that from dictation in a search box. Read the privacy information for your configuration.</p>
-        <p>VoxKey downloads its speech model during setup, then uses that model locally. It does not save recordings or a dictation history. Once text is delivered or copied, the destination app and clipboard determine what happens to it.</p>
-        <p>Before relying on either option while travelling, complete setup and try a harmless sentence in a local document without an internet connection. Successful downloading alone does not prove that your chosen setup works offline.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="spanish-title">
-        <h2 id="spanish-title">Dictating in English and Spanish</h2>
-        <p>In VoxKey, open <strong>Settings → Models &amp; Languages</strong>, download a Whisper v3 Turbo model, and select <strong>Use Model</strong>. Choose Spanish or English explicitly for a short phrase, or try Automatic for language detection. An English-only Distil model will not provide Spanish dictation.</p>
-        <p>Spanish dictation works independently of the <a href="#local-improvement">optional English improvement pipeline</a>. Selecting Spanish or Automatic pauses improvement, while speech recognition remains available.</p>
-        <p>A <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/testing/model-comparison-2026-09-10/README.md">small published VoxKey model experiment</a> used synthetic English and Spanish speech. It did not test Apple Dictation, personal voices, or end-to-end text delivery, so it cannot establish that VoxKey is more accurate or faster.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="try-title">
-        <h2 id="try-title">A small test with your own voice</h2>
-        <p>Use the same microphone, room, language, and text for both apps. Note your Mac chip, macOS version, VoxKey version and model, and whether transcription improvement is enabled. Start with improvement off to compare ordinary dictation.</p>
-        <div class="sample-grid">
-          <blockquote><p>“The meeting is on Tuesday at three. Please send the updated document to María before lunch.”</p><footer>English test prompt</footer></blockquote>
-          <blockquote lang="es"><p>“La reunión es el martes a las tres. Revisá el documento y avisame si podés enviarlo antes del almuerzo.”</p><footer>Spanish test prompt · includes Argentine voseo</footer></blockquote>
-        </div>
-        <p class="source-note">These are suggested prompts, not recorded results.</p>
-        <ol class="try-steps">
-          <li><strong>Check the words.</strong> Repeat each passage a few times. Note missing words, names, accents, and any change in meaning. Score punctuation separately.</li>
-          <li><strong>Check the wait.</strong> Time from your last spoken word to usable text. For VoxKey, include releasing the trigger and waiting for insertion. Decoder-only timings are not the same measurement.</li>
-          <li><strong>Check your apps.</strong> Try a local document and the editors you use each day, with disposable text. Check insertion at the cursor and replacement of selected text. Do not send or submit the result.</li>
-          <li><strong>Check the controls.</strong> Try starting, finishing, and cancelling. If spoken punctuation or paragraph commands matter to you, test those separately.</li>
-        </ol>
-        <p>VoxKey’s editor compatibility is still being tested. If delivery cannot be confirmed, Safety Net makes the last result available for recovery; it is not a saved history. The 0.6.0 release also notes an unresolved intermittent Right Command activation issue. See the <a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/docs/release/0.6.0.md">release limitations</a>.</p>
-      </section>
-
-      <section class="article-section" aria-labelledby="other-comparisons-title">
-        <h2 id="other-comparisons-title">Compare other dictation apps</h2>
-        <p><a href="/compare/wispr-flow/">Wispr Flow</a> · <a href="/compare/superwhisper/">Superwhisper</a> · <a href="/compare/openwhispr/">OpenWhispr</a> · <a href="/compare/dragon/">Dragon Professional</a> · <a href="/compare/macwhisper/">MacWhisper</a></p>
-      </section>
-      <section class="article-cta" aria-labelledby="download-title">
-        <div><h2 id="download-title">See how it fits your writing.</h2><p>Free, open source, and local. Apple Silicon · macOS 26+</p></div>
-        <a class="button primary" data-download-placement="install" href="https://github.com/rodrigouroz/VoxKey/releases/download/v0.6.0/VoxKey-v0.6.0-arm64.dmg">Download VoxKey for Mac</a>
-      </section>
-      <p class="article-privacy">This website measures visits and download clicks with PostHog using an anonymous browser identifier. No session recordings. <a href="../../#privacy">Privacy details</a>.</p>
-    </article>
+  <main id="main" class="wrap">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/compare/">All comparisons</a><span aria-hidden="true">/</span><span>Apple Dictation</span></nav>
+    <section class="compare-hero detail-hero" aria-labelledby="page-title"><p class="eyebrow">BUILT-IN VS ADD-ON</p><h1 id="page-title">VoxKey vs<br><em>Apple Dictation</em></h1><p class="compare-lead">Compare built-in macOS Dictation with VoxKey’s local-model workflow.</p><p class="compare-date"><time datetime="2026-09-14">Researched September 14, 2026</time> · VoxKey 0.6.0</p></section>
+    <section class="choice-grid" aria-label="Which app to choose">
+      <article class="choice-card choice-voxkey"><h2>When to choose VoxKey</h2><p>Choose VoxKey if you want to pick your Whisper model, add vocabulary hints, hold a key to dictate, and recover a result when delivery cannot be confirmed.</p></article>
+      <article class="choice-card"><h2>When to choose Apple Dictation</h2><p>Try Apple Dictation first if you want speech to text without installing another app. It comes with macOS and supports spoken punctuation, formatting commands, and many languages.</p></article>
+    </section>
+    <section class="compare-section" aria-labelledby="differences-title"><h2 id="differences-title">The practical differences</h2><div class="table-scroll" tabindex="0" role="region" aria-labelledby="differences-title"><table><caption>VoxKey vs Apple Dictation</caption><thead><tr><th scope="col">What matters</th><th scope="col">VoxKey</th><th scope="col">Apple Dictation</th></tr></thead><tbody>
+<tr><th scope="row">Cost</th><td data-label="VoxKey">Free; MIT-licensed app source. Model terms are separate.</td><td data-label="Apple Dictation">Included with macOS.</td></tr>
+<tr><th scope="row">Processing</th><td data-label="VoxKey">Local only after model downloads; update checks use the internet.</td><td data-label="Apple Dictation">On-device availability depends on your configuration; check Keyboard settings.</td></tr>
+<tr><th scope="row">Platforms</th><td data-label="VoxKey">Apple Silicon Mac, macOS 26 or later.</td><td data-label="Apple Dictation">Built into macOS; languages and features vary.</td></tr>
+<tr><th scope="row">Workflow</th><td data-label="VoxKey">Dictation into text fields, vocabulary hints, Safety Net recovery.</td><td data-label="Apple Dictation">Text appears as you speak, with spoken punctuation and formatting commands. Voice Control is a separate option for spoken commands.</td></tr>
+    </tbody></table></div><p class="comparison-note">Apple Dictation can process general text on-device in supported configurations. Check the Keyboard settings notice for your Mac and language; dictation in a search box is handled separately. I make no claim that VoxKey is more accurate. <a href="#sources">Sources &amp; scope ↓</a></p></section>
+    <section class="compare-section compare-extra" aria-labelledby="extra-title"><h2 id="extra-title">English cleanup that stays on your Mac</h2><p>VoxKey’s optional Improve transcription step removes fillers and repetitions and improves English grammar on your Mac. It is off by default and English only. <a href="/improve-transcription/">How it works and what I measured</a></p></section>
+    <p class="compare-limitations compare-section">VoxKey is for dictation into text fields. <a href="/compare/#limits">What VoxKey doesn’t do</a>.</p>
+    <section class="compare-method compare-section" id="sources" aria-labelledby="sources-title"><h2 id="sources-title">Sources &amp; scope</h2><p>I wrote this comparison from vendor documentation and VoxKey 0.6.0. <a href="/compare/#method">How I compare</a>.</p><p>Official sources checked:</p><ul>
+<li><a href="https://support.apple.com/en-ie/guide/mac-help/mh40584/mac">Dictation guide</a></li>
+<li><a href="https://support.apple.com/guide/mac-help/commands-for-dictating-text-on-mac-mh40695/26/mac/26">Spoken commands</a></li>
+<li><a href="https://www.apple.com/lae/macos/feature-availability/">Language availability</a></li>
+<li><a href="https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md">VoxKey 0.6.0 behavior and requirements</a></li>
+    </ul></section>
+    <nav class="related-comparisons" aria-label="Explore other comparisons"><h2>Explore other comparisons</h2><div><a href="/compare/wispr-flow/">Wispr Flow</a><a href="/compare/superwhisper/">Superwhisper</a><a href="/compare/openwhispr/">OpenWhispr</a><a href="/compare/dragon/">Dragon Professional</a><a href="/compare/macwhisper/">MacWhisper</a></div></nav>
+    <section class="compare-cta" aria-labelledby="try-title"><div><h2 id="try-title">Try VoxKey on your Mac</h2><p>Free, open source, and local after model setup. Apple Silicon · macOS 26+</p></div><a href="/#get-started" class="button primary">Download &amp; setup</a></section>
   </main>
-  <footer class="site-footer wrap"><a class="brand" href="../../"><img src="../../assets/voxkey-icon.png" width="26" height="26" alt="">VoxKey</a><p>A small app for getting your thoughts out.</p><nav aria-label="Footer"><a href="https://github.com/rodrigouroz/VoxKey">Source</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20comparison%20feedback">Suggest a correction</a></nav></footer>
+  <footer class="site-footer wrap"><a class="brand" href="/">VoxKey</a><p>Free, open-source dictation for Mac.</p><nav aria-label="Footer"><a href="https://github.com/rodrigouroz/VoxKey">GitHub</a><a href="mailto:hello@rodrigouroz.com?subject=VoxKey%20comparison%20correction">Suggest a correction</a></nav></footer>
+  <p class="compare-analytics wrap">This website measures visits, clicks, and page loading times with an anonymous browser identifier. No session recordings.</p>
 </body>
 </html>

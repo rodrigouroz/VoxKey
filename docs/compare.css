@@ -27,7 +27,7 @@
 .compare-card p:not(.eyebrow) { color: var(--muted); font-size: 14px; line-height: 1.8; }
 .compare-card .text-link { margin-top: auto; color: var(--accent); align-self: start; }
 .compare-method { max-width: 82ch; }
-.compare-method p, .compare-method li, .compare-limitations p { font-size: 14px; line-height: 1.85; color: var(--muted); }
+.compare-method p, .compare-method li, .compare-limitations, .compare-limitations p { font-size: 14px; line-height: 1.85; color: var(--muted); }
 .compare-method li { margin-bottom: 8px; }
 .compare-method ul { padding-left: 20px; }
 .compare-cta { display: flex; justify-content: space-between; align-items: center; gap: 28px; margin-block: 48px; padding: 32px; border-radius: 10px; background: var(--lime-wash); }
@@ -45,7 +45,8 @@
 .choice-voxkey { background: var(--lime-wash); }
 .comparison-note { font-size: 14px; line-height: 1.85; color: var(--muted); padding: 20px 24px; margin: 16px 0 0; border-left: 2px solid var(--border); }
 .compare-limitations { border-block: 1px solid var(--border); padding-block: 28px; }
-.compare-limitations p { max-width: 90ch; margin-bottom: 0; }
+.compare-extra p { max-width: 90ch; font-size: 15px; line-height: 1.85; color: var(--muted); margin-bottom: 0; }
+.compare-limitations, .compare-limitations p { max-width: 90ch; margin-bottom: 0; }
 .compare-limitations p + p { margin-top: 14px; }
 .related-comparisons { display: block; border-top: 1px solid var(--border); padding-top: 28px; }
 .related-comparisons div { display: flex; flex-wrap: wrap; gap: 12px 24px; }
@@ -64,4 +65,18 @@
   .comparison-page th, .comparison-page td { padding: 14px 16px; }
   .comparison-page .site-footer nav { flex-wrap: wrap; justify-content: center; }
   .breadcrumbs { margin-top: 20px; }
+}
+@media (max-width: 640px) {
+  /* Stack each comparison row as a card so every column is readable without horizontal scrolling. */
+  .table-scroll { overflow-x: visible; }
+  .comparison-page table, .comparison-page caption, .comparison-page tbody, .comparison-page tr, .comparison-page th, .comparison-page td { display: block; }
+  .comparison-page thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .comparison-page tbody th, .comparison-page td { min-width: 0; border-bottom: 0; }
+  .comparison-page tbody th { padding: 18px 16px 6px; font-size: 16px; }
+  .comparison-page td { padding: 6px 16px; }
+  .comparison-page td::before { content: attr(data-label); display: block; margin-bottom: 2px; font: 500 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); }
+  .comparison-page tr { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .comparison-page tr:last-child { border-bottom: 0; }
+  .voxkey-row > * { background: transparent; }
+  .voxkey-row { background: var(--lime-wash); }
 }

@@ -1,0 +1,104 @@
+slug = "apple-dictation"
+order = 6
+published = "2026-09-12"
+researched = "2026-09-14"
+
+[en]
+name = "Apple Dictation"
+title = "VoxKey vs Apple Dictation: Mac Dictation Compared"
+description = "Compare VoxKey and Apple Dictation for offline use, English and Spanish, local cleanup, setup, and text delivery. Includes sources and testing limitations."
+eyebrow = "BUILT-IN VS ADD-ON"
+lead = "Compare built-in macOS Dictation with VoxKey’s local-model workflow."
+card = "Compare built-in macOS Dictation with VoxKey’s local-model workflow."
+glance = { price = "Included with macOS", processing = "On-device for supported languages", useful_for = "No extra app" }
+choose_voxkey = "Choose VoxKey if you want to pick your Whisper model, add vocabulary hints, hold a key to dictate, and recover a result when delivery cannot be confirmed."
+choose_other = "Try Apple Dictation first if you want speech to text without installing another app. It comes with macOS and supports spoken punctuation, formatting commands, and many languages."
+note = "Apple Dictation can process general text on-device in supported configurations. Check the Keyboard settings notice for your Mac and language; dictation in a search box is handled separately. I make no claim that VoxKey is more accurate."
+extra_h = "English cleanup that stays on your Mac"
+extra_p = "VoxKey’s optional Improve transcription step removes fillers and repetitions and improves English grammar on your Mac. It is off by default and English only."
+extra_link = "How it works and what I measured"
+extra_href = "/improve-transcription/"
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Included with macOS."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "On-device availability depends on your configuration; check Keyboard settings."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Built into macOS; languages and features vary."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "Text appears as you speak, with spoken punctuation and formatting commands. Voice Control is a separate option for spoken commands."
+
+[[en.sources]]
+url = "https://support.apple.com/en-ie/guide/mac-help/mh40584/mac"
+label = "Dictation guide"
+
+[[en.sources]]
+url = "https://support.apple.com/guide/mac-help/commands-for-dictating-text-on-mac-mh40695/26/mac/26"
+label = "Spoken commands"
+
+[[en.sources]]
+url = "https://www.apple.com/lae/macos/feature-availability/"
+label = "Language availability"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "Apple Dictation"
+title = "VoxKey vs Apple Dictation: dictado para Mac"
+description = "Compará VoxKey con el dictado de Apple: uso sin conexión, español e inglés, mejora local, configuración e inserción de texto, con fuentes y límites."
+eyebrow = "INTEGRADO VS APP ADICIONAL"
+lead = "Compará el dictado integrado de macOS con los modelos locales de VoxKey."
+card = "Compará el dictado integrado de macOS con los modelos locales de VoxKey."
+glance = { price = "Incluido con macOS", processing = "En el equipo en idiomas compatibles", useful_for = "Sin otra app" }
+choose_voxkey = "Elegí VoxKey si querés elegir tu modelo Whisper, agregar pistas de vocabulario, mantener una tecla para dictar y recuperar un resultado cuando no se pueda confirmar la entrega."
+choose_other = "Probá primero el dictado de Apple si querés voz a texto sin instalar otra app. Viene con macOS y admite puntuación hablada, comandos de formato y varios idiomas."
+note = "El dictado de Apple puede procesar texto general en el dispositivo en configuraciones compatibles. Revisá el aviso de Teclado para tu Mac e idioma; el dictado en búsquedas se trata aparte. No afirmo que VoxKey sea más preciso."
+extra_h = "Mejora en inglés que se procesa en tu Mac"
+extra_p = "El paso opcional Improve transcription de VoxKey quita muletillas y repeticiones y mejora la gramática en inglés en tu Mac. Viene desactivado y solo funciona en inglés."
+extra_link = "Cómo funciona y qué medí"
+extra_href = "/es/improve-transcription/"
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Incluido con macOS."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "La disponibilidad local depende de la configuración; revisá Teclado."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Integrado en macOS; los idiomas y las funciones varían."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "El texto aparece mientras hablás, con puntuación hablada y comandos de formato. Control por voz es otra opción para comandos hablados."
+
+[[es.sources]]
+url = "https://support.apple.com/en-gb/guide/mac-help/-mh40584/mac"
+label = "Dictado en Mac"
+
+[[es.sources]]
+url = "https://support.apple.com/en-gb/guide/mac-help/kbdm162/mac"
+label = "Ajustes de teclado y dictado"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"

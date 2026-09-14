@@ -34,3 +34,7 @@ CI pins actions to commit SHAs and Dependabot proposes monthly updates. Signing
 credentials stay in a local Keychain, never in a pull request or CI artifact.
 
 See [distribution](docs/release/distribution.md) for DMG builds and beta releases.
+
+The public website lives in `docs/`. The comparison pages and sitemap are generated;
+edit `scripts/site/data/` and run `python3 scripts/site/build.py` instead of the HTML.
+See [scripts/site/README.md](scripts/site/README.md).

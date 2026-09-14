@@ -1,0 +1,100 @@
+slug = "wispr-flow"
+order = 1
+published = "2026-09-14"
+researched = "2026-09-14"
+
+[en]
+name = "Wispr Flow"
+title = "VoxKey vs Wispr Flow: Mac Dictation Compared"
+description = "Compare VoxKey vs Wispr Flow for Mac dictation: offline processing, cloud requirements, free-plan limits, Pro pricing, and desktop or mobile use."
+eyebrow = "LOCAL VS CLOUD"
+lead = "Compare local dictation with a cloud service across desktop and mobile."
+card = "Compare local dictation with a cloud service across desktop and mobile."
+glance = { price = "Free tier; paid Pro", processing = "Internet required", useful_for = "Desktop + mobile" }
+choose_voxkey = "Choose VoxKey if you want free dictation that works without a connection after model setup, and you use an Apple Silicon Mac with macOS 26 or later."
+choose_other = "Choose Wispr Flow if you want dictation across Mac, Windows, iOS, and Android, plus shared dictionaries and team administration. An internet connection is required."
+note = "Privacy controls and cloud processing are different things. Flow offers data controls; its dictation still runs in the cloud."
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Free desktop tier: 2,000 words/week; Pro US$15/month or US$12/month billed annually."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "Cloud; internet required for dictation."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Mac, Windows, iOS, Android."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "Cross-device dictation and team features."
+
+[[en.sources]]
+url = "https://wisprflow.ai/pricing"
+label = "Plans & pricing"
+
+[[en.sources]]
+url = "https://docs.wisprflow.ai/articles/4048537120-what-to-expect-from-flow-accuracy-and-known-limitations"
+label = "Internet requirement"
+
+[[en.sources]]
+url = "https://wisprflow.ai/privacy"
+label = "Privacy controls"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "Wispr Flow"
+title = "VoxKey vs Wispr Flow: dictado para Mac"
+description = "Compará VoxKey con Wispr Flow para dictar en Mac: uso sin conexión, nube, límites del plan gratis, precios Pro y compatibilidad con otros dispositivos."
+eyebrow = "LOCAL VS NUBE"
+lead = "Compará el dictado local con un servicio en la nube para computadoras y celulares."
+card = "Compará el dictado local con un servicio en la nube para computadoras y celulares."
+glance = { price = "Plan gratuito; Pro pago", processing = "Requiere internet", useful_for = "Computadoras + celulares" }
+choose_voxkey = "Elegí VoxKey si querés dictado gratuito que funcione sin conexión después de preparar el modelo, y usás una Mac con Apple Silicon y macOS 26 o posterior."
+choose_other = "Elegí Wispr Flow si necesitás dictar en Mac, Windows, iOS y Android, con diccionarios compartidos y administración de equipos. Requiere conexión a internet."
+note = "Los controles de privacidad y el procesamiento en la nube son cosas distintas. Flow ofrece controles de datos; su dictado sigue procesándose en la nube."
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Plan gratuito en computadoras: 2.000 palabras/semana; Pro US$15/mes o US$12/mes con pago anual."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "En la nube; requiere internet para dictar."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Mac, Windows, iOS, Android."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "Dictado en varios dispositivos y funciones para equipos."
+
+[[es.sources]]
+url = "https://wisprflow.ai/pricing"
+label = "Planes y precios"
+
+[[es.sources]]
+url = "https://docs.wisprflow.ai/articles/4048537120-what-to-expect-from-flow-accuracy-and-known-limitations"
+label = "Requisito de conexión"
+
+[[es.sources]]
+url = "https://wisprflow.ai/privacy"
+label = "Controles de privacidad"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"

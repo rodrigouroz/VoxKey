@@ -1,0 +1,100 @@
+slug = "superwhisper"
+order = 2
+published = "2026-09-14"
+researched = "2026-09-14"
+
+[en]
+name = "Superwhisper"
+title = "VoxKey vs Superwhisper: Mac Dictation Compared"
+description = "Compare VoxKey vs Superwhisper: free local Whisper on Mac, Pro pricing, custom modes, transcript history, and when each dictation app makes sense."
+eyebrow = "TWO LOCAL WHISPER APPS"
+lead = "Both offer free local Whisper on Mac. The difference is the workflow."
+card = "Both offer free local Whisper on Mac. The difference is the workflow."
+glance = { price = "Free local tier; paid Pro", processing = "Local option", useful_for = "Modes + model choice" }
+choose_voxkey = "Choose VoxKey for a focused hold-to-dictate app whose source you can inspect, with no saved recordings or dictation history. There is no cloud transcription option to configure."
+choose_other = "Choose Superwhisper for custom modes and a broader writing toolkit, with local and cloud models. Its Pro license also covers Windows, iPhone, and iPad."
+note = "Free offline Whisper is not exclusive to VoxKey. Superwhisper’s August 26, 2026 macOS changelog makes all local Whisper models free; its pricing table still lists local models under Pro. This comparison follows the dated changelog for that specific feature."
+
+[[en.rows]]
+label = "Cost"
+voxkey = "Free; MIT-licensed app source. Model terms are separate."
+other = "Local Whisper free on Mac; Pro US$8.49/month, US$84.99/year, or US$249.99 lifetime."
+
+[[en.rows]]
+label = "Processing"
+voxkey = "Local only after model downloads; update checks use the internet."
+other = "Local models available; cloud models optional."
+
+[[en.rows]]
+label = "Platforms"
+voxkey = "Apple Silicon Mac, macOS 26 or later."
+other = "Mac, Windows, iPhone, iPad; features vary."
+
+[[en.rows]]
+label = "Workflow"
+voxkey = "Dictation into text fields, vocabulary hints, Safety Net recovery."
+other = "Custom modes; local transcription history."
+
+[[en.sources]]
+url = "https://superwhisper.com/changelog"
+label = "macOS changelog, August 26, 2026"
+
+[[en.sources]]
+url = "https://superwhisper.com/docs/billing/plans"
+label = "Plans & pricing"
+
+[[en.sources]]
+url = "https://superwhisper.com/docs/security/sensitive-data"
+label = "Local processing & history"
+
+[[en.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "VoxKey 0.6.0 behavior and requirements"
+
+[es]
+name = "Superwhisper"
+title = "VoxKey vs Superwhisper: dictado para Mac"
+description = "Compará VoxKey con Superwhisper: Whisper local gratis en Mac, precios Pro, modos personalizados, historial y cuándo conviene cada app de dictado."
+eyebrow = "DOS APPS CON WHISPER LOCAL"
+lead = "Ambas ofrecen Whisper local gratis en Mac. La diferencia está en el uso."
+card = "Ambas ofrecen Whisper local gratis en Mac. La diferencia está en el uso."
+glance = { price = "Nivel local gratis; Pro pago", processing = "Opción local", useful_for = "Modos + modelos" }
+choose_voxkey = "Elegí VoxKey para mantener una tecla y dictar, con código que podés inspeccionar y sin grabaciones ni historial de dictado guardados. No hay una opción de transcripción en la nube que configurar."
+choose_other = "Elegí Superwhisper si buscás modos personalizados y más herramientas de escritura, con modelos locales y en la nube. Su licencia Pro también cubre Windows, iPhone y iPad."
+note = "Whisper gratis y sin conexión no es exclusivo de VoxKey. Las notas de Superwhisper para Mac del 26 de agosto de 2026 anuncian todos los modelos Whisper locales gratis; su tabla de precios todavía los ubica en Pro. Esta comparación usa las notas fechadas para esa función."
+
+[[es.rows]]
+label = "Costo"
+voxkey = "Gratis; código de la app bajo MIT. Los modelos tienen términos separados."
+other = "Whisper local gratis en Mac; Pro US$8.49/mes, US$84.99/año o US$249.99 de por vida."
+
+[[es.rows]]
+label = "Procesamiento"
+voxkey = "Solo local tras descargar los modelos; las actualizaciones usan internet."
+other = "Modelos locales disponibles; nube opcional."
+
+[[es.rows]]
+label = "Plataformas"
+voxkey = "Mac con Apple Silicon, macOS 26 o posterior."
+other = "Mac, Windows, iPhone, iPad; las funciones varían."
+
+[[es.rows]]
+label = "Uso"
+voxkey = "Dictado en campos de texto, pistas de vocabulario y recuperación con Safety Net."
+other = "Modos personalizados; historial de transcripciones local."
+
+[[es.sources]]
+url = "https://superwhisper.com/changelog"
+label = "Novedades de macOS, 26 de agosto de 2026"
+
+[[es.sources]]
+url = "https://superwhisper.com/docs/billing/plans"
+label = "Planes y precios"
+
+[[es.sources]]
+url = "https://superwhisper.com/docs/security/sensitive-data"
+label = "Procesamiento local e historial"
+
+[[es.sources]]
+url = "https://github.com/rodrigouroz/VoxKey/blob/v0.6.0/README.md"
+label = "Funciones y requisitos de VoxKey 0.6.0"
