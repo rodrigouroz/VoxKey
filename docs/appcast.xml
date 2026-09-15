@@ -9,6 +9,49 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Signed updates for VoxKey.</description>
         <language>en</language>
         <item>
+            <title>0.7.0</title>
+            <pubDate>Tue, 15 Sep 2026 12:07:54 -0300</pubDate>
+            <link>https://rodrigouroz.github.io/VoxKey/</link>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>0.7.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# VoxKey 0.7.0
+
+## Live transcript preview
+
+- Words now appear in the recording overlay while you speak, without waiting for
+  a pause. Provisional words use a softer color and can change as recognition
+  settles on completed phrases.
+- The overlay smoothly follows the latest three lines and keeps them visible
+  while VoxKey finishes processing and inserts the result. Reduce Motion disables
+  the transitions, and the overlay never takes keyboard focus.
+- Preview work yields to final recognition. Only the final text is inserted into
+  your input; failed delivery remains recoverable through Safety Net.
+- Preview text stays in memory and clears when the session completes or is
+  cancelled. Late callbacks cannot restore text from an ended session.
+
+## Focused-editor fixes
+
+- Improved editor detection when a web view reports its page or scroll container
+  as focused instead of the input inside it.
+- Expanded the bounded editor search to reach composers after longer conversation
+  histories, while retaining time and depth limits, ambiguous-focus rejection,
+  and secure-field protection.
+
+## Validation limits
+
+Automated tests cover preview ordering, cancellation, final-result preservation,
+native overlay layout in light and dark appearances, and focused-editor resolution.
+Installed-model checks use synthetic speech. They do not establish microphone
+compatibility, battery impact, or latency across all Macs and host editors.
+A fresh-user installation, physical dictation session, and VoiceOver walkthrough
+have not been repeated for this release. The previously reported intermittent
+Right Command activation failure remains unresolved.
+]]></description>
+            <enclosure url="https://github.com/rodrigouroz/VoxKey/releases/download/v0.7.0/VoxKey-v0.7.0-arm64.dmg" length="8199576" type="application/octet-stream" sparkle:edSignature="+4JCOe9Dyfh6F73icyACIlsk+XRiBnH/G77YIuPg63lVnjMqr9kDPMLn448ExPbdxVbBttYhUMOl0vYCFrfeDA=="/>
+        </item>
+        <item>
             <title>0.6.0</title>
             <pubDate>Sat, 12 Sep 2026 09:59:22 -0300</pubDate>
             <link>https://rodrigouroz.github.io/VoxKey/</link>
@@ -312,6 +355,6 @@ vocabulary.
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 24R+XrSF2eeE1Tf3u8+/DmfAgXRPk/hH4/txnGtDMN3tatU9fBRGRV67HR9zq7bYu+O6Ivf0zP+OWV/Az5TaCg==
-length: 17445
+edSignature: 5wu9uu3ajEhFxrru75FO4GtOuWYCoDKcNihiMdR40JweI0Q/BKDovQDXmCGFbwJ4rlu7/XG/w/xlmEKTbrfTAw==
+length: 19925
 -->
