@@ -10,7 +10,7 @@ import VoxKeyCore
 ])
 func statusOverlayPreservesTheFullRecoveryInstruction(_ message: String) throws {
     _ = NSApplication.shared
-    let controller = StatusOverlayController()
+    let controller = StatusOverlayController(animationsEnabled: false)
     controller.update(SessionSnapshot(phase: .ready, lastResult: LastResult(text: "Private dictation"), message: message, attention: .deliveryBlocked(.destinationChanged)))
     defer { controller.window?.orderOut(nil) }
     let window = try #require(controller.window)
@@ -33,7 +33,7 @@ func statusOverlayPreservesTheFullRecoveryInstruction(_ message: String) throws 
 @Test(arguments: [NSAppearance.Name.aqua, .darkAqua])
 func statusOverlayKeepsCaptureToOneCompactStatus(_ appearance: NSAppearance.Name) throws {
     _ = NSApplication.shared
-    let controller = StatusOverlayController()
+    let controller = StatusOverlayController(animationsEnabled: false)
     controller.window?.appearance = NSAppearance(named: appearance)
     controller.update(SessionSnapshot(
         phase: .capturing(DictationSessionID()), lastResult: nil, elapsedSeconds: 75,
@@ -62,7 +62,7 @@ private extension NSView {
 @MainActor
 @Test
 func retainedTextAndStatusMessagesCannotCreateAFailureToast() {
-    let controller = StatusOverlayController()
+    let controller = StatusOverlayController(animationsEnabled: false)
     defer { controller.window?.orderOut(nil) }
     controller.update(SessionSnapshot(
         phase: .ready, lastResult: LastResult(text: "Hello", deliveryUncertain: true),
@@ -74,7 +74,7 @@ func retainedTextAndStatusMessagesCannotCreateAFailureToast() {
 @MainActor @Test(arguments: [CaptureMode.hold, .toggle], DictationTrigger.allCases)
 func capturingLevelStaysInsideTheCompactPillAndHidesAfterCapture(_ mode: CaptureMode, _ trigger: DictationTrigger) throws {
     _ = NSApplication.shared
-    let overlay = StatusOverlayController()
+    let overlay = StatusOverlayController(animationsEnabled: false)
     let id = DictationSessionID()
     overlay.update(SessionSnapshot(phase: .capturing(id), lastResult: nil, captureMode: mode,
                                    trigger: trigger, inputLevel: 0.65))
@@ -100,7 +100,7 @@ func capturingLevelStaysInsideTheCompactPillAndHidesAfterCapture(_ mode: Capture
 
 @MainActor @Test(arguments: [NSAppearance.Name.aqua, .darkAqua])
 func toggleWarningAndLevelRemainReadableInBothAppearances(_ appearance: NSAppearance.Name) throws {
-    let controller = StatusOverlayController()
+    let controller = StatusOverlayController(animationsEnabled: false)
     controller.window?.appearance = NSAppearance(named: appearance)
     controller.update(.init(phase: .capturing(DictationSessionID()), lastResult: nil,
                             message: "Dictation ends automatically in 1:10", captureMode: .toggle,
@@ -123,7 +123,7 @@ func toggleWarningAndLevelRemainReadableInBothAppearances(_ appearance: NSAppear
 @MainActor @Test
 func levelUpdatesPreserveOverlayPlacementButPresentationChangesRestoreIt() throws {
     _ = NSApplication.shared
-    let overlay = StatusOverlayController()
+    let overlay = StatusOverlayController(animationsEnabled: false)
     defer { overlay.window?.orderOut(nil) }
     let id = DictationSessionID()
     overlay.update(SessionSnapshot(phase: .capturing(id), lastResult: nil, inputLevel: 0.2))
@@ -144,7 +144,7 @@ func levelUpdatesPreserveOverlayPlacementButPresentationChangesRestoreIt() throw
 @MainActor @Test
 func screenConfigurationChangesRepositionAVisibleOverlay() throws {
     _ = NSApplication.shared
-    let overlay = StatusOverlayController()
+    let overlay = StatusOverlayController(animationsEnabled: false)
     defer { overlay.window?.orderOut(nil) }
     overlay.update(SessionSnapshot(phase: .capturing(DictationSessionID()), lastResult: nil))
     let window = try #require(overlay.window)

@@ -274,10 +274,11 @@ final class FocusedElementResolver {
         // renderer may own that AX element in a different process. The global
         // fallback has no such ownership relationship and remains PID-checked.
         if let focused = client.focusedElement(in: application) {
-            return focused
+            return isFocusContainer(focused) ? nil : focused
         }
         guard let focused = client.systemWideFocusedElement(),
-              client.processIdentifier(of: focused) == process.processIdentifier else {
+              client.processIdentifier(of: focused) == process.processIdentifier,
+              !isFocusContainer(focused) else {
             return nil
         }
         #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
@@ -288,17 +289,40 @@ final class FocusedElementResolver {
         return focused
     }
 
+    private func isFocusContainer(_ element: AXUIElement) -> Bool {
+        // WebKit can report the page or its scroll view while a descendant
+        // editor also owns focus. Continue resolution instead of caching the
+        // container and preventing the bounded editor search. AXGroup remains
+        // authoritative because some rich editors use that role themselves.
+        switch client.role(of: element) {
+        case "AXWebArea", "AXScrollArea": true
+        default: false
+        }
+    }
+
     private func focusedEditorInWindow(of application: AXUIElement) -> (element: AXUIElement, window: AXUIElement)? {
-        guard let window = client.focusedWindow(in: application) else { return nil }
-        let deadline = ContinuousClock.now.advanced(by: .milliseconds(100))
-        let limit = 128
-        let editorRoles: Set<String> = ["AXTextField", "AXTextArea", "AXComboBox", "AXSecureTextField"]
-        var pending: [(element: AXUIElement, depth: Int, editorAncestor: AXUIElement?)] = [(window, 0, nil)]
+        let started = ContinuousClock.now
         var visited: [AXUIElement] = []
         var candidates: [AXUIElement] = []
+        func rejected(_ reason: String) -> (element: AXUIElement, window: AXUIElement)? {
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+            let elapsed = started.duration(to: .now).components
+            let milliseconds = elapsed.seconds * 1_000 + elapsed.attoseconds / 1_000_000_000_000_000
+            logger.notice("focus search rejected pid=\(self.client.processIdentifier(of: application) ?? 0, privacy: .public) reason=\(reason, privacy: .public) visited=\(visited.count, privacy: .public) candidates=\(candidates.count, privacy: .public) elapsed_ms=\(milliseconds, privacy: .public)")
+            #endif
+            return nil
+        }
+        guard let window = client.focusedWindow(in: application) else { return rejected("no_focused_window") }
+        let deadline = ContinuousClock.now.advanced(by: .milliseconds(100))
+        // Conversation history can place the composer beyond 128 AX nodes.
+        // Keep the time/depth bounds and require the search to finish.
+        let limit = 512
+        let editorRoles: Set<String> = ["AXTextField", "AXTextArea", "AXComboBox", "AXSecureTextField"]
+        var pending: [(element: AXUIElement, depth: Int, editorAncestor: AXUIElement?)] = [(window, 0, nil)]
 
         while let node = pending.popLast() {
-            guard visited.count < limit, ContinuousClock.now < deadline else { return nil }
+            guard visited.count < limit else { return rejected("node_limit") }
+            guard ContinuousClock.now < deadline else { return rejected("time_limit") }
             if visited.contains(where: { CFEqual($0, node.element) }) { continue }
             visited.append(node.element)
             var editorAncestor = node.editorAncestor
@@ -307,20 +331,26 @@ final class FocusedElementResolver {
                 // unrelated editors that both claim focus.
                 if let editorAncestor { candidates.removeAll { CFEqual($0, editorAncestor) } }
                 candidates.append(node.element)
-                guard candidates.count == 1 else { return nil }
+                guard candidates.count == 1 else { return rejected("ambiguous_editors") }
                 editorAncestor = node.element
             }
             let remaining = limit - visited.count - pending.count
-            guard let children = client.children(of: node.element, limit: remaining + 1),
-                  children.count <= remaining, node.depth < 12 || children.isEmpty else { return nil }
+            guard let children = client.children(of: node.element, limit: remaining + 1) else {
+                return rejected("children_unavailable")
+            }
+            guard children.count <= remaining else { return rejected("node_limit") }
+            guard node.depth < 12 || children.isEmpty else { return rejected("depth_limit") }
             for child in children.reversed() {
                 pending.append((child, node.depth + 1, editorAncestor))
             }
         }
 
-        guard candidates.count == 1, ContinuousClock.now < deadline,
-              let currentWindow = client.focusedWindow(in: application), CFEqual(window, currentWindow),
-              client.isFocused(candidates[0]) else { return nil }
+        guard candidates.count == 1 else { return rejected("no_focused_editor") }
+        guard ContinuousClock.now < deadline else { return rejected("time_limit") }
+        guard let currentWindow = client.focusedWindow(in: application), CFEqual(window, currentWindow) else {
+            return rejected("window_changed")
+        }
+        guard client.isFocused(candidates[0]) else { return rejected("editor_lost_focus") }
         return (candidates[0], window)
     }
 

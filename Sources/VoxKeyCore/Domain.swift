@@ -62,6 +62,9 @@ public struct SessionSnapshot: Equatable, Sendable {
     public let phase: DictationPhase
     public let lastResult: LastResult?
     public let inputLevel: Float?
+    /// A bounded, volatile tail of completed phrases for the recording overlay.
+    public let transcriptPreview: String?
+    public let provisionalPreview: String?
     public let captureMode: CaptureMode
     public let trigger: DictationTrigger
     public let elapsedSeconds: TimeInterval
@@ -76,9 +79,13 @@ public struct SessionSnapshot: Equatable, Sendable {
         attention: SessionAttention? = nil,
         captureMode: CaptureMode = .hold,
         trigger: DictationTrigger = .globe,
-        inputLevel: Float? = nil
+        inputLevel: Float? = nil,
+        transcriptPreview: String? = nil,
+        provisionalPreview: String? = nil
     ) {
         self.inputLevel = inputLevel
+        self.transcriptPreview = transcriptPreview
+        self.provisionalPreview = provisionalPreview
         self.captureMode = captureMode
         self.trigger = trigger
         self.phase = phase

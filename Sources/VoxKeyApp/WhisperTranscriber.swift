@@ -38,6 +38,9 @@ actor WhisperTranscriber {
     private let localModelRoot: URL?
     private var inferenceInFlight = false
     private var preparationInFlight = false
+    private var previewTask: Task<Void, Never>?
+    private var previewObserver: DecoderPreviewObserver?
+    private var previewRunning = false
     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
     private let logger = Logger(subsystem: "com.rodrigouroz.VoxKey", category: "transcription")
     #endif
@@ -147,22 +150,45 @@ actor WhisperTranscriber {
         from capture: AudioCaptureService,
         vocabulary: [VocabularyTerm] = [],
         language: String? = "en",
-        progress: @Sendable (StreamingTranscriptionProgress) -> Void = { _ in }
+        decoderPreview: AsyncStream<DecoderPreview>.Continuation? = nil,
+        progress: @Sendable (StreamingTranscriptionProgress) async -> Void = { _ in }
     ) async throws -> TranscriptionOutcome {
         guard !inferenceInFlight, !preparationInFlight else { throw TranscriptionError.inferenceBusy }
         inferenceInFlight = true
         defer { inferenceInFlight = false }
+        do {
+            let outcome = try await processStream(from: capture, vocabulary: vocabulary, language: language,
+                                                  decoderPreview: decoderPreview, progress: progress)
+            await stopPreview()
+            return outcome
+        } catch {
+            await stopPreview()
+            throw error
+        }
+    }
+
+    private func processStream(
+        from capture: AudioCaptureService, vocabulary: [VocabularyTerm], language: String?,
+        decoderPreview: AsyncStream<DecoderPreview>.Continuation?,
+        progress: @Sendable (StreamingTranscriptionProgress) async -> Void
+    ) async throws -> TranscriptionOutcome {
         let resampler = StreamingAudioResampler()
         let updates = await capture.audioUpdates
         var notifications = updates.makeAsyncIterator()
         var transcript = StreamingTranscript()
         var prompt: [Int]?
+        var previewSchedule = ProvisionalDecodeSchedule()
+        var revision = 0
         while true {
             try Task.checkCancellation()
             let input = try await capture.takePendingAudio()
             try Task.checkCancellation()
             try transcript.append(resampler.append(input.audio, isFinal: input.isFinal))
             if let window = transcript.nextWindow(isFinal: input.isFinal) {
+                // Cancel speculative work before any authoritative model call.
+                // Core ML's current operation may finish, but no queued preview
+                // or extra fallback is allowed ahead of final delivery.
+                await stopPreview()
                 try Task.checkCancellation()
                 if !SpeechActivityGate.containsSpeech(in: window.samples) {
                     transcript.accept("", window: window, decoded: false)
@@ -172,7 +198,11 @@ actor WhisperTranscriber {
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     let started = ContinuousClock.now
                     #endif
-                    let text = try await decodeStreamingWindow(window.samples, prompt: context, language: language)
+                    revision += 1
+                    let observer = decoderPreview.map { continuation in
+                        DecoderPreviewObserver(decodeIndex: transcript.decodeCount, revision: revision) { continuation.yield($0) }
+                    }
+                    let text = try await decodeStreamingWindow(window.samples, prompt: context, language: language, observer: observer)
                     try Task.checkCancellation()
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     let boundaryRepeat = TranscriptionRepetition.boundaryWordCount(previous: transcript.confirmedText, next: text)
@@ -185,7 +215,7 @@ actor WhisperTranscriber {
                     logger.debug("partial decode seconds=\(elapsed, privacy: .public) audio_seconds=\(Double(window.samples.count) / 16000, privacy: .public)")
                     #endif
                 }
-                progress(StreamingTranscriptionProgress(
+                await progress(StreamingTranscriptionProgress(
                     decodeCount: transcript.decodeCount,
                     confirmedAudioSeconds: Double(transcript.consumedSamples) / 16_000,
                     bufferedAudioSeconds: Double(transcript.samples.count) / 16_000,
@@ -197,8 +227,44 @@ actor WhisperTranscriber {
                 continue
             }
             if input.isFinal { return transcript.outcome }
+            if let decoderPreview, !previewRunning,
+               let samples = previewSchedule.nextSamples(in: transcript) {
+                if prompt == nil { prompt = try vocabularyPromptTokens(vocabulary) }
+                let context = try streamingPrompt(vocabulary: prompt ?? [], precedingText: transcript.confirmedText)
+                revision += 1
+                startPreview(samples, prompt: context, language: language, decodeIndex: transcript.decodeCount,
+                             revision: revision, continuation: decoderPreview)
+            }
             _ = await notifications.next()
         }
+    }
+
+    private func startPreview(_ samples: [Float], prompt: [Int], language: String?, decodeIndex: Int,
+                              revision: Int, continuation: AsyncStream<DecoderPreview>.Continuation) {
+        let observer = DecoderPreviewObserver(decodeIndex: decodeIndex, revision: revision) { continuation.yield($0) }
+        previewObserver = observer
+        previewRunning = true
+        previewTask = Task(priority: .utility) {
+            defer { previewRunning = false }
+            do {
+                try Task.checkCancellation()
+                let text = try await decodeStreamingWindow(samples, prompt: prompt, language: language,
+                                                          observer: observer, previewOnly: true)
+                try Task.checkCancellation()
+                continuation.yield(DecoderPreview(decodeIndex: decodeIndex, windowIndex: 0, tokens: [],
+                                                   revision: revision, text: text))
+            } catch {
+                // Speculation is disposable. Its failure must not fail dictation.
+            }
+        }
+    }
+
+    private func stopPreview() async {
+        previewObserver?.cancelDecoding()
+        previewTask?.cancel()
+        await previewTask?.value
+        previewTask = nil
+        previewObserver = nil
     }
 
     private func streamingPrompt(vocabulary: [Int], precedingText: String) throws -> [Int] {
@@ -206,9 +272,23 @@ actor WhisperTranscriber {
         return TranscriptionVocabulary.streamingPrompt(vocabulary: vocabulary, precedingText: precedingText, tokenizer: tokenizer)
     }
 
-    private func decodeStreamingWindow(_ samples: [Float], prompt: [Int], language: String?) async throws -> String {
+    /// Token-to-text presentation only; never feeds text back into recognition.
+    func textForPreview(_ preview: DecoderPreview) -> String {
+        preview.text ?? textForPreview(preview.tokens)
+    }
+
+    func textForPreview(_ tokens: [Int]) -> String {
+        guard let tokenizer = whisperKit?.tokenizer else { return "" }
+        let generated = DecoderPreviewObserver.generatedTokens(tokens,
+            startOfTranscript: tokenizer.specialTokens.startOfTranscriptToken,
+            specialTokenBegin: tokenizer.specialTokens.specialTokenBegin)
+        return tokenizer.decode(tokens: generated).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func decodeStreamingWindow(_ samples: [Float], prompt: [Int], language: String?, observer: DecoderPreviewObserver? = nil, previewOnly: Bool = false) async throws -> String {
+        defer { observer?.close() }
         guard let whisperKit else { throw TranscriptionError.modelNotLoaded }
-        let options = DecodingOptions(
+        var options = DecodingOptions(
             verbose: false, task: .transcribe, language: language, temperature: 0,
             temperatureFallbackCount: 3, usePrefillPrompt: true,
             detectLanguage: language == nil,
@@ -218,7 +298,14 @@ actor WhisperTranscriber {
             suppressBlank: true, compressionRatioThreshold: 2.4, logProbThreshold: -1,
             noSpeechThreshold: 0.6, concurrentWorkerCount: 1, chunkingStrategy: ChunkingStrategy.none
         )
-        let results = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
+        if previewOnly {
+            options.temperatureFallbackCount = 0
+            options.sampleLength = 128
+        }
+        let callback: TranscriptionCallback?
+        if let observer { callback = { progress in observer.observe(progress) } }
+        else { callback = nil }
+        let results = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options, callback: callback)
         guard !results.isEmpty else { throw TranscriptionError.emptyResult }
         let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE

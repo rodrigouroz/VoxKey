@@ -1,4 +1,5 @@
 import AppKit
+import QuartzCore
 import VoxKeyCore
 
 @MainActor
@@ -11,16 +12,23 @@ final class StatusOverlayController: NSWindowController {
         fill: VoxKeyDesign.Overlay.surface, border: VoxKeyDesign.Overlay.keyBorder, cornerRadius: 5
     )
     private var hideTask: Task<Void, Never>?
+    private let transcriptView = TranscriptPreviewView()
+    private let header = NSView()
+    private let headerHeight: NSLayoutConstraint
+    private let animationsEnabled: Bool
     private struct Presentation: Equatable {
         let phase: DictationPhase
         let message: String?
         let attention: SessionAttention?
         let trigger: DictationTrigger
         let captureMode: CaptureMode
+        let transcriptPreview: String?
+        let provisionalPreview: String?
     }
     private var presentation: Presentation?
 
-    init() {
+    init(animationsEnabled: Bool = true) {
+        self.animationsEnabled = animationsEnabled
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 212, height: 46),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -61,13 +69,20 @@ final class StatusOverlayController: NSWindowController {
         row.alignment = .centerY
         row.spacing = 12
         row.translatesAutoresizingMaskIntoConstraints = false
-        surface.addSubview(row)
+        header.translatesAutoresizingMaskIntoConstraints = false
+        headerHeight = header.heightAnchor.constraint(equalToConstant: 46)
+        surface.addSubview(header)
+        header.addSubview(row)
         NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: surface.topAnchor),
+            header.leadingAnchor.constraint(equalTo: surface.leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: surface.trailingAnchor),
+            headerHeight,
             iconView.widthAnchor.constraint(equalToConstant: 16),
             iconView.heightAnchor.constraint(equalToConstant: 16),
-            row.leadingAnchor.constraint(equalTo: surface.leadingAnchor, constant: 14),
-            row.trailingAnchor.constraint(equalTo: surface.trailingAnchor, constant: -14),
-            row.centerYAnchor.constraint(equalTo: surface.centerYAnchor)
+            row.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 14),
+            row.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -14),
+            row.centerYAnchor.constraint(equalTo: header.centerYAnchor)
         ])
         panel.contentView = surface
         super.init(window: panel)
@@ -84,11 +99,18 @@ final class StatusOverlayController: NSWindowController {
     func update(_ snapshot: SessionSnapshot) {
         if case .capturing = snapshot.phase { levelBar.level = snapshot.inputLevel ?? 0 }
         let next = Presentation(phase: snapshot.phase, message: snapshot.message, attention: snapshot.attention,
-                                trigger: snapshot.trigger, captureMode: snapshot.captureMode)
+                                trigger: snapshot.trigger, captureMode: snapshot.captureMode,
+                                transcriptPreview: snapshot.transcriptPreview, provisionalPreview: snapshot.provisionalPreview)
         // Meter ticks do not change layout, window order, or the lifetime of a toast.
         if presentation == next, window?.isVisible == true || !snapshot.phase.isBusy { return }
         presentation = next
         hideTask?.cancel()
+        switch snapshot.phase {
+        case .capturing, .finalizing, .delivering: break
+        default:
+            transcriptView.clear()
+            transcriptView.removeFromSuperview()
+        }
         if case .capturing = snapshot.phase {
             levelBar.isHidden = false
             iconView.isHidden = true
@@ -113,11 +135,17 @@ final class StatusOverlayController: NSWindowController {
                 ? "Listening — press \(snapshot.trigger.displayName) to finish" : "Listening"
             let detail = snapshot.message.flatMap { $0 == "Listening" ? nil : $0 }
             let title = detail.map { "\(listening)\n\($0)" } ?? listening
-            show(symbol: snapshot.captureMode == .toggle ? "mic.badge.plus" : "mic.fill", title: title)
+            show(symbol: snapshot.captureMode == .toggle ? "mic.badge.plus" : "mic.fill", title: title,
+                 preview: snapshot.transcriptPreview, provisional: snapshot.provisionalPreview)
         case .finalizing:
-            show(symbol: "waveform", title: snapshot.message == "Correcting grammar…" ? "Correcting grammar…" : "Transcribing…")
+            show(symbol: "waveform", title: snapshot.message ?? "Transcribing…", preview: snapshot.transcriptPreview,
+                 provisional: snapshot.provisionalPreview)
         case .delivering:
-            window?.orderOut(nil)
+            if let preview = snapshot.transcriptPreview {
+                show(symbol: "text.cursor", title: "Inserting…", preview: preview)
+            } else {
+                window?.orderOut(nil)
+            }
         case .notReady:
             window?.orderOut(nil)
         case .ready:
@@ -139,28 +167,70 @@ final class StatusOverlayController: NSWindowController {
         }
     }
 
-    private func show(symbol: String, title: String, needsAttention: Bool = false) {
+    private var shouldAnimate: Bool {
+        animationsEnabled && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    private func show(symbol: String, title: String, needsAttention: Bool = false, preview: String? = nil, provisional: String? = nil) {
         iconView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
         iconView.contentTintColor = needsAttention ? VoxKeyDesign.Overlay.attention : VoxKeyDesign.accent
         statusLabel.stringValue = title
-        sizeToFitStatus()
-        positionOnActiveScreen()
-        window?.orderFrontRegardless()
+        let wasVisible = window?.isVisible == true
+        let hadPreview = transcriptView.superview != nil
+        if !(preview ?? "").isEmpty || !(provisional ?? "").isEmpty, let surface = window?.contentView {
+            if !hadPreview {
+                surface.addSubview(transcriptView)
+                transcriptView.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    transcriptView.topAnchor.constraint(equalTo: header.bottomAnchor),
+                    transcriptView.leadingAnchor.constraint(equalTo: surface.leadingAnchor, constant: 18),
+                    transcriptView.trailingAnchor.constraint(equalTo: surface.trailingAnchor, constant: -18),
+                    transcriptView.bottomAnchor.constraint(equalTo: surface.bottomAnchor)
+                ])
+            }
+            transcriptView.setText(preview ?? "", provisional: provisional)
+        } else {
+            transcriptView.clear()
+            transcriptView.removeFromSuperview()
+        }
+        sizeToFitStatus(animated: wasVisible && shouldAnimate)
+        transcriptView.revealLatest(animated: hadPreview && shouldAnimate)
+        if !wasVisible { window?.orderFrontRegardless() }
     }
 
-    private func sizeToFitStatus() {
+    private func sizeToFitStatus(animated: Bool) {
         // The recovery instruction must survive long messages. Normal capture stays compact.
         let textWidth = (statusLabel.stringValue as NSString).size(withAttributes: [
             .font: statusLabel.font ?? VoxKeyDesign.TextStyle.emphasis.font
         ]).width
         let chromeWidth: CGFloat = levelBar.isHidden ? 28 + 16 + 12 : 28 + 24 + 12 + 30 + 12
-        let width = min(360, max(212, ceil(textWidth) + chromeWidth))
+        let hasPreview = transcriptView.superview != nil
+        let width = hasPreview ? 360 : min(360, max(212, ceil(textWidth) + chromeWidth))
         let availableTextWidth = width - chromeWidth
         statusLabel.preferredMaxLayoutWidth = availableTextWidth
         let titleHeight = statusLabel.cell?.cellSize(forBounds: NSRect(
             x: 0, y: 0, width: availableTextWidth, height: 1000
         )).height ?? 18
-        window?.setContentSize(NSSize(width: width, height: max(46, ceil(titleHeight) + 24)))
+        let statusHeight = max(46, ceil(titleHeight) + 24)
+        headerHeight.constant = statusHeight
+        let previewHeight = hasPreview ? transcriptView.prepareLayout(width: width - 36) : 0
+        let size = NSSize(width: width, height: statusHeight + (hasPreview ? previewHeight + 16 : 0))
+        guard let window else { return }
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main
+        let origin = screen.map { StatusOverlayPlacement.origin(windowSize: size, visibleFrame: $0.visibleFrame) }
+            ?? window.frame.origin
+        let frame = NSRect(origin: origin, size: size)
+        if animated, window.frame != frame {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.12
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                window.animator().setFrame(frame, display: true)
+            }
+        } else {
+            window.setFrame(frame, display: true)
+        }
+        window.contentView?.layoutSubtreeIfNeeded()
     }
 
     private func positionOnActiveScreen() {

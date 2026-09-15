@@ -37,7 +37,11 @@ An explicit language is useful for short utterances that are hard to identify.
 See the [local model comparison](docs/testing/model-comparison-2026-09-10/README.md)
 for measured speed, word errors, tradeoffs, and the Spanish grammar investigation.
 
-Completed phrases are transcribed while you speak; only the final text is inserted.
+Text appears in the recording overlay while you speak, without waiting for a pause.
+Provisional words use a softer color and can change before the phrase settles.
+The latest three lines stay in view with smooth scrolling, and remain visible while VoxKey
+finishes processing and inserts the final text. Reduce Motion disables these
+transitions. Only the final text is inserted into your input.
 If delivery cannot be confirmed, **Safety Net** keeps the result available for recovery.
 **Recover Dictation…** appears in the menu only when a result needs recovery,
 including when there was no destination. Confirmed delivery clears the result.

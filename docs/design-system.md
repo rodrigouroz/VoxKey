@@ -83,7 +83,14 @@ ready state and SF Symbols for capturing, busy, attention, and not-ready states.
   forest-green pill in both appearances, matching the public page's dictation demo.
   During capture, a lime input waveform sits beside the status and a keycap for the
   configured trigger. The pill stays compact for ordinary capture and grows to keep
-  toggle instructions and warnings readable. Warning icons remain amber.
+  toggle instructions and warnings readable. Decoder progress expands it to a 360 pt
+  caption card with up to three 21 pt lines in the body style. The latest lines
+  scroll into view and the panel grows over 120 ms with ease-out; text updates
+  immediately with no opacity fade. Reduce Motion makes geometry updates immediate. Keep existing words steady,
+  avoid typewriter effects, and clear captions after completion or cancellation.
+  Provisional words use secondary ink and revise in place; completed phrases use
+  primary ink. Do not delay text updates for animation; keep motion independent of recognition scheduling.
+  Warning icons remain amber.
 
 ## Windows
 
@@ -118,6 +125,19 @@ Reserve amber for actionable problems and uncertain delivery. The uncertainty
 explanation and explicit checked-input confirmation remain visible before a
 retry. Preserve the established interaction and focus behavior when styling
 these states. Do not add decorative animation or sound to settings actions.
+
+## Live-caption HIG checks
+
+The caption treatment follows Apple's [Motion](https://developer.apple.com/design/human-interface-guidelines/motion)
+and [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+guidance: brief motion tied to new content, no animation wait before cancellation
+or insertion, a Reduce Motion alternative, and readable status text in addition
+to the waveform. Captions use the recommended macOS default of 13 pt, with
+11.39:1 contrast for completed text and 7.69:1 for provisional text against the opaque forest surface in both appearances (the
+minimum for this size is 4.5:1). The preview is exposed as static text labeled
+“Live transcript”; it does not take focus or announce every phrase over the mic.
+Native layout tests cover both appearances and the intermediate expansion frame.
+A physical dictation session and a VoiceOver walkthrough remain manual checks.
 
 ## Validation
 

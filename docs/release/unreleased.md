@@ -1,3 +1,3 @@
 # Unreleased
 
-No pending changes.
+No pending release notes.

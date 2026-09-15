@@ -39,8 +39,7 @@ struct StreamingTranscript {
         if let boundary = nextPauseBoundary() {
             return StreamingDecodeWindow(samples: Array(samples.prefix(boundary)))
         }
-        // Open-phrase predictions cannot retire audio and are not displayed.
-        // Starting one here can make release wait for two consecutive decodes.
+        // Open-phrase previews are scheduled separately and cannot retire audio.
         return nil
     }
 

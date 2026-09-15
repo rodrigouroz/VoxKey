@@ -35,8 +35,8 @@ The explicit Safety Net action, invoked by Return, that inserts the Last Result 
 _Avoid_: Retry paste, send recovered text
 
 **Status Overlay**:
-Transient, compact, non-activating UI near the upper-right of a display. It shows capture state, a smoothed six-segment RMS input level, the configured trigger, and Dictation Limit warnings; after capture it shows transcription or correction state. It hides during delivery and after ordinary success, with brief content-free feedback for No Speech or known failures. It never takes keyboard focus or displays transcript text. The current implementation selects the display containing the pointer whenever it positions the panel, falling back to the main display; destination-based positioning remains the ADR-0031 target.
-_Avoid_: Transcript overlay, live caption, notification
+Transient, compact, non-activating UI near the upper-right of a display. It shows capture state, a smoothed six-segment RMS input level, the configured trigger, and Dictation Limit warnings; after capture it shows transcription or correction state. During speech, it expands to show the latest three lines of a bounded, volatile transcript preview. Provisional words use a softer color, revise in place, and yield to completed phrases; separate speculative decodes use copies of unfinished audio and never commit words or feed predictions into final recognition. It follows new lines with a short scroll transition, respects Reduce Motion, and retains the preview through finalization and delivery. It clears the preview on cancellation or completion; failed delivery retains the full result in Safety Net. No Speech and known-failure toasts remain content-free. It never takes keyboard focus. The current implementation selects the display containing the pointer whenever it positions the panel, falling back to the main display; destination-based positioning remains the ADR-0031 target.
+_Avoid_: Editable transcript, notification
 
 **Menu Bar Utility**:
 VoxKey's application posture while idle: a status item provides readiness, Settings, Safety Net access, model status, and Quit without a persistent Dock icon or application-switcher entry. While Set Up VoxKey is open, including first-run onboarding and permission repair after a previously completed setup, VoxKey temporarily presents as an ordinary foreground application. Settings, opened from the menu bar with ⌘, is an ordinary window that hands focus back to the previous app when closed. It hides its status item only after creating the Dock presence, so a permission dialog taking focus cannot remove every route back. Opening VoxKey again brings this window forward; closing it restores the menu-bar posture. Deliberately opened Safety Net windows remain ordinary accessible windows even though the background utility does not become a conventional document application.
@@ -101,11 +101,11 @@ Completed text that preserves the speaker's words and meaning without silently r
 _Avoid_: Raw transcript, cleaned-up writing
 
 **Final Result**:
-The single completed transcript produced after capture ends, including Grammar Correction when explicitly enabled. VoxKey performs Text Delivery atomically using the Final Result and never inserts or displays provisional decoder text while the user is speaking.
+The single completed transcript produced after capture ends, including Grammar Correction when explicitly enabled. VoxKey performs Text Delivery atomically using the Final Result. Completed phrases and speculative previews may appear in the Status Overlay during capture, but text is never inserted into the Destination before finalization.
 _Avoid_: Live transcript, streaming text, partial result
 
 **Provisional Decode**:
-Local, in-memory transcription work performed incrementally during capture to reduce post-release latency and bound audio memory. Its text is never shown or delivered, is reconciled into one Final Result after release, and is discarded with Ephemeral Audio on cancellation.
+Local, in-memory transcription work performed incrementally during capture to reduce post-release latency and bound audio memory. Completed acoustic phrases and speculative predictions from unfinished audio may be shown in the Status Overlay. Speculative predictions never retire audio or feed recognition context. Authoritative phrase decoding produces one Final Result after release, is never delivered incrementally, and is discarded with Ephemeral Audio on cancellation.
 _Avoid_: Live transcription, partial transcript
 
 **Native Transcription Pipeline**:

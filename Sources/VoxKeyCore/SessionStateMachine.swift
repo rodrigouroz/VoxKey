@@ -142,8 +142,8 @@ public struct SessionStateMachine: Sendable {
         lastResult = LastResult(text: result.text, createdAt: result.createdAt, id: id, deliveryUncertain: true)
     }
 
-    public func snapshot(elapsedSeconds: TimeInterval = 0, message: String? = nil, attention: SessionAttention? = nil, trigger: DictationTrigger = .globe, inputLevel: Float? = nil) -> SessionSnapshot {
-        SessionSnapshot(phase: phase, lastResult: lastResult, elapsedSeconds: elapsedSeconds, message: message, attention: attention, captureMode: captureMode, trigger: trigger, inputLevel: inputLevel)
+    public func snapshot(elapsedSeconds: TimeInterval = 0, message: String? = nil, attention: SessionAttention? = nil, trigger: DictationTrigger = .globe, inputLevel: Float? = nil, transcriptPreview: String? = nil, provisionalPreview: String? = nil) -> SessionSnapshot {
+        SessionSnapshot(phase: phase, lastResult: lastResult, elapsedSeconds: elapsedSeconds, message: message, attention: attention, captureMode: captureMode, trigger: trigger, inputLevel: inputLevel, transcriptPreview: transcriptPreview, provisionalPreview: provisionalPreview)
     }
 
     private func require(

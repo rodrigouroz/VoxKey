@@ -41,6 +41,14 @@ actor SessionCoordinator {
     private var releaseRequestedFor: DictationSessionID?
     private var inputLevelTask: Task<Void, Never>?
     private var inputLevel: Float?
+    private var transcriptPreview: String?
+    private var provisionalPreview: String?
+    private var provisionalWindowPrefix = ""
+    private var provisionalWindowText = ""
+    private var provisionalWindowIndex = -1
+    private var provisionalRevision = -1
+    private var completedPreviewDecodes = 0
+    private var decoderPreviewTask: Task<Void, Never>?
     private var captureLimitTask: Task<Void, Never>?
     private var cancellingSessionID: DictationSessionID?
     private var modelReady = false
@@ -91,6 +99,7 @@ actor SessionCoordinator {
     }
 
     deinit {
+        decoderPreviewTask?.cancel()
         inputLevelTask?.cancel()
         inputLevelTask = nil
         captureLimitTask?.cancel()
@@ -193,6 +202,9 @@ actor SessionCoordinator {
 
         do {
             let sessionID = try machine.beginSession(captureMode: captureMode)
+            transcriptPreview = nil
+            clearProvisionalPreview()
+            completedPreviewDecodes = 0
             sessionTrigger = trigger
             sessionMicrophoneUID = microphoneUID
             sessionVocabulary = vocabulary
@@ -266,9 +278,21 @@ actor SessionCoordinator {
                 ? TranscriptionImprovementSession(improver: improver, requestID: sessionID.rawValue) : nil
             grammarSession = correction
             let language = sessionLanguage
+            let previews = AsyncStream.makeStream(of: DecoderPreview.self, bufferingPolicy: .bufferingNewest(1))
+            decoderPreviewTask = Task { [weak self, transcriber] in
+                for await preview in previews.stream {
+                    guard !Task.isCancelled else { return }
+                    let text = await transcriber.textForPreview(preview)
+                    await self?.receiveDecoderPreview(preview, text: text, sessionID: sessionID)
+                }
+            }
             transcriptionTask = Task { [weak self, transcriber, audioCapture] in
+                defer { previews.continuation.finish() }
                 do {
-                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary, language: language) { _ in }
+                    return try await transcriber.transcribeStream(from: audioCapture, vocabulary: vocabulary, language: language,
+                        decoderPreview: previews.continuation) { [weak self] progress in
+                        await self?.receiveTranscriptionProgress(progress, sessionID: sessionID)
+                    }
                 } catch {
                     await self?.streamingFailed(sessionID)
                     throw error
@@ -413,11 +437,63 @@ actor SessionCoordinator {
     }
 
     func currentSnapshot() -> SessionSnapshot {
-        machine.snapshot(elapsedSeconds: elapsedSeconds, message: captureLimitMessage, trigger: sessionTrigger, inputLevel: capturingInputLevel)
+        machine.snapshot(elapsedSeconds: elapsedSeconds, message: captureLimitMessage, trigger: sessionTrigger, inputLevel: capturingInputLevel, transcriptPreview: transcriptPreview, provisionalPreview: provisionalPreview)
+    }
+
+    func receiveTranscriptionProgress(_ progress: StreamingTranscriptionProgress, sessionID: DictationSessionID) {
+        guard !terminating, cancellingSessionID == nil,
+              machine.phase == .capturing(sessionID) || machine.phase == .finalizing(sessionID) else { return }
+        completedPreviewDecodes = progress.decodeCount
+        let hadProvisional = provisionalPreview != nil
+        clearProvisionalPreview()
+        let preview = Self.previewTail(progress.confirmedText)
+        guard preview != transcriptPreview || hadProvisional else { return }
+        transcriptPreview = preview
+        publish(message: nil)
+    }
+
+    func receiveDecoderPreview(_ preview: DecoderPreview, text: String, sessionID: DictationSessionID) {
+        guard !terminating, !Task.isCancelled, cancellingSessionID == nil,
+              machine.phase == .capturing(sessionID) || machine.phase == .finalizing(sessionID),
+              preview.decodeIndex == completedPreviewDecodes, preview.revision >= provisionalRevision,
+              !text.isEmpty else { return }
+        if preview.revision > provisionalRevision {
+            clearProvisionalPreview()
+            provisionalRevision = preview.revision
+        }
+        if preview.windowIndex > provisionalWindowIndex {
+            provisionalWindowPrefix = Self.previewTail([provisionalWindowPrefix, provisionalWindowText]
+                .filter { !$0.isEmpty }.joined(separator: " ")) ?? ""
+            provisionalWindowIndex = preview.windowIndex
+        }
+        provisionalWindowText = Self.previewTail(text) ?? ""
+        let next = Self.previewTail([provisionalWindowPrefix, provisionalWindowText]
+            .filter { !$0.isEmpty }.joined(separator: " "))
+        guard provisionalPreview != next else { return }
+        provisionalPreview = next
+        publish(message: nil)
+    }
+
+    private func clearProvisionalPreview() {
+        provisionalPreview = nil
+        provisionalWindowPrefix = ""
+        provisionalWindowText = ""
+        provisionalWindowIndex = -1
+        provisionalRevision = -1
+    }
+
+    private static func previewTail(_ text: String) -> String? {
+        // UI snapshots never retain an entire long dictation. Cut only at a
+        // Character boundary so emoji and combining marks survive intact.
+        let tail = String(text.suffix(1_200)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return tail.isEmpty ? nil : tail
     }
 
     func prepareForTermination() async {
         terminating = true
+        transcriptPreview = nil
+        decoderPreviewTask?.cancel()
+        clearProvisionalPreview()
         inputLevelTask?.cancel()
         inputLevelTask = nil
         captureLimitTask?.cancel()
@@ -472,6 +548,7 @@ actor SessionCoordinator {
                 try machine.finishWithoutResult(sessionID: sessionID)
                 publish(message: "No speech detected")
             case let .final(text):
+                transcriptPreview = Self.previewTail(text)
                 if sessionGrammarCorrectionEnabled { publish(message: "Improving transcription…") }
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 let improvementStarted = ContinuousClock.now
@@ -493,6 +570,7 @@ actor SessionCoordinator {
                 #endif
                 guard !terminating, machine.phase == .finalizing(sessionID) else { return }
                 let deliveredText = grammarCorrectionEnabled && sessionGrammarCorrectionEnabled ? correctedText : text
+                transcriptPreview = Self.previewTail(deliveredText)
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 deliveryTrace?.output = deliveredText
                 deliveryTrace?.status = "delivery_started"
@@ -690,7 +768,13 @@ actor SessionCoordinator {
     }
 
     private func publish(message: String?, attention: SessionAttention? = nil) {
-        let snapshot = machine.snapshot(elapsedSeconds: elapsedSeconds, message: message ?? captureLimitMessage, attention: attention, trigger: sessionTrigger, inputLevel: capturingInputLevel)
+        if !machine.phase.isBusy {
+            transcriptPreview = nil
+            clearProvisionalPreview()
+            decoderPreviewTask?.cancel()
+            decoderPreviewTask = nil
+        }
+        let snapshot = machine.snapshot(elapsedSeconds: elapsedSeconds, message: message ?? captureLimitMessage, attention: attention, trigger: sessionTrigger, inputLevel: capturingInputLevel, transcriptPreview: transcriptPreview, provisionalPreview: provisionalPreview)
         guard snapshotDeduplicator.accept(snapshot) else { return }
         updateContinuation.yield(snapshot)
     }
