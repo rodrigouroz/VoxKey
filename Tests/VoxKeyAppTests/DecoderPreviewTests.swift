@@ -400,3 +400,340 @@ func installedModelReleaseAndCancellationInterruptActiveSpeculation() async thro
         previews.continuation.finish()
     }
 }
+
+/// A minute of continuous speech should remain visible without repeatedly
+/// submitting almost the entire same audio window on every update.
+@Test
+func sustainedPreviewBoundsRepeatedAudioAndKeepsFreshWords() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let started = ContinuousClock.now
+    let chunk = Array(repeating: Float(0.1), count: 1_600)
+    var decodedSamples = 0
+    var starts: [Int] = []
+    for tick in 1...600 {
+        try transcript.append(chunk)
+        if let samples = schedule.nextSamples(in: transcript, now: started.advanced(by: .milliseconds(tick * 100))) {
+            decodedSamples += samples.count
+            starts.append(tick)
+            #expect(samples == Array(transcript.samples.suffix(samples.count)))
+            #expect(samples.count <= 8 * 16_000)
+        }
+    }
+    #expect(starts.first == 10, "The first words still start decoding after one second")
+    #expect(decodedSamples <= transcript.samples.count * 4, "Bound speculative audio work to four times captured audio")
+    #expect(starts.count < 40, "Long phrases must not launch a nearly continuous stream of full-window decodes")
+    #expect(zip(starts, starts.dropFirst()).allSatisfy { $1 - $0 <= 21 }, "Keep fresh speech visible at least every 2.1 seconds")
+    #expect(transcript.consumedSamples == 0 && transcript.confirmedText.isEmpty)
+    #expect(transcript.nextWindow(isFinal: true)?.samples == Array(repeating: Float(0.1), count: 60 * 16_000))
+    print("Sustained preview schedule: \(starts.count) decodes, \(Double(decodedSamples) / 16_000) audio seconds for 60 seconds captured")
+}
+
+@Test
+func previewOfNewPhraseDoesNotWaitForThePreviousLongWindow() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    try transcript.append(Array(repeating: 0.1, count: 8 * 16_000))
+    #expect(schedule.nextSamples(in: transcript, now: now) != nil)
+    let pendingPhrase = transcript.nextWindow(isFinal: true)
+    let phrase = try #require(pendingPhrase)
+    transcript.accept("Completed phrase.", window: phrase)
+    let fresh = Array(repeating: Float(0.2), count: 16_000)
+    try transcript.append(fresh)
+    #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(1))) == fresh)
+    #expect(transcript.confirmedText == "Completed phrase.")
+    #expect(transcript.decodeCount == 1)
+    #expect(transcript.nextWindow(isFinal: true)?.samples == fresh)
+}
+
+@Test
+func aPauseRefreshesPreviewBeforeTheRegularBudgetAndOnlyOnce() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    try transcript.append(Array(repeating: 0.1, count: 8 * 16_000))
+    #expect(schedule.nextSamples(in: transcript, now: now) != nil)
+    try transcript.append(Array(repeating: 0.1, count: 6_400))
+    // Quiet enough for preview speech detection, but not an authoritative cut.
+    try transcript.append(Array(repeating: 0.005, count: 4_800))
+    #expect(transcript.nextWindow(isFinal: false) == nil)
+    let paused = schedule.nextSamples(in: transcript, now: now.advanced(by: .milliseconds(700)))
+    let containsLatestWords = paused == Array(transcript.samples.suffix(8 * 16_000))
+    #expect(containsLatestWords)
+    for second in 1...4 {
+        try transcript.append(Array(repeating: 0.005, count: 16_000))
+        #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(second + 1))) == nil)
+    }
+    try transcript.append(Array(repeating: 0.1, count: 6_400))
+    try transcript.append(Array(repeating: 0.005, count: 4_800))
+    #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(6))) != nil)
+    #expect(transcript.consumedSamples == 0 && transcript.confirmedText.isEmpty)
+    #expect(transcript.nextWindow(isFinal: true)?.samples.count == transcript.samples.count)
+}
+
+@Test
+func shortSpeechPauseDoesNotWaitForOneSecondOrDecodeTrailingSilence() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let speech = Array(repeating: Float(0.1), count: 6_400)
+    try transcript.append(speech)
+    #expect(schedule.nextSamples(in: transcript) == nil)
+    // Also covers a pause noticed after an earlier model call has finished.
+    try transcript.append(Array(repeating: 0.005, count: 2 * 16_000))
+    #expect(transcript.nextWindow(isFinal: false) == nil)
+    let paused = schedule.nextSamples(in: transcript)
+    let includesSpeechAndBriefQuiet = paused == speech + Array(repeating: 0.005, count: 4_800)
+    #expect(includesSpeechAndBriefQuiet)
+    #expect(schedule.nextSamples(in: transcript) == nil)
+    #expect(transcript.consumedSamples == 0)
+}
+
+@Test
+func completedPhraseAndSilenceDoNotRequestCatchUpPreviews() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    try transcript.append(Array(repeating: 0.005, count: 3 * 16_000))
+    #expect(schedule.nextSamples(in: transcript) == nil)
+    try transcript.append(Array(repeating: 0.1, count: 16_000))
+    _ = schedule.nextSamples(in: transcript, now: .now.advanced(by: .seconds(1)))
+    let pending = transcript.nextWindow(isFinal: true)
+    transcript.accept("Already visible.", window: try #require(pending))
+    try transcript.append(Array(repeating: 0.005, count: 16_000))
+    #expect(schedule.nextSamples(in: transcript, now: .now.advanced(by: .seconds(3))) == nil)
+    #expect(transcript.confirmedText == "Already visible.")
+}
+
+@MainActor
+@Test(.enabled(if: ProcessInfo.processInfo.environment["VOXKEY_PREVIEW_TEST_AUDIO"] != nil))
+func installedModelPauseShowsCompleteWordsInOverlayBeforeRelease() async throws {
+    let file = try AVAudioFile(forReading: URL(fileURLWithPath: #require(
+        ProcessInfo.processInfo.environment["VOXKEY_PREVIEW_TEST_AUDIO"])))
+    let buffer = try #require(AVAudioPCMBuffer(pcmFormat: file.processingFormat,
+        frameCapacity: AVAudioFrameCount(file.length)))
+    try file.read(into: buffer)
+    let raw = Array(UnsafeBufferPointer(start: try #require(buffer.floatChannelData?[0]), count: Int(buffer.frameLength)))
+    // A quiet background above the authoritative pause threshold reproduces
+    // a stalled phrase without changing the final decoder's boundaries.
+    let speech = raw.map { $0 + 0.005 }
+    let engine = WhisperTranscriber()
+    try await engine.prepare(model: ProcessInfo.processInfo.environment["VOXKEY_PREVIEW_TEST_MODEL"] ?? WhisperTranscriber.defaultModel, download: false)
+    var baseline: TranscriptionOutcome?
+    func words(_ text: String) -> [String] { text.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init) }
+    for observing in [false, true] {
+        let input = SyntheticAudioInput(sampleRate: file.processingFormat.sampleRate)
+        let capture = AudioCaptureService(makeInput: { _ in input })
+        let id = DictationSessionID()
+        let coordinator = SessionCoordinator(accessibility: DesktopFixture().service,
+            initialState: .init(phase: .capturing(id)))
+        let overlay = StatusOverlayController(animationsEnabled: false)
+        defer { overlay.window?.orderOut(nil) }
+        let previews = AsyncStream.makeStream(of: DecoderPreview.self, bufferingPolicy: .bufferingNewest(1))
+        let consumer = Task {
+            for await update in previews.stream {
+                let text = await engine.textForPreview(update)
+                await coordinator.receiveDecoderPreview(update, text: text, sessionID: id)
+                overlay.update(await coordinator.currentSnapshot())
+            }
+        }
+        try await capture.start()
+        let worker = Task { try await engine.transcribeStream(from: capture,
+            decoderPreview: observing ? previews.continuation : nil) { progress in
+            await coordinator.receiveTranscriptionProgress(progress, sessionID: id)
+        } }
+        let chunk = Int(file.processingFormat.sampleRate / 10)
+        for offset in stride(from: 0, to: speech.count, by: chunk) {
+            input.emit(Array(speech[offset..<min(offset + chunk, speech.count)]))
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        // Keep recording through the pause; never release to obtain these words.
+        for _ in 0..<20 {
+            input.emit(Array(repeating: 0.005, count: chunk))
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        let pausedSnapshot = await coordinator.currentSnapshot()
+        let visible = overlay.window?.contentView.flatMap { root in
+            descendants(root).compactMap { $0 as? NSTextView }.first?.string
+        } ?? ""
+        try await capture.finish()
+        let result = try await worker.value
+        previews.continuation.finish()
+        await consumer.value
+        if observing {
+            #expect(result == baseline, "Pause previews must preserve final recognition")
+            #expect(pausedSnapshot.phase == .capturing(id))
+            #expect(pausedSnapshot.transcriptPreview == nil, "The noise floor should prevent an authoritative phrase cut")
+            guard case let .final(expected) = try #require(baseline) else { Issue.record("Expected final speech"); return }
+            #expect(!expected.isEmpty)
+            #expect(words(visible) == words(expected), "All spoken words must be visible during the pause, before release")
+            #expect(overlay.window?.isVisible == true)
+        } else { baseline = result }
+    }
+}
+
+/// Microphone notifications can coalesce while inference is busy. A completed
+/// pause must survive later voiced frames in the same batch, without replaying
+/// an obsolete window that excludes the resumed speech.
+@Test
+func previewCatchesPauseFollowedByFastSpeechInOneBatch() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    try transcript.append(Array(repeating: 0.1, count: 8 * 16_000))
+    _ = schedule.nextSamples(in: transcript, now: now)
+    try transcript.append(Array(repeating: 0.005, count: 4_800))
+    try transcript.append(Array(repeating: 0.2, count: 6_400))
+    let result = schedule.nextSamples(in: transcript, now: now.advanced(by: .milliseconds(700)))
+    let includesResumedSpeech = result == Array(transcript.samples.suffix(8 * 16_000))
+    #expect(includesResumedSpeech)
+    #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(2))) == nil)
+    #expect(transcript.consumedSamples == 0)
+}
+
+@Test
+func repeatedBriefPausesCannotCreateADecodeStorm() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    var starts: [Int] = []
+    for tick in 1...100 {
+        // Two voiced frames, three quiet frames, repeated twenty times.
+        try transcript.append(Array(repeating: tick % 5 == 1 || tick % 5 == 2 ? 0.1 : 0.005, count: 1_600))
+        if let samples = schedule.nextSamples(in: transcript, now: now.advanced(by: .milliseconds(tick * 100))) {
+            starts.append(tick)
+            #expect(samples.count <= 8 * 16_000)
+        }
+    }
+    #expect(starts.first == 5, "A short first utterance appears at its pause")
+    #expect(zip(starts, starts.dropFirst()).allSatisfy { $1 - $0 >= 7 }, "Pause/resume cannot defeat the decode rate limit")
+    #expect(zip(starts, starts.dropFirst()).allSatisfy { $1 - $0 <= 10 }, "Repeated pauses still refresh promptly")
+}
+
+@Test(arguments: [317, 1_600, 11_200])
+func busyPreviewCoalescesPausesAndKeepsNewestAudio(_ chunkSize: Int) throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    let audio = Array(repeating: Float(0.1), count: 6_400)
+        + Array(repeating: Float(0.005), count: 4_800)
+        + Array(repeating: Float(0.2), count: 6_400)
+        + Array(repeating: Float(0.005), count: 4_800)
+        + Array(repeating: Float(0.3), count: 3_200)
+    for offset in stride(from: 0, to: audio.count, by: chunkSize) {
+        try transcript.append(Array(audio[offset..<min(offset + chunkSize, audio.count)]))
+        #expect(schedule.nextSamples(in: transcript, now: now, decoderAvailable: false) == nil)
+    }
+    let next = schedule.nextSamples(in: transcript, now: now)
+    let includesAllSpeech = next == audio
+    #expect(includesAllSpeech, "Busy decodes defer one request without clipping resumed speech or queuing old windows")
+    #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(1))) == nil)
+    #expect(transcript.consumedSamples == 0 && transcript.confirmedText.isEmpty)
+}
+
+@Test
+func authoritativeCommitDiscardsDeferredPauseAndNewSpeechRearmsIt() throws {
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    let now = ContinuousClock.now
+    try transcript.append(Array(repeating: 0.1, count: 6_400))
+    try transcript.append(Array(repeating: 0.005, count: 4_800))
+    #expect(schedule.nextSamples(in: transcript, now: now, decoderAvailable: false) == nil)
+    let pending = transcript.nextWindow(isFinal: true)
+    let window = try #require(pending)
+    transcript.accept("Already committed.", window: window)
+    try transcript.append(Array(repeating: 0.005, count: 320)) // different frame alignment
+    #expect(schedule.nextSamples(in: transcript, now: now) == nil)
+    try transcript.append(Array(repeating: 0.2, count: 6_400))
+    try transcript.append(Array(repeating: 0.005, count: 6_400))
+    let next = schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(1)))
+    #expect(next != nil)
+    #expect(next?.contains(0.1) == false, "Previously committed speech cannot reappear")
+    #expect(transcript.confirmedText == "Already committed.")
+}
+
+@Test
+func breathPausesAndIsolatedNoiseDoNotForceCatchUpDecodes() throws {
+    let now = ContinuousClock.now
+    for quietFrames in [1, 2] {
+        var transcript = StreamingTranscript()
+        var schedule = ProvisionalDecodeSchedule()
+        try transcript.append(Array(repeating: 0.1, count: 8 * 16_000))
+        _ = schedule.nextSamples(in: transcript, now: now)
+        try transcript.append(Array(repeating: 0.005, count: quietFrames * 1_600))
+        try transcript.append(Array(repeating: 0.1, count: 3_200))
+        #expect(schedule.nextSamples(in: transcript, now: now.advanced(by: .seconds(1))) == nil)
+    }
+    var transcript = StreamingTranscript()
+    var schedule = ProvisionalDecodeSchedule()
+    try transcript.append(Array(repeating: 0.1, count: 1_600)) // one-frame transient
+    try transcript.append(Array(repeating: 0.005, count: 16_000))
+    #expect(schedule.nextSamples(in: transcript, now: now) == nil)
+}
+
+@MainActor
+@Test(.enabled(if: ProcessInfo.processInfo.environment["VOXKEY_PREVIEW_RESUME_TEST_AUDIO"] != nil),
+      arguments: [200, 400, 1_200])
+func installedModelPauseThenFastSpeechCatchesUpBeforeRelease(_ pauseMS: Int) async throws {
+    func load(_ key: String) throws -> (samples: [Float], rate: Double) {
+        let file = try AVAudioFile(forReading: URL(fileURLWithPath: #require(ProcessInfo.processInfo.environment[key])))
+        let buffer = try #require(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)))
+        try file.read(into: buffer)
+        let raw = Array(UnsafeBufferPointer(start: try #require(buffer.floatChannelData?[0]), count: Int(buffer.frameLength)))
+        return (raw.map { $0 + 0.005 }, file.processingFormat.sampleRate)
+    }
+    func words(_ text: String) -> [String] { text.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init) }
+    let normal = try load("VOXKEY_PREVIEW_TEST_AUDIO")
+    let fast = try load("VOXKEY_PREVIEW_RESUME_TEST_AUDIO")
+    try #require(normal.rate == fast.rate)
+    let audio = normal.samples + Array(repeating: Float(0.005), count: Int(normal.rate) * pauseMS / 1_000) + fast.samples
+    try #require(audio.count < Int(normal.rate * 7), "Use short synthetic fixtures within the eight-second preview window")
+    let engine = WhisperTranscriber()
+    try await engine.prepare(model: ProcessInfo.processInfo.environment["VOXKEY_PREVIEW_TEST_MODEL"] ?? WhisperTranscriber.defaultModel, download: false)
+    var baseline: TranscriptionOutcome?
+    for observing in [false, true] {
+        let input = SyntheticAudioInput(sampleRate: normal.rate)
+        let capture = AudioCaptureService(makeInput: { _ in input })
+        let updates = AsyncStream.makeStream(of: DecoderPreview.self, bufferingPolicy: .bufferingNewest(1))
+        let id = DictationSessionID()
+        let coordinator = SessionCoordinator(accessibility: DesktopFixture().service, initialState: .init(phase: .capturing(id)))
+        let consumer = Task {
+            for await update in updates.stream {
+                await coordinator.receiveDecoderPreview(update, text: await engine.textForPreview(update), sessionID: id)
+            }
+        }
+        try await capture.start()
+        let worker = Task { try await engine.transcribeStream(from: capture,
+            decoderPreview: observing ? updates.continuation : nil) { progress in
+                await coordinator.receiveTranscriptionProgress(progress, sessionID: id)
+            }
+        }
+        let chunk = Int(normal.rate / 10)
+        if observing {
+            for offset in stride(from: 0, to: audio.count, by: chunk) {
+                input.emit(Array(audio[offset..<min(offset + chunk, audio.count)]))
+                try await Task.sleep(for: .milliseconds(100))
+            }
+        } else { input.emit(audio) }
+        if observing {
+            let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+            let expected: String
+            if case .final(let text) = baseline { expected = text } else { expected = "" }
+            while ContinuousClock.now < deadline {
+                input.emit(Array(repeating: 0.005, count: chunk))
+                try await Task.sleep(for: .milliseconds(100))
+                if words(await coordinator.currentSnapshot().provisionalPreview ?? "") == words(expected) { break }
+            }
+            let snapshot = await coordinator.currentSnapshot()
+            #expect(!expected.isEmpty)
+            #expect(snapshot.phase == .capturing(id))
+            #expect(snapshot.transcriptPreview == nil)
+            #expect(words(snapshot.provisionalPreview ?? "") == words(expected), "Catch up to the fast resumed speech before release")
+        }
+        try await capture.finish()
+        let result = try await worker.value
+        updates.continuation.finish()
+        await consumer.value
+        if observing { #expect(result == baseline, "Pause and speech speed must not change final recognition") }
+        else { baseline = result }
+    }
+}

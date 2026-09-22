@@ -199,11 +199,20 @@ updates correctly from 0.1.0 beta builds even though the tag format changed.
 
 ## Diagnostic boundary
 
+Production builds must never contain VoxKey telemetry or debug instrumentation.
+Keep every diagnostic facility behind an explicit local-only compile flag; a
+runtime preference is not an acceptable production boundary.
+
 All app, release-candidate, preview, and distribution packages must pass
 `python3 scripts/verify-no-diagnostics.py <app-bundle>`, including the app mounted
 from the final DMG. These builds define `VOXKEY_RELEASE` and never enable diagnostics.
 Release compilation rejects `VOXKEY_LOCAL_DIAGNOSTICS`, even if supplied manually.
 Stored preferences cannot enable code that is absent from the binary.
+
+Optimized local measurement bundles use the separate `VOXKEY_PERFORMANCE` flag.
+It is forbidden with `VOXKEY_RELEASE`; public artifact validation rejects its
+recording and destination-diagnostic markers. Only the explicit local performance
+packager may pass `--allow-performance`, which still rejects text diagnostics.
 
 For local debugging only:
 

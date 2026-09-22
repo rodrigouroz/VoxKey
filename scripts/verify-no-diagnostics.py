@@ -11,7 +11,7 @@ import re
 import sys
 
 
-def diagnostic_markers():
+def diagnostic_markers(allow_performance=False):
     source_root = Path(__file__).resolve().parent.parent / "Sources" / "VoxKeyApp"
     messages = re.compile(
         r'(?:\blogger\.\w+|\bLogger\([^\n]+?\)\.\w+)\(\s*"((?:\\.|[^"\\])*)"'
@@ -21,6 +21,10 @@ def diagnostic_markers():
                b"Record temporary transcription traces", b"Diagnostics/Transcription"}
     markers.update({b"TranscriptionDiagnostics", b"TranscriptionTrace",
                     b"TranscriptionDiagnosticsCard"})
+    if not allow_performance:
+        markers.update({b"PerformanceRecording", b"PerformanceSession", b"Diagnostics/Performance",
+                        b"Performance Recording On", b"VoxKey performance report could not be saved.",
+                        b"DestinationDiagnostics", b"DestinationDiagnosticRecord", b"FocusDiagnosticAttempt"})
     for path in source_root.glob("*.swift"):
         for literal in messages.findall(path.read_text()):
             prefix = literal.split(r"\(", 1)[0]
@@ -33,12 +37,14 @@ def diagnostic_markers():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("app", type=Path)
+    parser.add_argument("--allow-performance", action="store_true",
+                        help="Local optimized measurement bundle only; text diagnostics remain forbidden")
     args = parser.parse_args()
     binary = args.app / "Contents" / "MacOS" / "VoxKey"
     if not binary.is_file():
         parser.error("Expected a built VoxKey app bundle")
     try:
-        markers = diagnostic_markers()
+        markers = diagnostic_markers(args.allow_performance)
     except ValueError as error:
         parser.error(str(error))
     data = binary.read_bytes()

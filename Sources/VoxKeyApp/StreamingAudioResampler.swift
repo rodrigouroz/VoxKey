@@ -1,5 +1,5 @@
 @preconcurrency import AVFoundation
-import Synchronization
+import os
 import VoxKeyCore
 
 /// One converter per dictation preserves filter history and fractional sample
@@ -9,10 +9,19 @@ final class StreamingAudioResampler {
     private var sampleRate: Double?
 
     func append(_ capture: CapturedAudio, isFinal: Bool) throws -> [Float] {
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let performance = PerformanceRecording.shared.current
+        let started = ContinuousClock.now
+        performance?.add(.resampleCalls)
+        defer { performance?.add(.resampleMS, PerformanceSession.milliseconds(since: started)) }
+        #endif
         guard capture.sampleRate.isFinite, capture.sampleRate > 0, !capture.overflowed,
               capture.samples.allSatisfy(\.isFinite) else { throw TranscriptionError.invalidAudio }
         if let sampleRate, sampleRate != capture.sampleRate { throw TranscriptionError.invalidAudio }
         sampleRate = capture.sampleRate
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performance?.add(.resampledAudioSeconds, Double(capture.samples.count) / capture.sampleRate)
+        #endif
         if capture.sampleRate == WhisperTranscriber.targetSampleRate { return capture.samples }
 
         if converter == nil {
@@ -35,7 +44,9 @@ final class StreamingAudioResampler {
         guard let output = AVAudioPCMBuffer(pcmFormat: converter.outputFormat, frameCapacity: capacity) else {
             throw TranscriptionError.resamplingFailed
         }
-        let supplied = Mutex(false)
+        // A copyable lock keeps one shared flag across converter callbacks;
+        // Swift 6.4 cannot compile this closure capturing a noncopyable Mutex.
+        let supplied = OSAllocatedUnfairLock(initialState: false)
         var samples: [Float] = []
         while true {
             var error: NSError?

@@ -207,6 +207,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let status = NSMenuItem(title: currentDownloadStatus?.message ?? statusTitle(for: snapshot), action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let recording = NSMenuItem(title: "Performance Recording On", action: nil, keyEquivalent: "")
+        recording.isEnabled = false
+        menu.addItem(recording)
+        let reports = NSMenuItem(title: "Show Performance Reports…", action: #selector(showPerformanceReports), keyEquivalent: "")
+        reports.target = self
+        menu.addItem(reports)
+        #endif
         menu.addItem(.separator())
 
         if snapshot.lastResult != nil, !snapshot.phase.isBusy {
@@ -251,6 +259,20 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(quit)
     }
 
+    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+    @objc private func showPerformanceReports() {
+        let directory = PerformanceRecording.directory
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700])
+            NSWorkspace.shared.open(directory)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Could not open performance reports."
+            alert.runModal()
+        }
+    }
+    #endif
     private func statusTitle(for snapshot: SessionSnapshot) -> String {
         switch snapshot.phase {
         case .ready: "Ready — \(captureMode == .hold ? "hold" : "press") \(triggerMonitor.trigger.displayName) to dictate"

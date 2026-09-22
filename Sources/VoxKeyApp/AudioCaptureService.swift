@@ -206,6 +206,9 @@ actor AudioCaptureService {
 
     private func drainUntilCancelled() async {
         while !Task.isCancelled {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            PerformanceRecording.shared.current?.add(.drainPolls)
+            #endif
             drainAvailableSamples()
             try? await Task.sleep(for: .milliseconds(10))
         }
@@ -213,9 +216,18 @@ actor AudioCaptureService {
 
     private func drainAvailableSamples() {
         guard let ring else { return }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let performance = PerformanceRecording.shared.current
+        let started = ContinuousClock.now
+        defer { performance?.add(.drainMS, PerformanceSession.milliseconds(since: started)) }
+        #endif
         while ring.availableCount > 0 {
             let chunk = ring.read(maximumCount: 8_192)
             guard !chunk.isEmpty else { break }
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performance?.add(.drainBatches)
+            performance?.add(.captureAudioSeconds, Double(chunk.count) / sampleRate)
+            #endif
             levelMeter.consume(chunk, sampleRate: sampleRate)
             // The hardware ring and pending queue have independent bounds. A slow
             // decoder may leave a backlog here while the realtime ring stays empty.
@@ -231,6 +243,9 @@ actor AudioCaptureService {
                 speechStartSamples.append(contentsOf: chunk.prefix(remaining))
             }
         }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performance?.maximum(.maximumPendingAudioSeconds, Double(rawSamples.count) / sampleRate)
+        #endif
         if pendingOverflow || ring.overflowed || rawSamples.count >= Int(sampleRate / 10) {
             // This stream carries wakeups, never audio. Coalescing notifications
             // cannot lose samples, and finish wakes the worker immediately.

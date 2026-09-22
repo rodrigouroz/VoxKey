@@ -59,18 +59,30 @@ final class SystemDesktopAccessibilityClient: DesktopAccessibilityClient {
     }
     func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success else { return nil }
+        let result = AXUIElementCopyAttributeValue(element, name as CFString, &value)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: name)
+        #endif
+        guard result == .success else { return nil }
         return value
     }
     func attributeNames(_ element: AXUIElement) -> Set<String> {
         var names: CFArray?
-        guard AXUIElementCopyAttributeNames(element, &names) == .success,
+        let result = AXUIElementCopyAttributeNames(element, &names)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: "AXAttributeNames")
+        #endif
+        guard result == .success,
               let strings = names as? [String] else { return [] }
         return Set(strings)
     }
     func isSettable(_ element: AXUIElement, _ name: String) -> Bool {
         var settable = DarwinBoolean(false)
-        return AXUIElementIsAttributeSettable(element, name as CFString, &settable) == .success && settable.boolValue
+        let result = AXUIElementIsAttributeSettable(element, name as CFString, &settable)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: "AXIsAttributeSettable")
+        #endif
+        return result == .success && settable.boolValue
     }
     func setAttribute(_ element: AXUIElement, _ name: String, _ value: CFTypeRef) -> AXError {
         AXUIElementSetAttributeValue(element, name as CFString, value)
@@ -81,14 +93,22 @@ final class SystemDesktopAccessibilityClient: DesktopAccessibilityClient {
         var range = range
         guard let parameter = AXValueCreate(.cfRange, &range) else { return nil }
         var value: CFTypeRef?
-        if AXUIElementCopyParameterizedAttributeValue(
+        let plainResult = AXUIElementCopyParameterizedAttributeValue(
             element, kAXStringForRangeParameterizedAttribute as CFString, parameter, &value
-        ) == .success, let string = value as? String { return string }
+        )
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(plainResult.rawValue, operation: "AXStringForRange")
+        #endif
+        if plainResult == .success, let string = value as? String { return string }
         // Some native editors expose only the attributed variant. Never read
         // AXValue as a fallback: that would fetch the entire document.
-        if AXUIElementCopyParameterizedAttributeValue(
+        let attributedResult = AXUIElementCopyParameterizedAttributeValue(
             element, kAXAttributedStringForRangeParameterizedAttribute as CFString, parameter, &value
-        ) == .success, let string = value as? NSAttributedString { return string.string }
+        )
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(attributedResult.rawValue, operation: "AXAttributedStringForRange")
+        #endif
+        if attributedResult == .success, let string = value as? NSAttributedString { return string.string }
         return nil
     }
     func postPaste(processIdentifier: pid_t) -> Bool {

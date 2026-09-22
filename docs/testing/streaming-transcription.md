@@ -8,8 +8,21 @@ three lines, and is cleared when the session ends. Progress is awaited so the
 last phrase reaches session state before finalization continues. Stale-session
 and cancellation callbacks cannot restore cleared text.
 Speculative decoding starts after at least one second of unfinished speech, then
-at most once every 700 ms with at least half a second of new audio. It uses a copy
-of the latest eight seconds, caps output at 128 tokens, and disables fallback
+at most once every 700 ms. Each request requires fresh audio equal to at least a
+quarter of its window (and at least half a second). This preserves the early
+preview while moving toward one request per two seconds for an eight-second
+window, bounding continuous-speech preview audio to four times captured audio.
+A detected pause gets one catch-up preview outside that budget: after at least
+200 ms of detected speech followed by 300 ms below the preview speech threshold,
+show the latest words without waiting for the normal fresh-audio quota.
+The 700 ms minimum between starts still applies to catch-ups, preventing repeated
+brief pauses from flooding inference. This also covers utterances shorter than one second. Continued quiet
+does not repeat the catch-up; new speech rearms it. Pause detection continues
+while a preview is busy. Multiple pending pauses coalesce into one request using
+the newest audio, including speech that resumes before the decoder is available. The catch-up window ends
+300 ms after the latest detected voice, so trailing quiet cannot push those
+words out of the window. This is presentation only and never changes the stricter
+authoritative phrase cuts. Both preview paths use up to the latest eight seconds, cap output at 128 tokens, and disable fallback
 attempts for previews only. This adds inference work but never retires audio,
 commits preview words, or supplies them as recognition context. The authoritative
 phrase thresholds, decoding options, prompts, and final-output assembly remain
@@ -78,6 +91,24 @@ VOXKEY_PREVIEW_TEST_AUDIO=/tmp/voxkey-preview.aiff \
 swift test --force-resolved-versions --no-parallel --filter 'installedModel.*(Preview|Speculation|Overlay)'
 ```
 
+For pauses followed by faster speech, generate a second, short fixture and set
+`VOXKEY_PREVIEW_RESUME_TEST_AUDIO` alongside `VOXKEY_PREVIEW_TEST_AUDIO`:
+
+```sh
+say -v Samantha -r 270 -o /tmp/voxkey-fast-resume.aiff 'Then send the updated plan before Friday.'
+VOXKEY_PREVIEW_TEST_AUDIO=/tmp/voxkey-preview.aiff \
+VOXKEY_PREVIEW_RESUME_TEST_AUDIO=/tmp/voxkey-fast-resume.aiff \
+VOXKEY_PREVIEW_TEST_MODEL=distil-whisper_distil-large-v3 \
+swift test -c release --force-resolved-versions --no-parallel --filter installedModelPauseThenFastSpeech
+```
+
+Keep the two fixtures plus the longest pause below seven seconds. This checks
+200, 400, and 1,200 ms pauses, complete preview words before release, and unchanged
+final recognition. Deterministic scheduler tests also cover uneven capture
+chunks, busy inference, repeated brief pauses, noise transients, and retirement
+of a pending phrase. These are controlled fixtures, not a claim that every voice,
+noise environment, or model has been validated.
+
 The tests feed synthetic audio in 100 ms increments while capture remains open,
 assert visible native overlay text before any committed phrase, compare final
 text with previews disabled, and release/cancel during active speculative decoding.
@@ -88,6 +119,54 @@ The user's selected full-precision Distil model also passed: first words after
 without, and cancellation during an active preview in 4 ms. To test that model,
 add `VOXKEY_PREVIEW_TEST_MODEL=distil-whisper_distil-large-v3` to the command.
 These are small-fixture checks, not latency percentiles or evidence of a speedup.
+
+For sustained-preview efficiency, set `VOXKEY_PREVIEW_BENCHMARK_AUDIO` to a longer
+generated speech file and run `installedModelMeasuresSustainedPreviewWork` with
+`-c release -Xswiftc -DVOXKEY_PERFORMANCE`. Set `VOXKEY_PREVIEW_TEST_MODEL` to the
+installed model to compare. This feeds audio at microphone speed with previews
+off/on, checks equal final text and early visible updates, and reports existing
+performance counters without writing synthetic sessions into the user's reports.
+
+A local optimized run on 2026-09-18 used 24.625 seconds of generated English
+speech and full-precision Distil v3. The previous and adaptive schedules, before the pause catch-up addition, produced:
+
+| Measurement | Previous | Adaptive |
+|---|---:|---:|
+| Speculative decodes | 33 | 17 |
+| Audio submitted to previews | 182.02 s | 72.23 s |
+| Total preview decode wall time | 8.82 s | 4.40 s |
+| First visible words | 1.199 s | 1.189 s |
+| Release to final result | 0.251 s | 0.241 s |
+| Whole-session process CPU time | 5.83 s | 3.72 s |
+
+Both versions returned the same final text as their previews-disabled run, with
+three authoritative decodes. This is one paired synthetic fixture, not a latency,
+accuracy, battery, or thermal guarantee. The deterministic continuous-audio
+regression also reduced scheduled requests from 85 to 33 per minute and submitted
+audio from 641.5 to 234.2 seconds, while leaving final audio intact. Live recording
+with the performance build remains the real-workload acceptance check.
+
+The pause catch-up regression on 2026-09-18 verified complete visible sentence
+text before release with a synthetic 0.005 background level (above the stricter
+phrase-cut threshold), unchanged final recognition, one catch-up per pause, and
+no repeated work in silence. Short-speech capture/error handling, release, and
+cancellation checks passed. The sustained fixture still used 17 speculative
+decodes and 72.23 seconds of preview audio. The full suite was **not green**:
+`animatedCaptionExpansionKeepsTextBelowTheStatus` failed its unchanged window-size
+assertion (212×46 observed, 360×125 expected), including in isolation. Its source
+and overlay animation code were not modified by this change. The pause overlay
+regression disables animation; physical preview acceptance remains necessary.
+
+The subsequent pause/resume hardening run on 2026-09-18 passed the complete
+optimized measurement suite: 280 app, 16 core, and two audio-ring tests. The
+previously failing animation test passed on this run without animation changes;
+that observation does not establish the earlier failure's cause. A separate
+installed full-precision Distil v3 run passed all three pause/fast-speech cases
+(200, 400, and 1,200 ms). The continuous-audio schedule remained at 33 requests
+and 234.2 seconds of submitted audio per minute. The new scheduler coalesces
+busy-decoder pauses, includes resumed speech, and enforces the 700 ms start
+interval for catch-ups too. Performance and delivery instrumentation remain on
+in the local measurement bundle.
 
 ## Validation limits
 

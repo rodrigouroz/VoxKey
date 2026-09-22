@@ -136,7 +136,13 @@ actor TranscriptionImprover {
         trace?.status = !enabled ? "disabled" : generation != request ? "stale_generation" : Task.isCancelled ? "cancelled" : original.isEmpty ? "empty" : "not_ready"
         #endif
         guard current(request), ready, !original.isEmpty else { return original }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let performance = PerformanceRecording.shared.current
+        #endif
         do {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            let performanceS1Started = ContinuousClock.now
+            #endif
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             trace?.status = "s1_started"
             let s1Started = ContinuousClock.now
@@ -147,8 +153,16 @@ actor TranscriptionImprover {
             trace?.proposedTokens = generated.proposed
             trace?.acceptedTokens = generated.accepted
             trace?.status = "invalidated_after_s1"
+            #elseif VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            let generated = try await runtime.generate(original)
+            let proposed = generated.text
+            performance?.add(.s1ProposedTokens, Double(generated.proposed))
+            performance?.add(.s1AcceptedTokens, Double(generated.accepted))
             #else
             let proposed = try await runtime.improve(original)
+            #endif
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performance?.add(.s1MS, PerformanceSession.milliseconds(since: performanceS1Started))
             #endif
             guard current(request), ready else { return original }
             let rejected = TranscriptionImprovementGuard.rejects(original: original, candidate: proposed)
@@ -159,7 +173,13 @@ actor TranscriptionImprover {
             trace?.status = "gector_started"
             let gectorStarted = ContinuousClock.now
             #endif
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            let performanceGectorStarted = ContinuousClock.now
+            #endif
             let corrected = await grammar.correctUsingCache(source, enabledForSession: true, cache: .init())
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performance?.add(.gectorMS, PerformanceSession.milliseconds(since: performanceGectorStarted))
+            #endif
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             trace?.gector = corrected.text
             trace?.gectorMilliseconds = TranscriptionDiagnostics.milliseconds(since: gectorStarted)

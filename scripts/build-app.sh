@@ -10,11 +10,15 @@ case "$build_kind" in
     app) app="$repo_root/.build/VoxKey.app" ;;
     candidate) app="$repo_root/.build/VoxKeyCandidate.app" ;;
     development) app="$repo_root/.build/VoxKeyDevelopment.app" ;;
+    performance) app="$repo_root/.build/VoxKeyPerformance.app" ;;
     preview) app="$repo_root/.build/packaging-preview/VoxKey Packaging Preview.app" ;;
     distribution) app="$repo_root/.build/distribution/VoxKey.app" ;;
-    *) print -u2 "Usage: build-app.sh [debug|release] [app|candidate|development|preview|distribution]"; exit 2 ;;
+    *) print -u2 "Usage: build-app.sh [debug|release] [app|candidate|development|performance|preview|distribution]"; exit 2 ;;
 esac
 local_diagnostics="${VOXKEY_LOCAL_DIAGNOSTICS:-0}"
+if [[ "$build_kind" == performance && "$configuration" != release ]]; then
+    print -u2 'Performance bundles require optimized Release configuration.'; exit 2
+fi
 [[ "$local_diagnostics" == 0 || "$local_diagnostics" == 1 ]] || { print -u2 'VOXKEY_LOCAL_DIAGNOSTICS must be 0 or 1.'; exit 2; }
 if [[ "$build_kind" == development && "$configuration" != debug ]]; then
     print -u2 'Development bundles require Debug configuration.'; exit 2
@@ -35,6 +39,9 @@ fi
 
 cd "$repo_root"
 diagnostic_flags=(-Xswiftc -DVOXKEY_RELEASE)
+if [[ "$build_kind" == performance ]]; then
+    diagnostic_flags=(-Xswiftc -DVOXKEY_PERFORMANCE)
+fi
 if [[ "$build_kind" == development ]]; then
     diagnostic_flags=()
     if [[ "$local_diagnostics" == 1 ]]; then
@@ -57,6 +64,10 @@ cp "$repo_root/VoxKey/Info.plist" "$app/Contents/Info.plist"
 
 build_id="$(date -u +%Y%m%dT%H%M%SZ)-$(git rev-parse --short HEAD)"
 /usr/libexec/PlistBuddy -c "Add :VoxKeyBuildID string $build_id" "$app/Contents/Info.plist"
+if [[ "$build_kind" == performance ]]; then
+    /usr/libexec/PlistBuddy -c 'Add :VoxKeyPerformanceBuild bool true' "$app/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c 'Add :CFBundleDisplayName string VoxKey Performance' "$app/Contents/Info.plist"
+fi
 if [[ "$build_kind" == "preview" ]]; then
     /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.rodrigouroz.VoxKey.PackagingPreview' "$app/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c 'Set :CFBundleName VoxKey Packaging Preview' "$app/Contents/Info.plist"
@@ -128,7 +139,9 @@ fi
 
 voxkey_verify_signature "$app" "$signing_identity"
 python3 "$repo_root/scripts/verify-artifact-privacy.py" "$app"
-if [[ "$local_diagnostics" != 1 ]]; then
+if [[ "$build_kind" == performance ]]; then
+    python3 "$repo_root/scripts/verify-no-diagnostics.py" --allow-performance "$app"
+elif [[ "$local_diagnostics" != 1 ]]; then
     python3 "$repo_root/scripts/verify-no-diagnostics.py" "$app"
 fi
 echo "$app"

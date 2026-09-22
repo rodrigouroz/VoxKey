@@ -34,6 +34,9 @@ actor SessionCoordinator {
     private var captureStartTask: Task<Void, Error>?
     private var terminating = false
 
+    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+    private var performanceOutcome = PerformanceOutcome.interrupted
+    #endif
     private var machine: SessionStateMachine
     private var destinationToken: DestinationToken?
     private var recoveryToken: DestinationToken?
@@ -202,6 +205,11 @@ actor SessionCoordinator {
 
         do {
             let sessionID = try machine.beginSession(captureMode: captureMode)
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceOutcome = .interrupted
+            PerformanceRecording.shared.begin(id: sessionID.rawValue, model: transcriptionConfiguration.model,
+                language: sessionLanguage, improvementEnabled: sessionGrammarCorrectionEnabled)
+            #endif
             transcriptPreview = nil
             clearProvisionalPreview()
             completedPreviewDecodes = 0
@@ -212,6 +220,9 @@ actor SessionCoordinator {
             // Reserve the session before focus resolution can suspend. A quick
             // trigger release must be remembered while an AX tree wakes up.
             let assessment = await accessibility.captureCurrentDestination()
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            PerformanceRecording.shared.current?.mark(.destinationResolved)
+            #endif
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             logger.notice("trigger destination resolved secure=\(assessment.kind == .secure, privacy: .public)")
             #endif
@@ -273,6 +284,9 @@ actor SessionCoordinator {
             inputLevel = 0
             try machine.beginCapture(sessionID: sessionID)
             captureStartedAt = .now
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            PerformanceRecording.shared.current?.mark(.captureStarted)
+            #endif
             let vocabulary = sessionVocabulary
             let correction = sessionGrammarCorrectionEnabled
                 ? TranscriptionImprovementSession(improver: improver, requestID: sessionID.rawValue) : nil
@@ -369,6 +383,9 @@ actor SessionCoordinator {
             destinationToken = nil
             captureStartedAt = nil
             releaseRequestedFor = nil
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceOutcome = .cancelled
+            #endif
             try? machine.cancel(sessionID: sessionID)
             publish(message: "Cancelled")
         default:
@@ -457,6 +474,9 @@ actor SessionCoordinator {
               machine.phase == .capturing(sessionID) || machine.phase == .finalizing(sessionID),
               preview.decodeIndex == completedPreviewDecodes, preview.revision >= provisionalRevision,
               !text.isEmpty else { return }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        PerformanceRecording.shared.current?.firstPreview()
+        #endif
         if preview.revision > provisionalRevision {
             clearProvisionalPreview()
             provisionalRevision = preview.revision
@@ -491,6 +511,9 @@ actor SessionCoordinator {
 
     func prepareForTermination() async {
         terminating = true
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        defer { PerformanceRecording.shared.finish(.interrupted) }
+        #endif
         transcriptPreview = nil
         decoderPreviewTask?.cancel()
         clearProvisionalPreview()
@@ -523,8 +546,15 @@ actor SessionCoordinator {
         captureLimitTask?.cancel()
         captureLimitTask = nil
         do {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            let performance = PerformanceRecording.shared.current
+            performance?.mark(.releaseRequested)
+            #endif
             try machine.beginFinalization(sessionID: sessionID)
             try await audioCapture.finish()
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performance?.mark(.microphoneClosed)
+            #endif
             captureStartedAt = nil
             publish(message: "Transcribing…")
             guard let transcriptionTask else { throw TranscriptionError.emptyResult }
@@ -534,6 +564,9 @@ actor SessionCoordinator {
             await playEndCue()
 
             let transcription = try await transcriptionTask.value
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performance?.mark(.recognitionReady)
+            #endif
             self.transcriptionTask = nil
             guard !terminating, machine.phase == .finalizing(sessionID) else { return }
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
@@ -543,6 +576,9 @@ actor SessionCoordinator {
             #endif
             switch transcription {
             case .noSpeech:
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performanceOutcome = .noSpeech
+                #endif
                 await accessibility.discard(destinationToken)
                 destinationToken = nil
                 try machine.finishWithoutResult(sessionID: sessionID)
@@ -558,9 +594,16 @@ actor SessionCoordinator {
                 deliveryTrace?.recognitionFinalizationMilliseconds = seconds * 1000
                 defer { TranscriptionDiagnostics.shared.save(deliveryTrace) }
                 #endif
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                let performanceImprovementStarted = ContinuousClock.now
+                #endif
                 let correctedText: String
                 if let grammarSession { correctedText = await grammarSession.finish(text) }
                 else { correctedText = text }
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performance?.add(.improvementMS, PerformanceSession.milliseconds(since: performanceImprovementStarted))
+                performance?.mark(.improvementFinished)
+                #endif
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 if sessionGrammarCorrectionEnabled {
                     let elapsed = improvementStarted.duration(to: .now).components
@@ -574,6 +617,9 @@ actor SessionCoordinator {
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 deliveryTrace?.output = deliveredText
                 deliveryTrace?.status = "delivery_started"
+                #endif
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performance?.add(.finalCharacterCount, Double(deliveredText.count))
                 #endif
                 try machine.beginDelivery(sessionID: sessionID, text: deliveredText)
                 publish(message: "Delivering…")
@@ -589,19 +635,35 @@ actor SessionCoordinator {
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 let deliveryStarted = ContinuousClock.now
                 #endif
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performance?.mark(.deliveryStarted)
+                let performanceDeliveryStarted = ContinuousClock.now
+                #endif
                 let outcome = await accessibility.deliver(deliveredText, to: destinationToken)
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performance?.add(.deliveryMS, PerformanceSession.milliseconds(since: performanceDeliveryStarted))
+                #endif
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 deliveryTrace?.deliveryMilliseconds = TranscriptionDiagnostics.milliseconds(since: deliveryStarted)
                 deliveryTrace?.status = String(describing: outcome)
                 #endif
                 switch outcome {
                 case .delivered:
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    performanceOutcome = .delivered
+                    #endif
                     try machine.finishDelivery(sessionID: sessionID)
                     publish(message: "Delivered")
                 case .unconfirmed:
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    performanceOutcome = .unconfirmed
+                    #endif
                     try machine.finishDelivery(sessionID: sessionID, outcome: outcome)
                     publish(message: nil)
                 case let .failed(reason):
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    performanceOutcome = .failed
+                    #endif
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.notice("final result preserved delivery_failure=\(String(describing: reason), privacy: .public)")
                     #endif
@@ -642,6 +704,9 @@ actor SessionCoordinator {
     }
 
     func finishWithoutDestination(sessionID: DictationSessionID, reason: DeliveryFailure?) throws {
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceOutcome = .noDestination
+        #endif
         switch reason {
         case nil, .focusUnavailable, .unsupportedInsertion:
             guard let result = machine.lastResult else { throw SessionTransitionError.emptyLastResult }
@@ -655,6 +720,9 @@ actor SessionCoordinator {
 
     private func finishWithoutResult(_ sessionID: DictationSessionID, message: String, attention: SessionAttention? = nil) async {
         guard machine.phase.activeSessionID == sessionID else { return }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceOutcome = .failed
+        #endif
         grammarSession?.cancel()
         grammarSession = nil
         inputLevelTask?.cancel()
@@ -769,6 +837,9 @@ actor SessionCoordinator {
 
     private func publish(message: String?, attention: SessionAttention? = nil) {
         if !machine.phase.isBusy {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            PerformanceRecording.shared.finish(performanceOutcome)
+            #endif
             transcriptPreview = nil
             clearProvisionalPreview()
             decoderPreviewTask?.cancel()

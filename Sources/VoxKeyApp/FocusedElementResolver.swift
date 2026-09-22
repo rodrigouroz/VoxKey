@@ -56,11 +56,11 @@ final class SystemFocusedElementClient: FocusedElementClient {
 
     func isFocused(_ element: AXUIElement) -> Bool {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(
-            element,
-            kAXFocusedAttribute as CFString,
-            &value
-        ) == .success else { return false }
+        let result = AXUIElementCopyAttributeValue(element, kAXFocusedAttribute as CFString, &value)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: kAXFocusedAttribute)
+        #endif
+        guard result == .success else { return false }
         return (value as? NSNumber)?.boolValue == true
     }
 
@@ -74,23 +74,30 @@ final class SystemFocusedElementClient: FocusedElementClient {
 
     private func elementAttribute(_ attribute: String, from element: AXUIElement) -> AXUIElement? {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(
-            element,
-            attribute as CFString,
-            &value
-        ) == .success, let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        let result = AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: attribute)
+        #endif
+        guard result == .success, let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
         return (value as! AXUIElement)
     }
 
     func role(of element: AXUIElement) -> String? {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &value) == .success else { return nil }
+        let result = AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &value)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: kAXRoleAttribute)
+        #endif
+        guard result == .success else { return nil }
         return value as? String
     }
 
     func children(of element: AXUIElement, limit: Int) -> [AXUIElement]? {
         var values: CFArray?
         let result = AXUIElementCopyAttributeValues(element, kAXChildrenAttribute as CFString, 0, limit, &values)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.axError(result.rawValue, operation: kAXChildrenAttribute)
+        #endif
         switch result {
         case .success: return values as? [AXUIElement]
         case .attributeUnsupported, .notImplemented, .noValue, .illegalArgument: return []
@@ -108,6 +115,9 @@ final class FocusedElementResolver {
     static let manualAccessibilityAttribute = "AXManualAccessibility"
     static let enhancedUserInterfaceAttribute = "AXEnhancedUserInterface"
 
+    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+    private var performanceAttempt: FocusDiagnosticAttempt?
+    #endif
     private let client: FocusedElementClient
     private let focusEvents: FocusEventSource
     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
@@ -154,12 +164,27 @@ final class FocusedElementResolver {
         focusRefreshTask?.cancel()
         focusRefreshTask = nil
         pendingFocus = nil
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let diagnostics = DestinationDiagnostics.current
+        let diagnosticStart = ContinuousClock.now
+        performanceAttempt = diagnostics == nil ? nil : FocusDiagnosticAttempt()
+        defer {
+            if var attempt = performanceAttempt {
+                attempt.milliseconds = PerformanceSession.milliseconds(since: diagnosticStart)
+                diagnostics?.append(attempt)
+            }
+            performanceAttempt = nil
+        }
+        #endif
         client.prepare(application)
         if let focused = matchingFocusedElement(in: application, process: process) {
             remember(focused, process: process)
             return focused
         }
         if let focused = matchingObservedElement(in: application, process: process) {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceAttempt?.route = "observed_event"
+            #endif
             return focused
         }
 
@@ -172,6 +197,10 @@ final class FocusedElementResolver {
         }
         guard let match = focusedEditorInWindow(of: application) else { return nil }
         remember(match.element, process: process, window: match.window)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceAttempt?.route = "focused_window"
+        #endif
+
         #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         logger.notice("focus resolved route=focused_window pid=\(process.processIdentifier, privacy: .public)")
         #endif
@@ -195,8 +224,16 @@ final class FocusedElementResolver {
 
         removeStaleLaunches(for: process)
         let manual = enablementByProcess[process]?[Self.manualAccessibilityAttribute]
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceAttempt?.manualAccessibilityResult = manual?.result.rawValue
+        #endif
+
         if manual == nil || manual?.shouldRetry == true {
             let result = client.enable(Self.manualAccessibilityAttribute, in: application)
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceAttempt?.manualAccessibilityResult = result.rawValue
+            #endif
+
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             logger.notice(
                 "focus retry capability=manual_accessibility pid=\(process.processIdentifier, privacy: .public) ax_error=\(result.rawValue, privacy: .public)"
@@ -210,8 +247,16 @@ final class FocusedElementResolver {
         }
 
         let enhanced = enablementByProcess[process]?[Self.enhancedUserInterfaceAttribute]
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceAttempt?.enhancedAccessibilityResult = enhanced?.result.rawValue
+        #endif
+
         if enhanced == nil || enhanced?.shouldRetry == true {
             let result = client.enable(Self.enhancedUserInterfaceAttribute, in: application)
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceAttempt?.enhancedAccessibilityResult = result.rawValue
+            #endif
+
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             logger.notice(
                 "focus retry capability=enhanced_user_interface pid=\(process.processIdentifier, privacy: .public) ax_error=\(result.rawValue, privacy: .public)"
@@ -274,7 +319,11 @@ final class FocusedElementResolver {
         // renderer may own that AX element in a different process. The global
         // fallback has no such ownership relationship and remains PID-checked.
         if let focused = client.focusedElement(in: application) {
-            return isFocusContainer(focused) ? nil : focused
+            let container = isFocusContainer(focused)
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceAttempt?.route = container ? "application_container" : "application_focus"
+            #endif
+            return container ? nil : focused
         }
         guard let focused = client.systemWideFocusedElement(),
               client.processIdentifier(of: focused) == process.processIdentifier,
@@ -285,6 +334,9 @@ final class FocusedElementResolver {
         logger.notice(
             "focus resolved route=system_wide pid=\(process.processIdentifier, privacy: .public)"
         )
+        #endif
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceAttempt?.route = "system_wide"
         #endif
         return focused
     }
@@ -304,23 +356,57 @@ final class FocusedElementResolver {
         let started = ContinuousClock.now
         var visited: [AXUIElement] = []
         var candidates: [AXUIElement] = []
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        var performanceMaximumDepth = 0
+        var performanceEditorDepth: Int?
+        defer {
+            performanceAttempt?.visited = visited.count
+            performanceAttempt?.candidates = candidates.count
+            performanceAttempt?.maximumDepth = performanceMaximumDepth
+            performanceAttempt?.editorDepth = performanceEditorDepth
+        }
+        #endif
+
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        // Child offsets describe the branch without reading text, labels, or
+        // identifiers, or adding AX round trips to the bounded search.
+        var branch: [Int] = []
+        var maximumDepth = 0
+        var editorDepth: Int?
+        #endif
         func rejected(_ reason: String) -> (element: AXUIElement, window: AXUIElement)? {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceAttempt?.searchResult = reason
+            #endif
+
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             let elapsed = started.duration(to: .now).components
             let milliseconds = elapsed.seconds * 1_000 + elapsed.attoseconds / 1_000_000_000_000_000
-            logger.notice("focus search rejected pid=\(self.client.processIdentifier(of: application) ?? 0, privacy: .public) reason=\(reason, privacy: .public) visited=\(visited.count, privacy: .public) candidates=\(candidates.count, privacy: .public) elapsed_ms=\(milliseconds, privacy: .public)")
+            let path = branch.map(String.init).joined(separator: "/")
+            logger.notice("focus search rejected pid=\(self.client.processIdentifier(of: application) ?? 0, privacy: .public) reason=\(reason, privacy: .public) visited=\(visited.count, privacy: .public) candidates=\(candidates.count, privacy: .public) elapsed_ms=\(milliseconds, privacy: .public) max_depth=\(maximumDepth, privacy: .public) editor_depth=\(editorDepth ?? -1, privacy: .public) branch=\(path, privacy: .public)")
             #endif
             return nil
         }
         guard let window = client.focusedWindow(in: application) else { return rejected("no_focused_window") }
         let deadline = ContinuousClock.now.advanced(by: .milliseconds(100))
-        // Conversation history can place the composer beyond 128 AX nodes.
-        // Keep the time/depth bounds and require the search to finish.
+        // Nested content in an unrelated branch must not disqualify an editor.
+        // This traversal is iterative: node/time budgets and cycle detection
+        // bound it without a depth cutoff. Require the search to finish so a
+        // second focused editor cannot be hidden by a truncated branch.
         let limit = 512
         let editorRoles: Set<String> = ["AXTextField", "AXTextArea", "AXComboBox", "AXSecureTextField"]
-        var pending: [(element: AXUIElement, depth: Int, editorAncestor: AXUIElement?)] = [(window, 0, nil)]
+        var pending: [(element: AXUIElement, depth: Int, childIndex: Int, editorAncestor: AXUIElement?)] = [(window, 0, 0, nil)]
 
         while let node = pending.popLast() {
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            performanceMaximumDepth = max(performanceMaximumDepth, node.depth)
+            #endif
+
+            #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+            branch = Array(branch.prefix(max(0, node.depth - 1)))
+            if node.depth > 0 { branch.append(node.childIndex) }
+            maximumDepth = max(maximumDepth, node.depth)
+            #endif
             guard visited.count < limit else { return rejected("node_limit") }
             guard ContinuousClock.now < deadline else { return rejected("time_limit") }
             if visited.contains(where: { CFEqual($0, node.element) }) { continue }
@@ -333,15 +419,21 @@ final class FocusedElementResolver {
                 candidates.append(node.element)
                 guard candidates.count == 1 else { return rejected("ambiguous_editors") }
                 editorAncestor = node.element
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                performanceEditorDepth = node.depth
+                #endif
+
+                #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+                editorDepth = node.depth
+                #endif
             }
             let remaining = limit - visited.count - pending.count
             guard let children = client.children(of: node.element, limit: remaining + 1) else {
                 return rejected("children_unavailable")
             }
             guard children.count <= remaining else { return rejected("node_limit") }
-            guard node.depth < 12 || children.isEmpty else { return rejected("depth_limit") }
-            for child in children.reversed() {
-                pending.append((child, node.depth + 1, editorAncestor))
+            for (index, child) in children.enumerated().reversed() {
+                pending.append((child, node.depth + 1, index, editorAncestor))
             }
         }
 
@@ -351,6 +443,14 @@ final class FocusedElementResolver {
             return rejected("window_changed")
         }
         guard client.isFocused(candidates[0]) else { return rejected("editor_lost_focus") }
+        #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
+        if maximumDepth > 12 {
+            logger.notice("focus search completed beyond former depth limit visited=\(visited.count, privacy: .public) max_depth=\(maximumDepth, privacy: .public) editor_depth=\(editorDepth ?? -1, privacy: .public)")
+        }
+        #endif
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        performanceAttempt?.searchResult = "matched"
+        #endif
         return (candidates[0], window)
     }
 

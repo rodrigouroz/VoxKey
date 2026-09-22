@@ -70,11 +70,28 @@ final class AccessibilityService {
     }
 
     func captureCurrentDestination() async -> DestinationAssessment {
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        if let performance = PerformanceRecording.shared.current {
+            let diagnostics = DestinationDiagnostics()
+            return await DestinationDiagnostics.$current.withValue(diagnostics) {
+                let result = await captureDestination()
+                performance.recordDestination(diagnostics.finish(status: result.failure.map { String(describing: $0) } ?? "captured"))
+                return result
+            }
+        }
+        #endif
+        return await captureDestination()
+    }
+
+    private func captureDestination() async -> DestinationAssessment {
         let started = ContinuousClock.now
         guard !shuttingDown else { return rejected(.destinationUnavailable) }
         guard client.trusted else { return rejected(.permissionsUnavailable) }
         guard !client.secureInputEnabled else { return rejected(.secureDestination) }
         guard let application = client.frontmostApplication else { return rejected(.destinationUnavailable) }
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.applicationCategory = DestinationDiagnostics.applicationCategory(application.name) }
+        #endif
         let label = DestinationLabel(applicationName: application.name, processIdentifier: application.identity.processIdentifier)
         let appElement = AXUIElementCreateApplication(application.identity.processIdentifier)
         var element = focusedElementResolver.resolve(in: appElement, process: application.identity)
@@ -118,6 +135,25 @@ final class AccessibilityService {
     }
 
     func deliver(_ text: String, to token: DestinationToken, activateDestination: Bool = false) async -> DeliveryOutcome {
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        if let performance = PerformanceRecording.shared.current {
+            let diagnostics = DestinationDiagnostics()
+            return await DestinationDiagnostics.$current.withValue(diagnostics) {
+                let result = await performDelivery(text, to: token, activateDestination: activateDestination)
+                let status = switch result {
+                case .delivered: "delivered"
+                case .unconfirmed: "unconfirmed"
+                case let .failed(reason): String(describing: reason)
+                }
+                performance.recordDestination(diagnostics.finish(status: status), delivery: true)
+                return result
+            }
+        }
+        #endif
+        return await performDelivery(text, to: token, activateDestination: activateDestination)
+    }
+
+    private func performDelivery(_ text: String, to token: DestinationToken, activateDestination: Bool) async -> DeliveryOutcome {
         guard !shuttingDown else { return .failed(.destinationUnavailable) }
         guard let intent = intents.removeValue(forKey: token) else { return .failed(.destinationUnavailable) }
         guard !delivering else { return .failed(.inputBusy) }
@@ -165,9 +201,15 @@ final class AccessibilityService {
             isWebBacked: intent.isWebBacked, directInsertionSettable: settable && (client.attribute(intent.element, kAXRoleAttribute) as? String) == "AXTextField",
             directInsertionKnownUnsupported: directInsertionUnsupportedProcesses.contains(intent.process)
         )
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.deliveryRoute = route == .accessibilitySelection ? "accessibilitySelection" : "paste" }
+        #endif
         if route == .accessibilitySelection {
             if let failure = validate(intent) { return .failed(failure) }
             let result = client.setAttribute(intent.element, kAXSelectedTextAttribute, prepared as CFString)
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            DestinationDiagnostics.current?.update { $0.directWriteResult = result.rawValue }
+            #endif
             // A messaging timeout does not prove the write was rejected. Never
             // issue a second write after a possibly applied request.
             if result == .success || result == .cannotComplete || result == .failure {
@@ -201,6 +243,9 @@ final class AccessibilityService {
     }
 
     private func paste(_ text: String, intent: IntentRecord) async -> DeliveryOutcome {
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.deliveryRoute = "paste"; $0.pasteDispatched = false }
+        #endif
         // Clipboard transactions stay serialized even after the UI is ready.
         await waitForPendingPaste()
         let deadline = ContinuousClock.now.advanced(by: timing.modifierTimeout)
@@ -223,6 +268,9 @@ final class AccessibilityService {
             return .failed(.unsupportedInsertion)
         }
         let restorationDeadline = ContinuousClock.now.advanced(by: timing.confirmationTimeout)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.pasteDispatched = true }
+        #endif
         let confirmation = await confirmInsertion(
             intent: intent, text: text,
             timeout: min(timing.foregroundConfirmationTimeout, timing.confirmationTimeout)
@@ -274,6 +322,11 @@ final class AccessibilityService {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         var current: TextMutationSnapshot?
         var rangeReadback = InsertedTextReadback.notAttempted
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        let diagnostics = DestinationDiagnostics.current
+        var confirmation = "unavailable"
+        defer { diagnostics?.update { $0.confirmation = confirmation; $0.rangeReadback = rangeReadback.rawValue } }
+        #endif
         #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
         var observedEvidence: Set<String> = []
         #endif
@@ -282,6 +335,9 @@ final class AccessibilityService {
                   client.frontmostApplication?.identity == intent.process else {
                 #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                 logger.notice("confirmation interrupted reason=permissions_security_or_frontmost_changed")
+                #endif
+                #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                confirmation = "interrupted"
                 #endif
                 return .unavailable
             }
@@ -294,6 +350,9 @@ final class AccessibilityService {
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion confirmed source=anchored_text")
                     #endif
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    confirmation = "verified"
+                    #endif
                     return .verified
                 }
             }
@@ -302,6 +361,9 @@ final class AccessibilityService {
                 original: intent.snapshot, current: current, insertedText: text,
                 contextLimit: contextLimit
             )
+            #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+            diagnostics?.update { $0.confirmationEvidence = evidence.rawValue }
+            #endif
             #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
             observedEvidence.insert(evidence.rawValue)
             #endif
@@ -312,6 +374,9 @@ final class AccessibilityService {
                 if rangeReadback == .matched {
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion confirmed source=\(evidence.rawValue, privacy: .public)")
+                    #endif
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    confirmation = "verified"
                     #endif
                     return .verified
                 }
@@ -324,6 +389,9 @@ final class AccessibilityService {
                 if rangeReadback == .matched {
                     #if DEBUG && VOXKEY_LOCAL_DIAGNOSTICS && !VOXKEY_RELEASE
                     logger.info("insertion observed verification=\(evidence.rawValue, privacy: .public)")
+                    #endif
+                    #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+                    confirmation = "textObserved"
                     #endif
                     return .textObserved
                 }
@@ -406,7 +474,11 @@ final class AccessibilityService {
     }
 
     private func mutationSnapshot(for element: AXUIElement) -> TextMutationSnapshot? {
-        guard let range = selectedTextRange(element) else { return nil }
+        let selectedRange = selectedTextRange(element)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.selectionAvailable = selectedRange != nil }
+        #endif
+        guard let range = selectedRange else { return nil }
         let precedingLength = min(contextLimit, range.location)
         let preceding = client.string(element, range: CFRange(location: range.location - precedingLength, length: precedingLength))
         let followingStart = range.location + range.length
@@ -414,6 +486,10 @@ final class AccessibilityService {
         let followingLength = characterCount.map { max(0, min(contextLimit, $0.intValue - followingStart)) }
         let following = followingLength.flatMap { client.string(element, range: CFRange(location: followingStart, length: $0)) }
         let selectionLength = min(contextLimit, range.length)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.readableContext = preceding != nil && following != nil }
+        #endif
+
         return TextMutationSnapshot(
             range: range, preceding: preceding, following: following,
             selectedPrefix: client.string(element, range: CFRange(location: range.location, length: selectionLength)),
@@ -425,17 +501,26 @@ final class AccessibilityService {
     private func isSecure(_ element: AXUIElement) -> Bool {
         let role: String? = copyAttribute(element, kAXRoleAttribute)
         let subrole: String? = copyAttribute(element, kAXSubroleAttribute)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update { $0.role = DestinationDiagnostics.role(role) }
+        #endif
         return role == "AXSecureTextField" || subrole == kAXSecureTextFieldSubrole
     }
     private func isEditable(_ element: AXUIElement) -> Bool {
-        DestinationCapabilityClassifier.isEditable(
-            role: copyAttribute(element, kAXRoleAttribute),
-            editable: (copyAttribute(element, "AXEditable") as NSNumber?)?.boolValue,
-            enabled: (copyAttribute(element, kAXEnabledAttribute) as NSNumber?)?.boolValue,
-            hasSelection: selectedTextRange(element) != nil,
-            directInsertionSettable: client.isSettable(element, kAXSelectedTextAttribute)
-                || client.isSettable(element, kAXValueAttribute)
-        )
+        let role: String? = copyAttribute(element, kAXRoleAttribute)
+        let editable = (copyAttribute(element, "AXEditable") as NSNumber?)?.boolValue
+        let enabled = (copyAttribute(element, kAXEnabledAttribute) as NSNumber?)?.boolValue
+        let hasSelection = selectedTextRange(element) != nil
+        let settable = client.isSettable(element, kAXSelectedTextAttribute) || client.isSettable(element, kAXValueAttribute)
+        #if VOXKEY_PERFORMANCE && !VOXKEY_RELEASE
+        DestinationDiagnostics.current?.update {
+            $0.role = DestinationDiagnostics.role(role)
+            $0.editable = editable; $0.enabled = enabled
+            $0.selectionAvailable = hasSelection; $0.directInsertionSettable = settable
+        }
+        #endif
+        return DestinationCapabilityClassifier.isEditable(role: role, editable: editable, enabled: enabled,
+            hasSelection: hasSelection, directInsertionSettable: settable)
     }
     private func isWebBacked(_ element: AXUIElement) -> Bool {
         if DestinationCapabilityClassifier.isWebBacked(role: nil, attributeNames: client.attributeNames(element)) { return true }
