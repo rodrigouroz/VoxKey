@@ -14,7 +14,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/argmaxinc/argmax-oss-swift", exact: "1.1.0"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.20"),
-        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.6")
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0")
     ],
     targets: [
         .binaryTarget(
