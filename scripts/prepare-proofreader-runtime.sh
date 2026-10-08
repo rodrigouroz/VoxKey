@@ -11,11 +11,34 @@ import subprocess
 import sys
 import tempfile
 
+# SHA-256 of llama.framework/Versions/A/llama inside the b10809 xcframework zip that
+# Package.swift pins by checksum. Update both together when bumping llama.cpp.
+PINNED_FRAMEWORK_SHA256 = 'a1e02284766ce6c7ff84eb9d0a2469606663d7869379d581b363e79ff2873721'
+
+
+def locate_pinned_framework(artifacts):
+    # SwiftPM names this folder after the package identity, i.e. the checkout folder name.
+    pattern = '*/llama/llama.xcframework/macos-arm64_x86_64/llama.framework'
+    matches = sorted({path.resolve() for path in artifacts.glob(pattern) if path.is_dir()})
+    if not matches:
+        raise SystemExit('Run swift package resolve first to fetch the checksum-pinned llama binary target.')
+    if len(matches) > 1:
+        listing = '\n'.join(f'  {path}' for path in matches)
+        raise SystemExit(f'Found several llama.framework artifacts; remove the stale ones:\n{listing}')
+    return matches[0]
+
+
+def verify_pinned_binary(framework):
+    digest = hashlib.sha256((framework / 'Versions/A/llama').read_bytes()).hexdigest()
+    if digest != PINNED_FRAMEWORK_SHA256:
+        raise SystemExit(f'{framework} is not the pinned llama.cpp b10809 framework '
+                         f'(binary sha256 {digest}, expected {PINNED_FRAMEWORK_SHA256}).')
+
+
 root = Path.cwd()
-source = root / '.build/artifacts/voxkey/llama/llama.xcframework/macos-arm64_x86_64/llama.framework'
+source = locate_pinned_framework(root / '.build/artifacts')
+verify_pinned_binary(source)
 target = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root / '.build/proofreader-runtime'
-if not source.is_dir():
-    raise SystemExit('Run swift package resolve first to fetch the checksum-pinned llama binary target.')
 target.parent.mkdir(parents=True, exist_ok=True)
 work = Path(tempfile.mkdtemp(prefix='linked-s1-runtime-', dir=target.parent))
 try:
